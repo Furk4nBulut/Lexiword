@@ -1,7 +1,7 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot } from 'lexical';
 import { useEffect, useCallback } from 'react';
-import { $createPageBreakNode, $isPageBreakNode, type PageBreakNode } from './PaginationNode';
+import { $createPageBreakNode, $isPageBreakNode, type PageBreakNode } from './PageBreakNode';
 
 export interface PaginationSettings {
   pageHeight: number; // mm

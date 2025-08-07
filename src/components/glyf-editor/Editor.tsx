@@ -9,7 +9,7 @@ import {
   DEFAULT_PAGINATION_SETTINGS,
   type PaginationSettings
 } from './plugins/pagination/PaginationPlugin';
-import { PageBreakNode } from './plugins/pagination/PaginationNode';
+import { PageBreakNode } from './plugins/pagination/PageBreakNode';
 import './styles.css';
 
 const theme = {
