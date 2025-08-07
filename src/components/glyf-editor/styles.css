@@ -1,218 +1,219 @@
 /* Sade ve temiz A4 Word benzeri tasarım */
 .editor-container {
-    display: flex;
-    justify-content: center;
-    background: #f3f2f1;
-    min-height: 100vh;
-    padding: 20px;
-    font-family: 'Segoe UI', system-ui, sans-serif;
+  display: flex;
+  justify-content: center;
+  background: #f3f2f1;
+  min-height: 100vh;
+  padding: 20px;
+  font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
 /* Temiz A4 sayfa tasarımı */
 .a4-page {
-    width: 210mm;
-    min-height: 297mm;
-    background: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    border-radius: 2px;
+  width: 210mm;
+  min-height: 297mm;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  border-radius: 2px;
 }
 
 /* A4 içerik alanı - sade */
 .a4-content {
-    flex: 1;
-    position: relative;
+  flex: 1;
+  position: relative;
 }
 
 /* Toolbar - minimal tasarım */
 .toolbar-wrapper {
-    background: #fafafa;
-    border-bottom: 1px solid #e0e0e0;
-    border-radius: 2px 2px 0 0;
+  background: #fafafa;
+  border-bottom: 1px solid #e0e0e0;
+  border-radius: 2px 2px 0 0;
 }
 
 /* Ana yazı alanı - Word benzeri */
 .contentEditable {
-    width: 100%;
-    min-height: calc(297mm - 60px);
-    padding: 25mm 20mm;
-    border: none;
-    outline: none;
-    font-family: 'Calibri', 'Times New Roman', serif;
-    font-size: 11pt;
-    line-height: 1.15;
-    color: #000;
-    background: white;
-    caret-color: #0078d4;
+  width: 100%;
+  min-height: calc(297mm - 60px);
+  padding: 25mm 20mm;
+  border: none;
+  outline: none;
+  font-family: 'Calibri', 'Times New Roman', serif;
+  font-size: 11pt;
+  line-height: 1.15;
+  color: #000;
+  background: white;
+  caret-color: #0078d4;
 }
 
 .contentEditable:focus {
-    outline: none;
+  outline: none;
 }
 
 /* Placeholder - sade */
 .placeholder {
-    position: absolute;
-    top: 25mm;
-    left: 20mm;
-    color: #999;
-    pointer-events: none;
-    font-family: 'Calibri', serif;
-    font-size: 11pt;
-    font-style: italic;
+  position: absolute;
+  top: 25mm;
+  left: 20mm;
+  color: #999;
+  pointer-events: none;
+  font-family: 'Calibri', serif;
+  font-size: 11pt;
+  font-style: italic;
 }
 
 /* Text formatting - basit ve etkili */
 .glyf-editor-bold {
-    font-weight: 700;
+  font-weight: 700;
 }
 
 .glyf-editor-italic {
-    font-style: italic;
+  font-style: italic;
 }
 
 .glyf-editor-underline {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
 .glyf-editor-strikethrough {
-    text-decoration: line-through;
+  text-decoration: line-through;
 }
 
 .glyf-editor-underlineStrikethrough {
-    text-decoration: underline line-through;
+  text-decoration: underline line-through;
 }
 
 /* Başlık stilleri - Word'ün basit versiyonu */
 .glyf-editor-h1 {
-    font-family: 'Calibri', sans-serif;
-    font-size: 16pt;
-    font-weight: 600;
-    color: #2F5496;
-    margin: 0 0 8pt 0;
-    line-height: 1.2;
+  font-family: 'Calibri', sans-serif;
+  font-size: 16pt;
+  font-weight: 600;
+  color: #2f5496;
+  margin: 0 0 8pt 0;
+  line-height: 1.2;
 }
 
 .glyf-editor-h2 {
-    font-family: 'Calibri', sans-serif;
-    font-size: 13pt;
-    font-weight: 600;
-    color: #2F5496;
-    margin: 8pt 0 6pt 0;
-    line-height: 1.2;
+  font-family: 'Calibri', sans-serif;
+  font-size: 13pt;
+  font-weight: 600;
+  color: #2f5496;
+  margin: 8pt 0 6pt 0;
+  line-height: 1.2;
 }
 
 .glyf-editor-h3 {
-    font-family: 'Calibri', sans-serif;
-    font-size: 12pt;
-    font-weight: 600;
-    color: #1F3763;
-    margin: 6pt 0 4pt 0;
-    line-height: 1.2;
+  font-family: 'Calibri', sans-serif;
+  font-size: 12pt;
+  font-weight: 600;
+  color: #1f3763;
+  margin: 6pt 0 4pt 0;
+  line-height: 1.2;
 }
 
 /* Paragraf - basit Word spacing */
 p {
-    margin: 0 0 8pt 0;
-    font-family: 'Calibri', serif;
-    font-size: 11pt;
-    line-height: 1.15;
-    color: #000;
+  margin: 0 0 8pt 0;
+  font-family: 'Calibri', serif;
+  font-size: 11pt;
+  line-height: 1.15;
+  color: #000;
 }
 
 /* Liste stilleri - minimal */
-ul, ol {
-    margin: 0 0 8pt 0;
-    padding-left: 18pt;
-    font-family: 'Calibri', serif;
-    font-size: 11pt;
-    line-height: 1.15;
+ul,
+ol {
+  margin: 0 0 8pt 0;
+  padding-left: 18pt;
+  font-family: 'Calibri', serif;
+  font-size: 11pt;
+  line-height: 1.15;
 }
 
 li {
-    margin: 0 0 2pt 0;
-    padding: 0;
-    color: #000;
+  margin: 0 0 2pt 0;
+  padding: 0;
+  color: #000;
 }
 
 /* Banner - sade tasarım */
 .glyf-editor-banner {
-    margin: 8pt 0;
-    padding: 8pt 12pt;
-    border-left: 3px solid #0078d4;
-    background: #f8f9fa;
-    border-radius: 0 3px 3px 0;
+  margin: 8pt 0;
+  padding: 8pt 12pt;
+  border-left: 3px solid #0078d4;
+  background: #f8f9fa;
+  border-radius: 0 3px 3px 0;
 }
 
 /* Selection - Word mavi */
 ::selection {
-    background-color: #0078d4;
-    color: white;
+  background-color: #0078d4;
+  color: white;
 }
 
 /* Scrollbar - minimal */
 .contentEditable::-webkit-scrollbar {
-    width: 8px;
+  width: 8px;
 }
 
 .contentEditable::-webkit-scrollbar-track {
-    background: transparent;
+  background: transparent;
 }
 
 .contentEditable::-webkit-scrollbar-thumb {
-    background: #ccc;
-    border-radius: 4px;
+  background: #ccc;
+  border-radius: 4px;
 }
 
 .contentEditable::-webkit-scrollbar-thumb:hover {
-    background: #999;
+  background: #999;
 }
 
 /* Print için temizlik */
 @media print {
-    .editor-container {
-        background: white;
-        padding: 0;
-    }
+  .editor-container {
+    background: white;
+    padding: 0;
+  }
 
-    .a4-page {
-        box-shadow: none;
-        margin: 0;
-        border-radius: 0;
-    }
+  .a4-page {
+    box-shadow: none;
+    margin: 0;
+    border-radius: 0;
+  }
 
-    .toolbar-wrapper {
-        display: none;
-    }
+  .toolbar-wrapper {
+    display: none;
+  }
 
-    .contentEditable {
-        padding: 20mm;
-        font-size: 12pt;
-        line-height: 1.5;
-    }
+  .contentEditable {
+    padding: 20mm;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
 }
 
 /* Responsive - mobil için */
 @media (max-width: 768px) {
-    .editor-container {
-        padding: 10px;
-    }
+  .editor-container {
+    padding: 10px;
+  }
 
-    .a4-page {
-        width: 100%;
-        min-width: 300px;
-    }
+  .a4-page {
+    width: 100%;
+    min-width: 300px;
+  }
 
-    .contentEditable {
-        padding: 15mm 10mm;
-        font-size: 12pt;
-    }
+  .contentEditable {
+    padding: 15mm 10mm;
+    font-size: 12pt;
+  }
 
-    .placeholder {
-        left: 10mm;
-        top: 15mm;
-        font-size: 12pt;
-    }
+  .placeholder {
+    left: 10mm;
+    top: 15mm;
+    font-size: 12pt;
+  }
 }
