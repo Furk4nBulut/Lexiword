@@ -2,10 +2,6 @@ import {
   $applyNodeReplacement,
   $createParagraphNode,
   ElementNode,
-  type DOMConversionMap,
-  type DOMConversionOutput,
-  type DOMExportOutput,
-  type EditorConfig,
   type LexicalNode,
   type NodeKey,
   type SerializedElementNode,
@@ -44,7 +40,7 @@ export class PageBreakNode extends ElementNode {
     writable.__pageNumber = pageNumber;
   }
 
-  createDOM(config: EditorConfig): HTMLElement {
+  createDOM(): HTMLElement {
     const element = document.createElement('div');
     element.setAttribute('data-lexical-page-break', 'true');
     element.setAttribute('data-page-number', this.__pageNumber.toString());
@@ -56,26 +52,8 @@ export class PageBreakNode extends ElementNode {
     return false;
   }
 
-  static importDOM(): DOMConversionMap | null {
-    return {
-      div: () => ({
-        conversion: convertPageBreakElement,
-        priority: 1
-      })
-    };
-  }
-
   static importJSON(serializedNode: SerializedPageBreakNode): PageBreakNode {
-    const { pageNumber } = serializedNode;
-    return $createPageBreakNode(pageNumber);
-  }
-
-  exportDOM(): DOMExportOutput {
-    const element = document.createElement('div');
-    element.setAttribute('data-lexical-page-break', 'true');
-    element.setAttribute('data-page-number', this.__pageNumber.toString());
-    element.className = 'page-break';
-    return { element };
+    return $createPageBreakNode(serializedNode.pageNumber);
   }
 
   exportJSON(): SerializedPageBreakNode {
@@ -94,13 +72,6 @@ export class PageBreakNode extends ElementNode {
   isInline(): false {
     return false;
   }
-}
-
-function convertPageBreakElement(node: HTMLElement): DOMConversionOutput {
-  const pageNumberAttr = node.getAttribute('data-page-number');
-  const pageNumber = pageNumberAttr != null ? parseInt(pageNumberAttr, 10) : 1;
-  const pageBreakNode = $createPageBreakNode(pageNumber);
-  return { node: pageBreakNode };
 }
 
 export function $createPageBreakNode(pageNumber: number): PageBreakNode {

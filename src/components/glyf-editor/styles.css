@@ -250,3 +250,43 @@ li {
     font-size: 12pt;
   }
 }
+.editor-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.a4-page {
+  background: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.contentEditable {
+  min-height: 100%;
+  outline: none;
+}
+
+.page-break {
+  border-top: 1px dashed #ccc;
+  margin: 10px 0;
+}
+
+.page-indicator {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: #f0f0f0;
+  padding: 5px 10px;
+  border-radius: 4px;
+}
+
+.placeholder {
+  color: #999;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  pointer-events: none;
+}
