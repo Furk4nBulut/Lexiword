@@ -1,6 +1,6 @@
 import * as React from 'react';
 import './App.css';
-import { GlyfEditor } from 'src/components';
+import { Editor } from 'src/components';
 
 function App(): JSX.Element {
   const [wordCount, setWordCount] = React.useState(0);
@@ -37,7 +37,7 @@ function App(): JSX.Element {
       </header>
 
       <main className="editorWrapper">
-        <GlyfEditor onWordCountChange={handleWordCountChange} />
+        <Editor onWordCountChange={handleWordCountChange} />
       </main>
       <footer className="editorStatusBar">
         <div className="statusBarLeft">

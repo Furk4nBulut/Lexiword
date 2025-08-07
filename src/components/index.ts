@@ -1,3 +1,3 @@
-import GlyfEditor from './glyf-editor/Editor';
+import Editor from './editor/Editor';
 
-export { GlyfEditor };
+export { Editor };

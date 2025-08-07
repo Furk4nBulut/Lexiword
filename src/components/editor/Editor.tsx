@@ -11,7 +11,7 @@ import {
 } from './plugins/pagination/PaginationSettings';
 import { PageBreakNode } from './plugins/pagination/PageBreakNode';
 import { WordCountPlugin } from './plugins/wordcount/WordCountPlugin';
-import { ToolbarPlugin } from '../glyf-toolbar/Toolbar';
+import { ToolbarPlugin } from '../toolbar/Toolbar';
 import './styles.css';
 import { BannerNode, BannerPlugin } from './plugins/banner/BannerPlugin';
 
