@@ -50,6 +50,9 @@ function App(): JSX.Element {
           <span>Türkçe (Türkiye)</span>
           <span>100%</span>
         </div>
+        <div className="statusBarDebug">
+          <span>kayblound wordocunt: {wordCount}</span>
+        </div>
       </footer>
     </div>
   );

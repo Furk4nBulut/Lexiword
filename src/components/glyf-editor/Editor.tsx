@@ -10,6 +10,7 @@ import {
   type PaginationSettings
 } from './plugins/pagination/PaginationPlugin';
 import { PageBreakNode } from './plugins/pagination/PageBreakNode';
+import { WordCountPlugin } from './WordCountPlugin';
 import './styles.css';
 
 const theme = {
@@ -24,7 +25,11 @@ function onError(error: Error): void {
   console.error(error);
 }
 
-export default function Editor(): JSX.Element {
+export default function Editor({
+  onWordCountChange
+}: {
+  onWordCountChange?: (words: number, chars: number) => void;
+}): JSX.Element {
   const [pageCount, setPageCount] = React.useState(1);
   const paginationSettings: PaginationSettings = DEFAULT_PAGINATION_SETTINGS;
 
@@ -61,6 +66,7 @@ export default function Editor(): JSX.Element {
             settings={paginationSettings}
             onPageCountChange={handlePageCountChange}
           />
+          <WordCountPlugin onWordCountChange={onWordCountChange} />
         </LexicalComposer>
       </div>
     </div>
