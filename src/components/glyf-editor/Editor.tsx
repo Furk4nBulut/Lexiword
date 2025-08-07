@@ -13,6 +13,7 @@ import { PageBreakNode } from './plugins/pagination/PageBreakNode';
 import { WordCountPlugin } from './plugins/WordCountPlugin';
 import { ToolbarPlugin } from '../glyf-toolbar/Toolbar';
 import './styles.css';
+import { BannerNode, BannerPlugin } from './plugins/banner/BannerPlugin';
 
 const theme = {
   text: {
@@ -42,7 +43,7 @@ export default function Editor({
     namespace: 'SimpleEditor',
     theme,
     onError,
-    nodes: [PageBreakNode]
+    nodes: [PageBreakNode, BannerNode]
   };
 
   return (
@@ -58,6 +59,7 @@ export default function Editor({
       >
         <LexicalComposer initialConfig={initialConfig}>
           <ToolbarPlugin />
+          <BannerPlugin />
           <RichTextPlugin
             contentEditable={<ContentEditable className="contentEditable" />}
             placeholder={<div className="placeholder">Start typing...</div>}
