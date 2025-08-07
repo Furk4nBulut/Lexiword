@@ -15,6 +15,10 @@ import { PaginationPlugin } from './plugins/pagination/PaginationPlugin';
 import { PageBreakNode } from './plugins/pagination/PaginationNode';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot } from 'lexical';
+import {
+  DEFAULT_PAGINATION_SETTINGS,
+  type PaginationSettings
+} from './plugins/pagination/PaginationSettings';
 
 const theme = {
   heading: {
@@ -69,14 +73,7 @@ export default function Editor({
   enablePagination = true
 }: EditorProps): JSX.Element {
   const [pageCount, setPageCount] = React.useState(1);
-  const paginationSettings = {
-    pageHeight: 297,
-    pageWidth: 210,
-    marginTop: 25,
-    marginBottom: 25,
-    marginLeft: 20,
-    marginRight: 20
-  };
+  const paginationSettings: PaginationSettings = DEFAULT_PAGINATION_SETTINGS;
   const handleWordCountChange = React.useCallback(
     (words: number, chars: number) => {
       onWordCountChange?.(words, chars);

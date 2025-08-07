@@ -13,7 +13,7 @@
 }
 
 .page-break::before {
-  content: "Sayfa " attr(data-page-number);
+  content: 'Sayfa ' attr(data-page-number);
   position: absolute;
   top: -25px;
   left: 50%;
