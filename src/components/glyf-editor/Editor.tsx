@@ -11,6 +11,7 @@ import {
 } from './plugins/pagination/PaginationPlugin';
 import { PageBreakNode } from './plugins/pagination/PageBreakNode';
 import { WordCountPlugin } from './plugins/WordCountPlugin';
+import { ToolbarPlugin } from '../glyf-toolbar/Toolbar';
 import './styles.css';
 
 const theme = {
@@ -56,6 +57,7 @@ export default function Editor({
         }}
       >
         <LexicalComposer initialConfig={initialConfig}>
+          <ToolbarPlugin />
           <RichTextPlugin
             contentEditable={<ContentEditable className="contentEditable" />}
             placeholder={<div className="placeholder">Start typing...</div>}

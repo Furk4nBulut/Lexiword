@@ -123,7 +123,7 @@ function HeadingToolbarPlugin(): JSX.Element {
     editor.update(() => {
       const selection = $getSelection();
       if ($isRangeSelection(selection)) {
-        $setBlocksType_experimental(selection, () => $createHeadingNode(tag));
+        $setBlocksType_experimental(selection, () => $createHeadingNode(tag) as any);
       }
     });
   };
