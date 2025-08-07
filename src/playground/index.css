@@ -1,19 +1,90 @@
+/* Microsoft Word benzeri global reset ve temel stiller */
 :root {
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  color: #323130;
+  background-color: #f3f2f1;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+
+  /* Microsoft Office renk paleti */
+  --ms-blue: #0078d4;
+  --ms-blue-hover: #106ebe;
+  --ms-blue-active: #005a9e;
+  --ms-gray-10: #faf9f8;
+  --ms-gray-20: #f3f2f1;
+  --ms-gray-30: #edebe9;
+  --ms-gray-40: #e1dfdd;
+  --ms-gray-50: #d2d0ce;
+  --ms-gray-60: #c8c6c4;
+  --ms-gray-70: #a19f9d;
+  --ms-gray-80: #797775;
+  --ms-gray-90: #605e5c;
+  --ms-gray-100: #323130;
+  --ms-gray-110: #201f1e;
+  --ms-gray-120: #11100f;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
+  padding: 0;
+  background: var(--ms-gray-20);
+  color: var(--ms-gray-100);
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: auto;
+}
+
+/* Scrollbar styling - Microsoft benzeri */
+::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--ms-gray-10);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ms-gray-60);
+  border-radius: 7px;
+  border: 2px solid var(--ms-gray-10);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ms-gray-70);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--ms-gray-10);
+}
+
+/* Typography reset */
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: 600;
+  color: var(--ms-gray-110);
+}
+
+p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Selection styling */
+::selection {
+  background-color: var(--ms-blue);
+  color: white;
+}
+
+::-moz-selection {
+  background-color: var(--ms-blue);
+  color: white;
 }
 
 h1 {

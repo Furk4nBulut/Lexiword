@@ -1,94 +1,184 @@
+/* Banner plugin stilleri - global theme ile uyumlu */
 .colorButtonInner {
     height: 24px;
     width: 24px;
+    border-radius: 4px;
+    border: 1px solid var(--ms-gray-50);
+    transition: all 0.1s ease-in-out;
 }
 
+.colorButtonInner:hover {
+    border-color: var(--ms-gray-70);
+    transform: scale(1.05);
+}
+
+/* Popover content - Microsoft Word benzeri tasarım */
 .popoverContent {
-  border-radius: 4px;
-  padding: 20px;
-  width: 180px;
-  background-color: white;
-  box-shadow: hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px;
-  animation-duration: 400ms;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, opacity;
+    border-radius: 8px;
+    padding: 16px;
+    width: 200px;
+    background: white;
+    border: 1px solid var(--ms-gray-40);
+    box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.1),
+        0 8px 20px rgba(0, 0, 0, 0.05);
+    animation-duration: 200ms;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform, opacity;
+    font-family: inherit;
 }
+
 .popoverContent[data-state='open'][data-side='top'] {
-  animation-name: slideDownAndFade;
+    animation-name: slideDownAndFade;
 }
+
 .popoverContent[data-state='open'][data-side='right'] {
-  animation-name: slideLeftAndFade;
+    animation-name: slideLeftAndFade;
 }
+
 .popoverContent[data-state='open'][data-side='bottom'] {
-  animation-name: slideUpAndFade;
+    animation-name: slideUpAndFade;
 }
+
 .popoverContent[data-state='open'][data-side='left'] {
-  animation-name: slideRightAndFade;
+    animation-name: slideRightAndFade;
 }
 
+/* Close button - theme ile uyumlu */
 .popoverClose {
-  font-family: inherit;
-  border-radius: 100%;
-  height: 25px;
-  width: 25px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background-color: #242424;
+    font-family: inherit;
+    border-radius: 4px;
+    height: 24px;
+    width: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: transparent;
+    color: var(--ms-gray-90);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.1s ease-in-out;
 }
 
+.popoverClose:hover {
+    background: var(--ms-gray-20);
+    border-color: var(--ms-gray-40);
+    color: var(--ms-gray-110);
+}
+
+.popoverClose:active {
+    background: var(--ms-gray-30);
+}
+
+/* Icon button - theme ile uyumlu */
 .iconButton {
-  font-family: inherit;
-  border-radius: 100%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
+    font-family: inherit;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 6px;
+    background: transparent;
+    color: var(--ms-gray-110);
+    border: 1px solid var(--ms-gray-50);
+    cursor: pointer;
+    transition: all 0.1s ease-in-out;
 }
 
+.iconButton:hover {
+    background: var(--ms-gray-10);
+    border-color: var(--ms-gray-60);
+    color: var(--ms-gray-120);
+}
+
+.iconButton:active {
+    background: var(--ms-gray-20);
+    transform: translateY(0.5px);
+}
+
+.iconButton:focus {
+    outline: 2px solid var(--ms-blue);
+    outline-offset: 1px;
+}
+
+/* Color picker grid */
+.colorGrid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.colorOption {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    border: 2px solid var(--ms-gray-40);
+    cursor: pointer;
+    transition: all 0.1s ease-in-out;
+}
+
+.colorOption:hover {
+    transform: scale(1.1);
+    border-color: var(--ms-gray-70);
+}
+
+.colorOption:focus {
+    outline: 2px solid var(--ms-blue);
+    outline-offset: 2px;
+}
+
+.colorOption.selected {
+    border-color: var(--ms-blue);
+    box-shadow: 0 0 0 2px var(--ms-blue);
+}
+
+/* Animation keyframes */
 @keyframes slideUpAndFade {
-  from {
-    opacity: 0;
-    transform: translateY(2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+    from {
+        opacity: 0;
+        transform: translateY(2px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes slideRightAndFade {
-  from {
-    opacity: 0;
-    transform: translateX(-2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+    from {
+        opacity: 0;
+        transform: translateX(-2px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 @keyframes slideDownAndFade {
-  from {
-    opacity: 0;
-    transform: translateY(-2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+    from {
+        opacity: 0;
+        transform: translateY(-2px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes slideLeftAndFade {
-  from {
-    opacity: 0;
-    transform: translateX(2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+    from {
+        opacity: 0;
+        transform: translateX(2px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }

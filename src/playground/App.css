@@ -1,22 +1,134 @@
+/* Microsoft Word benzeri uygulama container */
 #root {
   width: 100%;
-  margin: 0 auto;
-  padding: 2rem;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background: var(--ms-gray-20);
 }
 
 .App {
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
+  background: var(--ms-gray-20);
+}
+
+/* Word benzeri başlık alanı */
+.editorHeading {
+  background: linear-gradient(135deg, var(--ms-blue) 0%, var(--ms-blue-hover) 100%);
+  color: white;
+  margin: 0;
+  padding: 24px 40px;
+  font-size: 28px;
+  font-weight: 300;
+  text-align: left;
+  letter-spacing: -0.5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--ms-blue-active);
+  position: relative;
+}
+
+.editorHeading::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.3) 100%);
+}
+
+/* Ana editör wrapper alanı */
+.editorWrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0;
+  background: var(--ms-gray-20);
+  min-height: calc(100vh - 100px);
+  width: 100%;
+  max-width: none;
+  position: relative;
+}
+
+/* Word benzeri sidebar/panel tasarımı (gelecekte kullanım için) */
+.editorSidebar {
+  width: 280px;
+  background: var(--ms-gray-10);
+  border-right: 1px solid var(--ms-gray-40);
+  padding: 16px;
+  display: none; /* Şimdilik gizli */
+}
+
+/* Status bar - Word benzeri alt çubuk */
+.editorStatusBar {
+  background: var(--ms-gray-10);
+  border-top: 1px solid var(--ms-gray-40);
+  padding: 8px 16px;
+  font-size: 11px;
+  color: var(--ms-gray-90);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 32px;
+}
+
+.statusBarLeft,
+.statusBarRight {
+  display: flex;
+  gap: 16px;
   align-items: center;
 }
 
-.editorHeading {
-  text-align: center;
+/* Responsive tasarım */
+@media (max-width: 1200px) {
+  .editorHeading {
+    padding: 20px 24px;
+    font-size: 24px;
+  }
 }
 
-.editorWrapper {
-  position: relative;
-  width: 80%;
-  min-width: 400px;
-  max-width: 1200px;
+@media (max-width: 768px) {
+  .editorHeading {
+    padding: 16px 16px;
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .editorWrapper {
+    padding: 0;
+    min-height: calc(100vh - 80px);
+  }
+}
+
+@media (max-width: 480px) {
+  .editorHeading {
+    padding: 12px 12px;
+    font-size: 18px;
+  }
+}
+
+/* Loading state */
+.editorLoading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: var(--ms-gray-90);
+  font-size: 14px;
+}
+
+/* Error state */
+.editorError {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 16px;
+  margin: 16px;
+  border-radius: 8px;
+  font-size: 14px;
 }

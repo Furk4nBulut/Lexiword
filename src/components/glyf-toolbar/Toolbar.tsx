@@ -20,11 +20,22 @@ import { BannerColorPickerPlugin } from '../glyf-editor/plugins/banner/BannerCol
 interface ToolbarButtonProps {
   onClick: React.MouseEventHandler<HTMLButtonElement> | undefined;
   children: React.ReactNode;
+  title?: string;
+  dataAttribute?: string;
+  className?: string;
 }
 
 function ToolbarButton(props: ToolbarButtonProps): JSX.Element {
+  const className = `toolbarButton ${props.className ?? ''}`;
+  const additionalProps = props.dataAttribute != null ? { [props.dataAttribute]: true } : {};
+
   return (
-    <Toolbar.Button className="toolbarButton" onClick={props.onClick}>
+    <Toolbar.Button
+      className={className}
+      onClick={props.onClick}
+      title={props.title}
+      {...additionalProps}
+    >
       {props.children}
     </Toolbar.Button>
   );
@@ -46,6 +57,22 @@ function TextFormatToolbarPlugin(): JSX.Element {
         return null;
     }
   };
+
+  const getTitle = (format: TextFormatType): string => {
+    switch (format) {
+      case 'bold':
+        return 'Kalın (Ctrl+B)';
+      case 'italic':
+        return 'İtalik (Ctrl+I)';
+      case 'underline':
+        return 'Alt çizgi (Ctrl+U)';
+      case 'strikethrough':
+        return 'Üstü çizili';
+      default:
+        return '';
+    }
+  };
+
   const onClick = (format: TextFormatType): void => {
     editor.update(() => {
       const selection = $getSelection();
@@ -54,20 +81,23 @@ function TextFormatToolbarPlugin(): JSX.Element {
       }
     });
   };
+
   const supportedTextFormats: TextFormatType[] = ['bold', 'italic', 'underline', 'strikethrough'];
   return (
-    <>
+    <div className="toolbarGroup">
       {supportedTextFormats.map((format) => (
         <ToolbarButton
           key={format}
           onClick={() => {
             onClick(format);
           }}
+          title={getTitle(format)}
+          dataAttribute="data-format"
         >
           {getIcon(format)}
         </ToolbarButton>
       ))}
-    </>
+    </div>
   );
 }
 
@@ -75,6 +105,20 @@ type HeadingTag = 'h1' | 'h2' | 'h3';
 function HeadingToolbarPlugin(): JSX.Element {
   const [editor] = useLexicalComposerContext();
   const headingTags: HeadingTag[] = ['h1', 'h2', 'h3'];
+
+  const getTitle = (tag: HeadingTag): string => {
+    switch (tag) {
+      case 'h1':
+        return 'Başlık 1';
+      case 'h2':
+        return 'Başlık 2';
+      case 'h3':
+        return 'Başlık 3';
+      default:
+        return '';
+    }
+  };
+
   const onClick = (tag: HeadingTag): void => {
     editor.update(() => {
       const selection = $getSelection();
@@ -83,19 +127,22 @@ function HeadingToolbarPlugin(): JSX.Element {
       }
     });
   };
+
   return (
-    <>
+    <div className="toolbarGroup">
       {headingTags.map((tag) => (
         <ToolbarButton
           onClick={() => {
             onClick(tag);
           }}
           key={tag}
+          title={getTitle(tag)}
+          dataAttribute="data-heading"
         >
           {tag.toUpperCase()}
         </ToolbarButton>
       ))}
-    </>
+    </div>
   );
 }
 
@@ -108,12 +155,15 @@ function ListToolbarPlugin(): JSX.Element {
     }
     editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
   };
+
   return (
-    <>
+    <div className="toolbarGroup">
       <ToolbarButton
         onClick={() => {
           onClick('ol');
         }}
+        title="Numaralı liste"
+        dataAttribute="data-list"
       >
         <OrderedListIcon />
       </ToolbarButton>
@@ -121,23 +171,29 @@ function ListToolbarPlugin(): JSX.Element {
         onClick={() => {
           onClick('ul');
         }}
+        title="Madde işaretli liste"
+        dataAttribute="data-list"
       >
         <UnorderedListIcon />
       </ToolbarButton>
-    </>
+    </div>
   );
 }
 
 function BannerToolbarPlugin(): JSX.Element {
   const [editor] = useLexicalComposerContext();
-  const onClick = (e: React.MouseEvent): void => {
+  const onClick = (): void => {
     editor.dispatchCommand(INSERT_BANNER_COMMAND, undefined);
   };
+
   return (
-    <ToolbarButton onClick={onClick}>
-      <PlusCircledIcon />
-      Banner
-    </ToolbarButton>
+    <div className="toolbarGroup">
+      <ToolbarButton onClick={onClick} title="Banner ekle" dataAttribute="data-banner">
+        <PlusCircledIcon />
+        Banner
+      </ToolbarButton>
+      <BannerColorPickerPlugin />
+    </div>
   );
 }
 
@@ -148,7 +204,6 @@ export function ToolbarPlugin(): JSX.Element {
       <HeadingToolbarPlugin />
       <ListToolbarPlugin />
       <BannerToolbarPlugin />
-      <BannerColorPickerPlugin />
     </Toolbar.Root>
   );
 }

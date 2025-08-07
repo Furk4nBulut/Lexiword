@@ -10,6 +10,8 @@ import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { ListNode, ListItemNode } from '@lexical/list';
 import { ToolbarPlugin } from '../glyf-toolbar/Toolbar';
 import { BannerPlugin, BannerNode } from './plugins/banner/BannerPlugin';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { $getRoot } from 'lexical';
 
 const theme = {
   heading: {
@@ -31,25 +33,69 @@ function onError(error: Error): void {
   console.error(error);
 }
 
-export default function Editor(): JSX.Element {
+// Kelime ve karakter sayacı bileşeni
+function WordCountPlugin({
+  onWordCountChange
+}: {
+  onWordCountChange: (wordCount: number, charCount: number) => void;
+}): null {
+  const [editor] = useLexicalComposerContext();
+
+  React.useEffect(() => {
+    return editor.registerUpdateListener(({ editorState }) => {
+      editorState.read(() => {
+        const root = $getRoot();
+        const textContent = root.getTextContent();
+        const wordCount = textContent.trim() === '' ? 0 : textContent.trim().split(/\s+/).length;
+        const charCount = textContent.length;
+        onWordCountChange(wordCount, charCount);
+      });
+    });
+  }, [editor, onWordCountChange]);
+
+  return null;
+}
+
+interface EditorProps {
+  onWordCountChange?: (wordCount: number, charCount: number) => void;
+}
+
+export default function Editor({ onWordCountChange }: EditorProps): JSX.Element {
+  const handleWordCountChange = React.useCallback(
+    (words: number, chars: number) => {
+      onWordCountChange?.(words, chars);
+    },
+    [onWordCountChange]
+  );
+
   const initialConfig = {
-    namespace: 'MyEditor',
+    namespace: 'GlyfEditor',
     theme,
     onError,
     nodes: [HeadingNode, ListNode, ListItemNode, BannerNode]
   };
 
   return (
-    <LexicalComposer initialConfig={initialConfig}>
-      <ToolbarPlugin />
-      <BannerPlugin />
-      <ListPlugin />
-      <RichTextPlugin
-        contentEditable={<ContentEditable className="contentEditable" />}
-        placeholder={<div className="placeholder">Enter some text...</div>}
-        ErrorBoundary={LexicalErrorBoundary}
-      />
-      <HistoryPlugin />
-    </LexicalComposer>
+    <div className="editor-container">
+      <div className="a4-page">
+        <LexicalComposer initialConfig={initialConfig}>
+          <div className="toolbar-wrapper">
+            <ToolbarPlugin />
+          </div>
+
+          <div className="a4-content">
+            <RichTextPlugin
+              contentEditable={<ContentEditable className="contentEditable" />}
+              placeholder={<div className="placeholder">Yazmaya başlayın...</div>}
+              ErrorBoundary={LexicalErrorBoundary}
+            />
+            <BannerPlugin />
+            <ListPlugin />
+            <HistoryPlugin />
+            <WordCountPlugin onWordCountChange={handleWordCountChange} />
+          </div>
+        </LexicalComposer>
+      </div>
+    </div>
   );
 }

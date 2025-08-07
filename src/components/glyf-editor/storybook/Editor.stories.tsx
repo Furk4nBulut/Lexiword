@@ -8,7 +8,7 @@ import './stories.css';
 
 // eslint-disable-next-line
 export default {
-  title: 'Glyf Editor',
+  title: 'Editor',
   component: Editor
 } as ComponentMeta<typeof Editor>;
 
