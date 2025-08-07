@@ -33,13 +33,12 @@ function App(): JSX.Element {
   return (
     <div className="App">
       <header>
-        <h1 className="editorHeading">Glyf Editor - Microsoft Word Benzeri Deneyim</h1>
+        <h1 className="editorHeading">Editor</h1>
       </header>
 
       <main className="editorWrapper">
         <GlyfEditor onWordCountChange={handleWordCountChange} />
       </main>
-
       <footer className="editorStatusBar">
         <div className="statusBarLeft">
           <span>Sayfa 1 / 1</span>

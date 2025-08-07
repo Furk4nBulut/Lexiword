@@ -10,7 +10,7 @@ import {
   type PaginationSettings
 } from './plugins/pagination/PaginationSettings';
 import { PageBreakNode } from './plugins/pagination/PageBreakNode';
-import { WordCountPlugin } from './plugins/WordCountPlugin';
+import { WordCountPlugin } from './plugins/wordcount/WordCountPlugin';
 import { ToolbarPlugin } from '../glyf-toolbar/Toolbar';
 import './styles.css';
 import { BannerNode, BannerPlugin } from './plugins/banner/BannerPlugin';
@@ -32,12 +32,7 @@ export default function Editor({
 }: {
   onWordCountChange?: (words: number, chars: number) => void;
 }): JSX.Element {
-  const [pageCount, setPageCount] = React.useState(1);
   const paginationSettings: PaginationSettings = DEFAULT_PAGINATION_SETTINGS;
-
-  const handlePageCountChange = React.useCallback((count: number) => {
-    setPageCount(count);
-  }, []);
 
   const initialConfig = {
     namespace: 'SimpleEditor',
@@ -48,7 +43,6 @@ export default function Editor({
 
   return (
     <div className="editor-container paginated">
-      <div className="page-indicator">Page {pageCount}</div>
       <div
         className="a4-page"
         style={{
@@ -66,10 +60,7 @@ export default function Editor({
             ErrorBoundary={LexicalErrorBoundary}
           />
           <HistoryPlugin />
-          <PaginationPlugin
-            settings={paginationSettings}
-            onPageCountChange={handlePageCountChange}
-          />
+          <PaginationPlugin settings={paginationSettings} />
           <WordCountPlugin onWordCountChange={onWordCountChange} />
         </LexicalComposer>
       </div>

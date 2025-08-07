@@ -31,15 +31,6 @@ export class PageBreakNode extends ElementNode {
     this.__pageNumber = pageNumber;
   }
 
-  getPageNumber(): number {
-    return this.__pageNumber;
-  }
-
-  setPageNumber(pageNumber: number): void {
-    const writable = this.getWritable();
-    writable.__pageNumber = pageNumber;
-  }
-
   createDOM(): HTMLElement {
     const element = document.createElement('div');
     element.setAttribute('data-lexical-page-break', 'true');
@@ -60,17 +51,8 @@ export class PageBreakNode extends ElementNode {
     return {
       ...super.exportJSON(),
       pageNumber: this.__pageNumber,
-      type: 'page-break',
-      version: 1
+      type: 'page-break'
     };
-  }
-
-  canBeEmpty(): false {
-    return false;
-  }
-
-  isInline(): false {
-    return false;
   }
 }
 

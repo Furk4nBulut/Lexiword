@@ -3,8 +3,6 @@
   display: flex;
   justify-content: center;
   background: #f3f2f1;
-  min-height: 100vh;
-  padding: 20px;
   font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
@@ -249,12 +247,6 @@ li {
     top: 15mm;
     font-size: 12pt;
   }
-}
-.editor-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
 }
 
 .a4-page {

@@ -58,8 +58,6 @@
 /* Updated editor container for pagination */
 .editor-container.paginated {
   background: #f3f2f1;
-  min-height: 100vh;
-  padding: 20px;
 }
 
 .editor-container.paginated .a4-page {

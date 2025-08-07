@@ -75,7 +75,7 @@ export function PaginationPlugin({
   useEffect(() => {
     const timer = setTimeout(() => {
       checkForPageBreak();
-    }, 500);
+    }, 100);
 
     return () => {
       clearTimeout(timer);
