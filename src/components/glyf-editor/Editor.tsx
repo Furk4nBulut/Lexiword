@@ -10,7 +10,7 @@ import {
   type PaginationSettings
 } from './plugins/pagination/PaginationPlugin';
 import { PageBreakNode } from './plugins/pagination/PageBreakNode';
-import { WordCountPlugin } from './WordCountPlugin';
+import { WordCountPlugin } from './plugins/WordCountPlugin';
 import './styles.css';
 
 const theme = {
