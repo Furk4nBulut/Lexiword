@@ -11,13 +11,8 @@ import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { ListNode, ListItemNode } from '@lexical/list';
 import { ToolbarPlugin } from '../glyf-toolbar/Toolbar';
 import { BannerPlugin, BannerNode } from './plugins/banner/BannerPlugin';
-import {
-  PaginationPlugin,
-  type PaginationSettings,
-  defaultPaginationSettings
-} from './plugins/pagination/PaginationPlugin';
+import { PaginationPlugin } from './plugins/pagination/PaginationPlugin';
 import { PageBreakNode } from './plugins/pagination/PaginationNode';
-import { PaginationSettingsPanel } from './plugins/pagination/PaginationSettings';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot } from 'lexical';
 
@@ -74,10 +69,14 @@ export default function Editor({
   enablePagination = true
 }: EditorProps): JSX.Element {
   const [pageCount, setPageCount] = React.useState(1);
-  const [paginationSettings, setPaginationSettings] =
-    React.useState<PaginationSettings>(defaultPaginationSettings);
-  const [showSettings, setShowSettings] = React.useState(false);
-
+  const paginationSettings = {
+    pageHeight: 297,
+    pageWidth: 210,
+    marginTop: 25,
+    marginBottom: 25,
+    marginLeft: 20,
+    marginRight: 20
+  };
   const handleWordCountChange = React.useCallback(
     (words: number, chars: number) => {
       onWordCountChange?.(words, chars);
@@ -88,11 +87,6 @@ export default function Editor({
   const handlePageCountChange = React.useCallback((count: number) => {
     setPageCount(count);
   }, []);
-
-  const handleSettingsChange = React.useCallback((settings: PaginationSettings) => {
-    setPaginationSettings(settings);
-  }, []);
-
   const initialConfig = {
     namespace: 'GlyfEditor',
     theme,
@@ -110,15 +104,6 @@ export default function Editor({
     <div className={`editor-container ${enablePagination ? 'paginated' : ''}`}>
       {enablePagination && (
         <>
-          <PaginationSettingsPanel
-            settings={paginationSettings}
-            onSettingsChange={handleSettingsChange}
-            isVisible={showSettings}
-            onToggle={() => {
-              setShowSettings(!showSettings);
-            }}
-          />
-
           <div className="page-indicator">
             Sayfa {pageCount} / {pageCount}
           </div>
