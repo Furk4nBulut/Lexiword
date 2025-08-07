@@ -8,6 +8,12 @@
   font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
+/* Pagination desteği için güncellenmiş container */
+.editor-container.paginated {
+  flex-direction: column;
+  align-items: center;
+}
+
 /* Temiz A4 sayfa tasarımı */
 .a4-page {
   width: 210mm;
@@ -18,6 +24,13 @@
   display: flex;
   flex-direction: column;
   border-radius: 2px;
+}
+
+/* Pagination modunda sayfa düzeni */
+.editor-container.paginated .a4-page {
+  box-shadow: none;
+  background: transparent;
+  margin-bottom: 0;
 }
 
 /* A4 içerik alanı - sade */
@@ -33,11 +46,20 @@
   border-radius: 2px 2px 0 0;
 }
 
+/* Pagination modunda toolbar */
+.editor-container.paginated .toolbar-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 /* Ana yazı alanı - Word benzeri */
 .contentEditable {
   width: 100%;
   min-height: calc(297mm - 60px);
-  padding: 25mm 20mm;
   border: none;
   outline: none;
   font-family: 'Calibri', 'Times New Roman', serif;
@@ -46,6 +68,17 @@
   color: #000;
   background: white;
   caret-color: #0078d4;
+  padding: 25mm 20mm;
+}
+
+/* Pagination modunda contentEditable */
+.editor-container.paginated .contentEditable {
+  padding: 25mm 20mm;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  margin-bottom: 20px;
+  min-height: auto;
 }
 
 .contentEditable:focus {

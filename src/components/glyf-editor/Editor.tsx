@@ -1,5 +1,6 @@
 import * as React from 'react';
 import './styles.css';
+import './plugins/pagination/styles.css';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
@@ -10,6 +11,13 @@ import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { ListNode, ListItemNode } from '@lexical/list';
 import { ToolbarPlugin } from '../glyf-toolbar/Toolbar';
 import { BannerPlugin, BannerNode } from './plugins/banner/BannerPlugin';
+import {
+  PaginationPlugin,
+  type PaginationSettings,
+  defaultPaginationSettings
+} from './plugins/pagination/PaginationPlugin';
+import { PageBreakNode } from './plugins/pagination/PaginationNode';
+import { PaginationSettingsPanel } from './plugins/pagination/PaginationSettings';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot } from 'lexical';
 
@@ -58,9 +66,18 @@ function WordCountPlugin({
 
 interface EditorProps {
   onWordCountChange?: (wordCount: number, charCount: number) => void;
+  enablePagination?: boolean;
 }
 
-export default function Editor({ onWordCountChange }: EditorProps): JSX.Element {
+export default function Editor({
+  onWordCountChange,
+  enablePagination = true
+}: EditorProps): JSX.Element {
+  const [pageCount, setPageCount] = React.useState(1);
+  const [paginationSettings, setPaginationSettings] =
+    React.useState<PaginationSettings>(defaultPaginationSettings);
+  const [showSettings, setShowSettings] = React.useState(false);
+
   const handleWordCountChange = React.useCallback(
     (words: number, chars: number) => {
       onWordCountChange?.(words, chars);
@@ -68,16 +85,57 @@ export default function Editor({ onWordCountChange }: EditorProps): JSX.Element 
     [onWordCountChange]
   );
 
+  const handlePageCountChange = React.useCallback((count: number) => {
+    setPageCount(count);
+  }, []);
+
+  const handleSettingsChange = React.useCallback((settings: PaginationSettings) => {
+    setPaginationSettings(settings);
+  }, []);
+
   const initialConfig = {
     namespace: 'GlyfEditor',
     theme,
     onError,
-    nodes: [HeadingNode, ListNode, ListItemNode, BannerNode]
+    nodes: [
+      HeadingNode,
+      ListNode,
+      ListItemNode,
+      BannerNode,
+      ...(enablePagination ? [PageBreakNode] : [])
+    ]
   };
 
   return (
-    <div className="editor-container">
-      <div className="a4-page">
+    <div className={`editor-container ${enablePagination ? 'paginated' : ''}`}>
+      {enablePagination && (
+        <>
+          <PaginationSettingsPanel
+            settings={paginationSettings}
+            onSettingsChange={handleSettingsChange}
+            isVisible={showSettings}
+            onToggle={() => {
+              setShowSettings(!showSettings);
+            }}
+          />
+
+          <div className="page-indicator">
+            Sayfa {pageCount} / {pageCount}
+          </div>
+        </>
+      )}
+
+      <div
+        className="a4-page"
+        style={
+          enablePagination
+            ? {
+                width: `${paginationSettings.pageWidth}mm`,
+                minHeight: `${paginationSettings.pageHeight}mm`
+              }
+            : {}
+        }
+      >
         <LexicalComposer initialConfig={initialConfig}>
           <div className="toolbar-wrapper">
             <ToolbarPlugin />
@@ -93,6 +151,12 @@ export default function Editor({ onWordCountChange }: EditorProps): JSX.Element 
             <ListPlugin />
             <HistoryPlugin />
             <WordCountPlugin onWordCountChange={handleWordCountChange} />
+            {enablePagination && (
+              <PaginationPlugin
+                settings={paginationSettings}
+                onPageCountChange={handlePageCountChange}
+              />
+            )}
           </div>
         </LexicalComposer>
       </div>
