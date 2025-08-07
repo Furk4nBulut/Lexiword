@@ -4,11 +4,11 @@ import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
+import { PaginationPlugin } from './plugins/pagination/PaginationPlugin';
 import {
-  PaginationPlugin,
   DEFAULT_PAGINATION_SETTINGS,
   type PaginationSettings
-} from './plugins/pagination/PaginationPlugin';
+} from './plugins/pagination/PaginationSettings';
 import { PageBreakNode } from './plugins/pagination/PageBreakNode';
 import { WordCountPlugin } from './plugins/WordCountPlugin';
 import { ToolbarPlugin } from '../glyf-toolbar/Toolbar';
