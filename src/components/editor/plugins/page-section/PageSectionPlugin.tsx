@@ -61,6 +61,13 @@ function syncHeaderFooterContent(): void {
   
   if (!firstHeader || !firstFooter) return;
   
+  // Only sync if first page has content
+  const firstHeaderText = firstHeader.getTextContent();
+  const firstFooterText = firstFooter.getTextContent();
+  
+  // If first page header/footer is empty, don't sync
+  if (!firstHeaderText.trim() && !firstFooterText.trim()) return;
+  
   // Copy header/footer content to all other pages
   for (let i = 1; i < pages.length; i++) {
     const page = pages[i];
@@ -70,38 +77,42 @@ function syncHeaderFooterContent(): void {
     const footer = page.getChildren().find($isFooterNode) as FooterNode | undefined;
     
     if (header && footer) {
-      // Copy header content
-      header.clear();
-      for (const child of firstHeader.getChildren()) {
-        if ($isTextNode(child)) {
-          header.append($createTextNode(child.getTextContent()));
-        } else if (typeof child.clone === 'function') {
-          header.append(child.clone());
-        } else {
-          // For other nodes, try to create a new instance
-          const Ctor = (child as any).constructor;
-          if (typeof Ctor?.clone === 'function') {
-            header.append(Ctor.clone(child));
+      // Copy header content only if first page has content
+      if (firstHeaderText.trim()) {
+        header.clear();
+        for (const child of firstHeader.getChildren()) {
+          if ($isTextNode(child)) {
+            header.append($createTextNode(child.getTextContent()));
+          } else if (typeof child.clone === 'function') {
+            header.append(child.clone());
           } else {
-            header.append(child);
+            // For other nodes, try to create a new instance
+            const Ctor = (child as any).constructor;
+            if (typeof Ctor?.clone === 'function') {
+              header.append(Ctor.clone(child));
+            } else {
+              header.append(child);
+            }
           }
         }
       }
       
-      // Copy footer content
-      footer.clear();
-      for (const child of firstFooter.getChildren()) {
-        if ($isTextNode(child)) {
-          footer.append($createTextNode(child.getTextContent()));
-        } else if (typeof child.clone === 'function') {
-          footer.append(child.clone());
-        } else {
-          // For other nodes, try to create a new instance
-          const Ctor = (child as any).constructor;
-          if (typeof Ctor?.clone === 'function') {
-            footer.append(Ctor.clone(child));
+      // Copy footer content only if first page has content
+      if (firstFooterText.trim()) {
+        footer.clear();
+        for (const child of firstFooter.getChildren()) {
+          if ($isTextNode(child)) {
+            footer.append($createTextNode(child.getTextContent()));
+          } else if (typeof child.clone === 'function') {
+            footer.append(child.clone());
           } else {
-            footer.append(child);
+            // For other nodes, try to create a new instance
+            const Ctor = (child as any).constructor;
+            if (typeof Ctor?.clone === 'function') {
+              footer.append(Ctor.clone(child));
+            } else {
+              footer.append(child);
+            }
           }
         }
       }
