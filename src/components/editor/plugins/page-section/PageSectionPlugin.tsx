@@ -21,6 +21,7 @@ import {
 } from './PageSectionNodes';
 import { DEFAULT_PAGE_SECTION_SETTINGS } from './PageSectionSettings';
 import { $createPageNode, $isPageNode } from '../page/PageNode';
+import { DEFAULT_PAGINATION_SETTINGS } from '../pagebreak/PageBreakSettings';
 
 export type SectionMode = 'content' | 'header' | 'footer';
 
@@ -115,6 +116,22 @@ function ensurePageStructure(): void {
   }
 }
 
+function getActiveMode(): SectionMode {
+  const root = $getRoot();
+  const sample = root.getChildren().find($isElementNode) as any;
+  if (!sample) return 'content';
+  const header = sample.getChildren().find($isHeaderNode) as HeaderNode | undefined;
+  const content = sample.getChildren().find($isContentNode) as ContentNode | undefined;
+  const footer = sample.getChildren().find($isFooterNode) as FooterNode | undefined;
+  if (header?.isEditableSection()) return 'header';
+  if (footer?.isEditableSection()) return 'footer';
+  return 'content';
+}
+
+function mmToPx(mm: number): number {
+  return (mm / 25.4) * 96;
+}
+
 export function PageSectionPlugin(): null {
   const [editor] = useLexicalComposerContext();
 
@@ -147,9 +164,55 @@ export function PageSectionPlugin(): null {
       }
     };
 
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
+        e.preventDefault();
+        editor.update(() => {
+          const mode = getActiveMode();
+          const pages = $getRoot().getChildren().filter($isElementNode) as any[];
+          if (pages.length === 0) return;
+          const firstPage = pages[0];
+          const section = ((): any => {
+            switch (mode) {
+              case 'header':
+                return firstPage.getChildren().find($isHeaderNode);
+              case 'footer':
+                return firstPage.getChildren().find($isFooterNode);
+              default:
+                return firstPage.getChildren().find($isContentNode);
+            }
+          })();
+          if (!section || !$isElementNode(section)) return;
+          // Find deepest first and last nodes to select across the section
+          const findDeepFirst = (node: any): any => {
+            let cur: any = node.getFirstChild();
+            while (cur && $isElementNode(cur) && cur.getChildren().length > 0) {
+              cur = cur.getFirstChild();
+            }
+            return cur ?? node;
+          };
+          const findDeepLast = (node: any): any => {
+            let cur: any = node.getLastChild();
+            while (cur && $isElementNode(cur) && cur.getChildren().length > 0) {
+              cur = cur.getLastChild();
+            }
+            return cur ?? node;
+          };
+          const startNode = findDeepFirst(section);
+          const endNode = findDeepLast(section);
+          if (startNode && endNode) {
+            startNode.selectStart();
+            endNode.selectEnd();
+          }
+        });
+      }
+    };
+
     rootEl.addEventListener('dblclick', onDblClick);
+    rootEl.addEventListener('keydown', onKeyDown, true);
     return () => {
       rootEl.removeEventListener('dblclick', onDblClick);
+      rootEl.removeEventListener('keydown', onKeyDown, true);
     };
   }, [editor]);
 
@@ -158,13 +221,29 @@ export function PageSectionPlugin(): null {
     return editor.registerUpdateListener(() => {
       editor.update(() => {
         ensurePageStructure();
-        // Apply fixed DOM heights for header/footer
+        // Apply fixed DOM heights for header/footer and max height for content
         const rootEl = editor.getRootElement();
         if (rootEl) {
           const headerEls = rootEl.querySelectorAll('[data-lexical-page-section="header"]');
           const footerEls = rootEl.querySelectorAll('[data-lexical-page-section="footer"]');
-          headerEls.forEach((el) => (el as HTMLElement).style.minHeight = `${DEFAULT_PAGE_SECTION_SETTINGS.headerHeightMm}mm`);
-          footerEls.forEach((el) => (el as HTMLElement).style.minHeight = `${DEFAULT_PAGE_SECTION_SETTINGS.footerHeightMm}mm`);
+          const contentEls = rootEl.querySelectorAll('[data-lexical-page-section="content"]');
+          headerEls.forEach(
+            (el) => ((el as HTMLElement).style.minHeight = `${DEFAULT_PAGE_SECTION_SETTINGS.headerHeightMm}mm`)
+          );
+          footerEls.forEach(
+            (el) => ((el as HTMLElement).style.minHeight = `${DEFAULT_PAGE_SECTION_SETTINGS.footerHeightMm}mm`)
+          );
+          const capacityMm =
+            DEFAULT_PAGINATION_SETTINGS.pageHeight -
+            DEFAULT_PAGINATION_SETTINGS.marginTop -
+            DEFAULT_PAGINATION_SETTINGS.marginBottom -
+            DEFAULT_PAGE_SECTION_SETTINGS.headerHeightMm -
+            DEFAULT_PAGE_SECTION_SETTINGS.footerHeightMm;
+          contentEls.forEach((el) => {
+            const elt = el as HTMLElement;
+            elt.style.maxHeight = `${capacityMm}mm`;
+            elt.style.overflow = 'hidden';
+          });
         }
 
         // Sync header/footer content if in their edit modes
