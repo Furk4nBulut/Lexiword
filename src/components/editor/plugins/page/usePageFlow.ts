@@ -32,21 +32,14 @@ export function usePageFlow(settings: PageFlowSettings): void {
       return editor.getElementByKey(page.getKey());
     }
 
-    function getCapacityPx(pageEl: HTMLElement): number {
+    function getContentBox(pageEl: HTMLElement): { top: number; bottom: number; height: number } {
+      const rect = pageEl.getBoundingClientRect();
       const styles = window.getComputedStyle(pageEl);
       const paddingTop = parseFloat(styles.paddingTop) || 0;
       const paddingBottom = parseFloat(styles.paddingBottom) || 0;
-      return pageEl.clientHeight - paddingTop - paddingBottom;
-    }
-
-    function getBlockOuterHeightPx(block: LexicalElementNode): number {
-      const el = editor.getElementByKey(block.getKey());
-      if (!el) return 0;
-      const rect = el.getBoundingClientRect();
-      const styles = window.getComputedStyle(el);
-      const mt = parseFloat(styles.marginTop) || 0;
-      const mb = parseFloat(styles.marginBottom) || 0;
-      return rect.height + mt + mb;
+      const top = rect.top + paddingTop;
+      const bottom = rect.bottom - paddingBottom;
+      return { top, bottom, height: bottom - top };
     }
 
     function proportionalSplitParagraphByHeight(
@@ -56,19 +49,15 @@ export function usePageFlow(settings: PageFlowSettings): void {
     ): boolean {
       const textNodes = block.getChildren().filter($isTextNode);
       if (textNodes.length === 0) return false;
-
       const totalChars = textNodes.reduce((sum, t) => sum + t.getTextContent().length, 0);
       if (totalChars < 2) return false;
-
       const keepChars = Math.max(
         1,
         Math.min(totalChars - 1, Math.floor((targetHeightPx / currentHeightPx) * totalChars))
       );
-
       let remainingToKeep = keepChars;
       const newPara = $createParagraphNode();
       const movedNodes: Array<ReturnType<typeof $createTextNode>> = [];
-
       for (const t of textNodes) {
         if (remainingToKeep <= 0) {
           movedNodes.push($createTextNode(t.getTextContent()));
@@ -86,11 +75,23 @@ export function usePageFlow(settings: PageFlowSettings): void {
         movedNodes.push($createTextNode(right));
         remainingToKeep = 0;
       }
-
       if (movedNodes.length === 0) return false;
       movedNodes.forEach((n) => newPara.append(n));
       block.insertAfter(newPara);
       return true;
+    }
+
+    function pickMovableBlock(blocks: LexicalElementNode[]): LexicalElementNode | null {
+      for (let i = blocks.length - 1; i >= 0; i--) {
+        const node = blocks[i] as LexicalElementNode;
+        const el = editor.getElementByKey(node.getKey());
+        const height = el?.offsetHeight ?? 0;
+        const text = (node as unknown as { getTextContent?: () => string }).getTextContent?.() ?? '';
+        if (text.trim().length > 0 || height > 2) {
+          return node;
+        }
+      }
+      return blocks.length > 0 ? (blocks[blocks.length - 1] as LexicalElementNode) : null;
     }
 
     function reflowPass(): boolean {
@@ -103,7 +104,6 @@ export function usePageFlow(settings: PageFlowSettings): void {
           return;
         }
 
-        // Ensure only PageNodes under root
         const children = root.getChildren();
         const hasNonPage = children.some((n) => !$isPageNode(n));
         if (hasNonPage) {
@@ -122,32 +122,41 @@ export function usePageFlow(settings: PageFlowSettings): void {
             page = pageNode.getNextSibling();
             continue;
           }
-
-          const ch = pageEl.clientHeight;
-          const sh = pageEl.scrollHeight;
-          if (ch === 0 || sh === 0) {
+          if (pageEl.clientHeight === 0 || pageEl.scrollHeight === 0) {
             page = pageNode.getNextSibling();
             continue;
           }
 
-          const capacity = getCapacityPx(pageEl);
-          const blocks = pageNode.getChildren();
-          let used = 0;
+          const { height: capacity, top: contentTop, bottom: contentBottom } = getContentBox(pageEl);
+          const blocks = pageNode.getChildren() as LexicalElementNode[];
+
+          // Deepest child bottom
+          let deepestBottom = contentTop;
+          let sumHeights = 0;
           for (let i = 0; i < blocks.length; i++) {
-            used += getBlockOuterHeightPx(blocks[i] as LexicalElementNode);
-            if (used > capacity) break;
+            const el = editor.getElementByKey(blocks[i].getKey());
+            if (!el) continue;
+            const r = el.getBoundingClientRect();
+            if (r.bottom > deepestBottom) deepestBottom = r.bottom;
+            sumHeights += el.offsetHeight; // excludes margins, stable
           }
+          const usedDeepest = Math.max(0, deepestBottom - contentTop);
+          const usedSum = sumHeights;
 
-          if (used > capacity) {
-            if (blocks.length > 0) {
-              const lastBlock = blocks[blocks.length - 1] as LexicalElementNode;
-              const lastEl = editor.getElementByKey(lastBlock.getKey());
+          // Require both metrics to exceed capacity with tolerances to avoid false positives
+          const tolDeepest = 1; // px
+          const tolSum = 6; // px
+          const overflow = usedDeepest > capacity - tolDeepest && usedSum > capacity - tolSum;
 
-              if (blocks.length === 1 && lastEl) {
-                const currentH = getBlockOuterHeightPx(lastBlock);
-                const key = lastBlock.getKey();
+          if (overflow) {
+            const candidate = pickMovableBlock(blocks);
+            if (candidate) {
+              if (blocks.length === 1) {
+                const el = editor.getElementByKey(candidate.getKey());
+                const currentH = el?.offsetHeight ?? usedDeepest;
+                const key = candidate.getKey();
                 if (!unbreakableTooTallKeysRef.current.has(key)) {
-                  const ok = proportionalSplitParagraphByHeight(lastBlock, currentH, capacity);
+                  const ok = proportionalSplitParagraphByHeight(candidate, currentH, capacity);
                   if (!ok) {
                     unbreakableTooTallKeysRef.current.add(key);
                     let nextPage = pageNode.getNextSibling();
@@ -155,17 +164,16 @@ export function usePageFlow(settings: PageFlowSettings): void {
                       nextPage = $createPageNode();
                       pageNode.insertAfter(nextPage);
                     }
-                    (nextPage as PageNode).append(lastBlock);
+                    (nextPage as PageNode).append(candidate);
                   }
                 }
               } else {
-                // Move only the last block to the next page
                 let nextPage = pageNode.getNextSibling();
                 if (!$isPageNode(nextPage)) {
                   nextPage = $createPageNode();
                   pageNode.insertAfter(nextPage);
                 }
-                (nextPage as PageNode).append(lastBlock);
+                (nextPage as PageNode).append(candidate);
               }
 
               const selection = $getSelection();
