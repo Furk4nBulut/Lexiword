@@ -28,7 +28,13 @@ export function usePageFlow(settings: PageFlowSettings): void {
       return editor.getElementByKey(page.getKey());
     }
 
-    function getContentBox(pageEl: HTMLElement): { top: number; bottom: number; height: number; paddingTop: number; paddingBottom: number } {
+    function getContentBox(pageEl: HTMLElement): {
+      top: number;
+      bottom: number;
+      height: number;
+      paddingTop: number;
+      paddingBottom: number;
+    } {
       const rect = pageEl.getBoundingClientRect();
       const styles = window.getComputedStyle(pageEl);
       let paddingTop = parseFloat(styles.paddingTop);
@@ -40,7 +46,11 @@ export function usePageFlow(settings: PageFlowSettings): void {
       return { top, bottom, height: bottom - top, paddingTop, paddingBottom };
     }
 
-    function getContentScrollHeight(pageEl: HTMLElement, paddingTop: number, paddingBottom: number): number {
+    function getContentScrollHeight(
+      pageEl: HTMLElement,
+      paddingTop: number,
+      paddingBottom: number
+    ): number {
       return pageEl.scrollHeight - paddingTop - paddingBottom;
     }
 
@@ -94,7 +104,7 @@ export function usePageFlow(settings: PageFlowSettings): void {
           return node;
         }
       }
-      return blocks.length > 0 ? (blocks[blocks.length - 1]) : null;
+      return blocks.length > 0 ? blocks[blocks.length - 1] : null;
     }
 
     function reflowPass(): boolean {
@@ -130,8 +140,13 @@ export function usePageFlow(settings: PageFlowSettings): void {
             continue;
           }
 
-          const { height: capacity, top: contentTop, paddingTop, paddingBottom } = getContentBox(pageEl);
-          const blocks = pageNode.getChildren();
+          const {
+            height: capacity,
+            top: contentTop,
+            paddingTop,
+            paddingBottom
+          } = getContentBox(pageEl);
+          const blocks = pageNode.getChildren() as unknown as LexicalElementNode[];
 
           // Deepest child bottom and sum of heights
           let deepestBottom = contentTop;
@@ -151,7 +166,9 @@ export function usePageFlow(settings: PageFlowSettings): void {
           const tolDeepest = 1;
           const tolSum = 6;
           const scrollTol = 2;
-          const overflow = (usedDeepest > capacity - tolDeepest && usedSum > capacity - tolSum) || usedScroll > capacity + scrollTol;
+          const overflow =
+            (usedDeepest > capacity - tolDeepest && usedSum > capacity - tolSum) ||
+            usedScroll > capacity + scrollTol;
 
           if (overflow) {
             const candidate = pickMovableBlock(blocks);
@@ -185,7 +202,7 @@ export function usePageFlow(settings: PageFlowSettings): void {
               if ($isRangeSelection(selection)) {
                 const next = pageNode.getNextSibling();
                 if ($isPageNode(next)) {
-                  const firstChild = (next).getFirstChild();
+                  const firstChild = next.getFirstChild();
                   if (firstChild != null) firstChild.selectStart();
                 }
               }
