@@ -9,10 +9,10 @@ import {
 } from 'lexical';
 
 export type SerializedPageBreakNode = Spread<
-  {
-    pageNumber: number;
-  },
-  SerializedElementNode
+{
+  pageNumber: number;
+},
+SerializedElementNode
 >;
 
 export class PageBreakNode extends ElementNode {

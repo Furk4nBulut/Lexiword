@@ -12,21 +12,21 @@ export function usePageObserver(): void {
       observerRef.current?.disconnect();
 
       const rootElement = editor.getRootElement();
-      if (!rootElement) return;
+      if (rootElement === null) return;
 
       const observer = new IntersectionObserver(
         (entries) => {
           for (const entry of entries) {
             if (entry.isIntersecting) {
               const target = entry.target as HTMLElement;
-              const pageElement = target.closest('[data-lexical-node-key]') as HTMLElement | null;
+              const pageElement = target.closest('[data-lexical-node-key]');
 
               editor.update(() => {
                 const root = $getRoot();
 
-                if (pageElement) {
+                if (pageElement !== null) {
                   const key = pageElement.getAttribute('data-lexical-node-key');
-                  if (!key) return;
+                  if (key === null || key === '') return;
                   const node = $getNodeByKey(key);
                   if ($isPageNode(node)) {
                     const nextSibling = node.getNextSibling();
@@ -34,7 +34,7 @@ export function usePageObserver(): void {
                       const newPage = $createPageNode();
                       node.insertAfter(newPage);
                       const firstChild = newPage.getFirstChild();
-                      if (firstChild) firstChild.selectStart();
+                      if (firstChild != null) firstChild.selectStart();
                     }
                   }
                 } else {
@@ -54,7 +54,7 @@ export function usePageObserver(): void {
       observerRef.current = observer;
 
       const sentinels = rootElement.querySelectorAll('.page-observer-target');
-      sentinels.forEach((el) => observer.observe(el));
+      sentinels.forEach((el) => { observer.observe(el); });
     }
 
     const raf = requestAnimationFrame(setupObserver);
@@ -70,4 +70,4 @@ export function usePageObserver(): void {
       observerRef.current = null;
     };
   }, [editor]);
-} 
+}

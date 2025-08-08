@@ -4,17 +4,16 @@ import {
   ElementNode,
   type EditorConfig,
   type LexicalNode,
-  type NodeKey,
   type SerializedElementNode,
   type Spread
 } from 'lexical';
 
 export type SerializedPageNode = Spread<
-  {
-    type: 'page';
-    version: 1;
-  },
-  SerializedElementNode
+{
+  type: 'page';
+  version: 1;
+},
+SerializedElementNode
 >;
 
 export class PageNode extends ElementNode {
@@ -26,9 +25,7 @@ export class PageNode extends ElementNode {
     return new PageNode(node.__key);
   }
 
-  constructor(key?: NodeKey) {
-    super(key);
-  }
+  // No constructor needed
 
   createDOM(_config: EditorConfig): HTMLElement {
     const container = document.createElement('div');
@@ -69,4 +66,4 @@ export function $createPageNode(): PageNode {
 
 export function $isPageNode(node: LexicalNode | null | undefined): node is PageNode {
   return node instanceof PageNode;
-} 
+}

@@ -4,16 +4,12 @@ import {
   $getRoot,
   $getSelection,
   $isRangeSelection,
-  ElementNode as LexicalElementNode,
+  type ElementNode as LexicalElementNode,
   $isTextNode,
   $createTextNode,
   $createParagraphNode
 } from 'lexical';
-import { $createPageNode, $isPageNode, PageNode } from './PageNode';
-
-function mmToPx(mm: number): number {
-  return (mm / 25.4) * 96;
-}
+import { $createPageNode, $isPageNode, type PageNode } from './PageNode';
 
 export interface PageFlowSettings {
   pageHeightMm: number;
@@ -35,8 +31,10 @@ export function usePageFlow(settings: PageFlowSettings): void {
     function getContentBox(pageEl: HTMLElement): { top: number; bottom: number; height: number; paddingTop: number; paddingBottom: number } {
       const rect = pageEl.getBoundingClientRect();
       const styles = window.getComputedStyle(pageEl);
-      const paddingTop = parseFloat(styles.paddingTop) || 0;
-      const paddingBottom = parseFloat(styles.paddingBottom) || 0;
+      let paddingTop = parseFloat(styles.paddingTop);
+      let paddingBottom = parseFloat(styles.paddingBottom);
+      if (Number.isNaN(paddingTop)) paddingTop = 0;
+      if (Number.isNaN(paddingBottom)) paddingBottom = 0;
       const top = rect.top + paddingTop;
       const bottom = rect.bottom - paddingBottom;
       return { top, bottom, height: bottom - top, paddingTop, paddingBottom };
@@ -87,15 +85,16 @@ export function usePageFlow(settings: PageFlowSettings): void {
 
     function pickMovableBlock(blocks: LexicalElementNode[]): LexicalElementNode | null {
       for (let i = blocks.length - 1; i >= 0; i--) {
-        const node = blocks[i] as LexicalElementNode;
+        const node = blocks[i];
         const el = editor.getElementByKey(node.getKey());
         const height = el?.offsetHeight ?? 0;
-        const text = (node as unknown as { getTextContent?: () => string }).getTextContent?.() ?? '';
-        if (text.trim().length > 0 || height > 2) {
+        const textGetter = (node as unknown as { getTextContent?: () => string }).getTextContent;
+        const text = typeof textGetter === 'function' ? textGetter.call(node) : '';
+        if ((text?.trim()?.length ?? 0) > 0 || height > 2) {
           return node;
         }
       }
-      return blocks.length > 0 ? (blocks[blocks.length - 1] as LexicalElementNode) : null;
+      return blocks.length > 0 ? (blocks[blocks.length - 1]) : null;
     }
 
     function reflowPass(): boolean {
@@ -120,9 +119,9 @@ export function usePageFlow(settings: PageFlowSettings): void {
 
         let page = root.getFirstChild();
         while ($isPageNode(page)) {
-          const pageNode = page as PageNode;
+          const pageNode = page;
           const pageEl = getPageEl(pageNode);
-          if (!pageEl) {
+          if (pageEl === null) {
             page = pageNode.getNextSibling();
             continue;
           }
@@ -131,15 +130,15 @@ export function usePageFlow(settings: PageFlowSettings): void {
             continue;
           }
 
-          const { height: capacity, top: contentTop, bottom: contentBottom, paddingTop, paddingBottom } = getContentBox(pageEl);
-          const blocks = pageNode.getChildren() as LexicalElementNode[];
+          const { height: capacity, top: contentTop, paddingTop, paddingBottom } = getContentBox(pageEl);
+          const blocks = pageNode.getChildren();
 
           // Deepest child bottom and sum of heights
           let deepestBottom = contentTop;
           let sumHeights = 0;
           for (let i = 0; i < blocks.length; i++) {
             const el = editor.getElementByKey(blocks[i].getKey());
-            if (!el) continue;
+            if (el == null) continue;
             const r = el.getBoundingClientRect();
             if (r.bottom > deepestBottom) deepestBottom = r.bottom;
             sumHeights += el.offsetHeight;
@@ -156,7 +155,7 @@ export function usePageFlow(settings: PageFlowSettings): void {
 
           if (overflow) {
             const candidate = pickMovableBlock(blocks);
-            if (candidate) {
+            if (candidate != null) {
               if (blocks.length === 1) {
                 const el = editor.getElementByKey(candidate.getKey());
                 const currentH = el?.offsetHeight ?? usedDeepest;
@@ -186,8 +185,8 @@ export function usePageFlow(settings: PageFlowSettings): void {
               if ($isRangeSelection(selection)) {
                 const next = pageNode.getNextSibling();
                 if ($isPageNode(next)) {
-                  const firstChild = (next as PageNode).getFirstChild();
-                  if (firstChild) firstChild.selectStart();
+                  const firstChild = (next).getFirstChild();
+                  if (firstChild != null) firstChild.selectStart();
                 }
               }
 
@@ -209,7 +208,7 @@ export function usePageFlow(settings: PageFlowSettings): void {
         isReflowingRef.current = true;
         let passes = 0;
         const maxPasses = 30;
-        const run = () => {
+        const run = (): void => {
           const moved = reflowPass();
           passes++;
           if (moved && passes < maxPasses) {
@@ -224,11 +223,11 @@ export function usePageFlow(settings: PageFlowSettings): void {
 
     schedule();
 
-    const unregister = editor.registerUpdateListener(() => {
+    const unregister = editor.registerUpdateListener((): void => {
       schedule();
     });
 
-    return () => {
+    return (): void => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       unregister();
       isReflowingRef.current = false;
