@@ -19,7 +19,7 @@ import {
 export type SerializedPageNode = Spread<
   {
     type: 'page';
-    version: 1;
+    version: 2;
   },
   SerializedElementNode
 >;
@@ -61,7 +61,7 @@ export class PageNode extends ElementNode {
     return {
       ...super.exportJSON(),
       type: 'page',
-      version: 1
+      version: 2
     };
   }
 }

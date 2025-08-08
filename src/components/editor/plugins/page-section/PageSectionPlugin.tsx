@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   $getRoot,
@@ -6,6 +6,7 @@ import {
   COMMAND_PRIORITY_EDITOR,
   createCommand,
   type LexicalCommand,
+  type LexicalNode,
   $createParagraphNode
 } from 'lexical';
 import {
@@ -20,7 +21,7 @@ import {
   type ContentNode
 } from './PageSectionNodes';
 import { DEFAULT_PAGE_SECTION_SETTINGS } from './PageSectionSettings';
-import { $createPageNode, $isPageNode, type PageNode } from '../page/PageNode';
+import { $createPageNode, $isPageNode, type PageNode } from '../page';
 import { DEFAULT_PAGINATION_SETTINGS } from '../pagebreak/PageBreakSettings';
 
 export type SectionMode = 'content' | 'header' | 'footer';
@@ -43,43 +44,41 @@ function updateAllSectionsEditable(mode: SectionMode): void {
   }
 }
 
-function syncSectionAcrossPages(selector: (nodes: any[]) => any | undefined): void {
+function syncSectionAcrossPages(selector: (nodes: any[]) => any | undefined, sourcePageKey?: string): void {
   const root = $getRoot();
   const pages = root.getChildren();
   if (pages.length <= 1) return;
-  const first = pages[0];
+  const first = sourcePageKey
+    ? pages.find((p) => p.getKey() === sourcePageKey)
+    : pages[0];
   if (!$isElementNode(first)) return;
   const source = selector(first.getChildren());
   if (source == null || !$isElementNode(source)) return;
 
-  const sourceChildren = source.getChildren().map((c) => c.clone());
-  for (let i = 1; i < pages.length; i++) {
-    const page = pages[i];
+  const sourceChildren = source.getChildren();
+  for (const page of pages) {
+    if (page.getKey() === source.getParent()?.getKey()) continue;
     if (!$isElementNode(page)) continue;
     const target = selector(page.getChildren());
     if (target == null || !$isElementNode(target)) continue;
-    target.clear();
-    for (const child of sourceChildren) target.append(child.clone());
+    const newChildren = sourceChildren.map((c: LexicalNode) => c.clone());
+    target.clear().append(...newChildren);
   }
 }
 
-function cloneHeaderFooterFromFirstTo(targetPage: PageNode): void {
-  const pages = $getRoot().getChildren();
-  const first = pages[0];
-  if (!$isElementNode(first)) return;
+function cloneHeaderFooterFrom(sourcePage: PageNode, targetPage: PageNode): void {
+  const first = sourcePage;
   const srcHeader = first.getChildren().find($isHeaderNode) as HeaderNode | undefined;
   const srcFooter = first.getChildren().find($isFooterNode) as FooterNode | undefined;
   const dstHeader = targetPage.getChildren().find($isHeaderNode) as HeaderNode | undefined;
   const dstFooter = targetPage.getChildren().find($isFooterNode) as FooterNode | undefined;
   if (srcHeader && dstHeader) {
-    const children = srcHeader.getChildren().map((c) => c.clone());
-    dstHeader.clear();
-    children.forEach((c) => dstHeader.append(c));
+    const newChildren = srcHeader.getChildren().map((c: LexicalNode) => c.clone());
+    dstHeader.clear().append(...newChildren);
   }
   if (srcFooter && dstFooter) {
-    const children = srcFooter.getChildren().map((c) => c.clone());
-    dstFooter.clear();
-    children.forEach((c) => dstFooter.append(c));
+    const newChildren = srcFooter.getChildren().map((c: LexicalNode) => c.clone());
+    dstFooter.clear().append(...newChildren);
   }
 }
 
@@ -259,23 +258,23 @@ export function PageSectionPlugin(): null {
         }
 
         // Sync header/footer content if in their edit modes
-        const pages = $getRoot().getChildren();
-        const samplePage = pages.find($isElementNode);
-        if (samplePage == null) return;
-        const header = (samplePage as any)
-          .getChildren()
-          .find($isHeaderNode) as HeaderNode | undefined;
-        const content = (samplePage as any)
-          .getChildren()
-          .find($isContentNode) as ContentNode | undefined;
-        const footer = (samplePage as any)
-          .getChildren()
-          .find($isFooterNode) as FooterNode | undefined;
-
-        if (header?.isEditableSection()) {
-          syncSectionAcrossPages((children) => children.find($isHeaderNode));
-        } else if (footer?.isEditableSection()) {
-          syncSectionAcrossPages((children) => children.find($isFooterNode));
+        const activeElement = document.activeElement;
+        if (activeElement) {
+          const activeSection = activeElement.closest('[data-lexical-page-section]');
+          if (activeSection) {
+            const sectionType = activeSection.getAttribute('data-lexical-page-section');
+            const page = activeElement.closest('.page-container');
+            if (page) {
+              const pageKey = (page as any)._lexicalKey;
+              if (pageKey) {
+                if (sectionType === 'header') {
+                  syncSectionAcrossPages((children) => children.find($isHeaderNode), pageKey);
+                } else if (sectionType === 'footer') {
+                  syncSectionAcrossPages((children) => children.find($isFooterNode), pageKey);
+                }
+              }
+            }
+          }
         }
       });
     });
@@ -301,10 +300,10 @@ export function PageSectionPlugin(): null {
             if (target.clientHeight === 0) continue;
             const tol = 2; // px tolerance
             if (target.scrollHeight > target.clientHeight + tol) {
-              // Append a new page after this one and copy header/footer from first
+              // Append a new page after this one and copy header/footer from the current page
               const newPage = $createPageNode();
               page.insertAfter(newPage);
-              cloneHeaderFooterFromFirstTo(newPage);
+              cloneHeaderFooterFrom(page, newPage);
               break;
             }
           }
@@ -334,4 +333,4 @@ export function PageSectionPlugin(): null {
   }, [editor]);
 
   return null;
-} 
+}
