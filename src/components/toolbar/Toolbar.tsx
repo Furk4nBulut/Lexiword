@@ -16,6 +16,7 @@ import {
 } from '@radix-ui/react-icons';
 import { OrderedListIcon, UnorderedListIcon } from './icons';
 import { BannerColorPickerPlugin } from '../editor/plugins/banner/BannerColorPickerPlugin';
+import { SET_SECTION_MODE_COMMAND } from '../editor/plugins/page-section/PageSectionPlugin';
 
 interface ToolbarButtonProps {
   onClick: React.MouseEventHandler<HTMLButtonElement> | undefined;
@@ -197,6 +198,35 @@ function BannerToolbarPlugin(): JSX.Element {
   );
 }
 
+function PageSectionModeToolbar(): JSX.Element {
+  const [editor] = useLexicalComposerContext();
+  return (
+    <div className="toolbarGroup">
+      <ToolbarButton
+        onClick={() => editor.dispatchCommand(SET_SECTION_MODE_COMMAND, 'header')}
+        title="Üstbilgiyi Düzenle"
+        dataAttribute="data-section"
+      >
+        Header
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.dispatchCommand(SET_SECTION_MODE_COMMAND, 'footer')}
+        title="Altbilgiyi Düzenle"
+        dataAttribute="data-section"
+      >
+        Footer
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.dispatchCommand(SET_SECTION_MODE_COMMAND, 'content')}
+        title="Ana İçeriği Düzenle"
+        dataAttribute="data-section"
+      >
+        Content
+      </ToolbarButton>
+    </div>
+  );
+}
+
 export function ToolbarPlugin(): JSX.Element {
   return (
     <Toolbar.Root className="toolbarRoot">
@@ -204,6 +234,7 @@ export function ToolbarPlugin(): JSX.Element {
       <HeadingToolbarPlugin />
       <ListToolbarPlugin />
       <BannerToolbarPlugin />
+      <PageSectionModeToolbar />
     </Toolbar.Root>
   );
 }

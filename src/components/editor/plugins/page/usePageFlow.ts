@@ -10,6 +10,7 @@ import {
   $createParagraphNode
 } from 'lexical';
 import { $createPageNode, $isPageNode, type PageNode } from './PageNode';
+import { $isContentNode, type ContentNode } from '../page-section/PageSectionNodes';
 
 export interface PageFlowSettings {
   pageHeightMm: number;
@@ -28,30 +29,31 @@ export function usePageFlow(settings: PageFlowSettings): void {
       return editor.getElementByKey(page.getKey());
     }
 
-    function getContentBox(pageEl: HTMLElement): {
+    function getContentMetrics(pageEl: HTMLElement): {
+      el: HTMLElement | null;
       top: number;
       bottom: number;
       height: number;
       paddingTop: number;
       paddingBottom: number;
     } {
-      const rect = pageEl.getBoundingClientRect();
-      const styles = window.getComputedStyle(pageEl);
+      const contentEl = pageEl.querySelector(
+        '[data-lexical-page-section="content"]'
+      ) as HTMLElement | null;
+      const target = contentEl ?? pageEl;
+      const rect = target.getBoundingClientRect();
+      const styles = window.getComputedStyle(target);
       let paddingTop = parseFloat(styles.paddingTop);
       let paddingBottom = parseFloat(styles.paddingBottom);
       if (Number.isNaN(paddingTop)) paddingTop = 0;
       if (Number.isNaN(paddingBottom)) paddingBottom = 0;
       const top = rect.top + paddingTop;
       const bottom = rect.bottom - paddingBottom;
-      return { top, bottom, height: bottom - top, paddingTop, paddingBottom };
+      return { el: contentEl, top, bottom, height: bottom - top, paddingTop, paddingBottom };
     }
 
-    function getContentScrollHeight(
-      pageEl: HTMLElement,
-      paddingTop: number,
-      paddingBottom: number
-    ): number {
-      return pageEl.scrollHeight - paddingTop - paddingBottom;
+    function getContentScrollHeight(targetEl: HTMLElement, paddingTop: number, paddingBottom: number): number {
+      return targetEl.scrollHeight - paddingTop - paddingBottom;
     }
 
     function proportionalSplitParagraphByHeight(
@@ -122,7 +124,11 @@ export function usePageFlow(settings: PageFlowSettings): void {
         if (hasNonPage) {
           const page = $createPageNode();
           children.forEach((n) => {
-            if (!$isPageNode(n)) page.append(n);
+            if (!$isPageNode(n)) {
+              // Move foreign nodes into first page's content section
+              const contentSection = (page.getChildren().find($isContentNode) as ContentNode) ?? null;
+              if (contentSection) contentSection.append(n);
+            }
           });
           root.append(page);
         }
@@ -140,13 +146,13 @@ export function usePageFlow(settings: PageFlowSettings): void {
             continue;
           }
 
-          const {
-            height: capacity,
-            top: contentTop,
-            paddingTop,
-            paddingBottom
-          } = getContentBox(pageEl);
-          const blocks = pageNode.getChildren() as unknown as LexicalElementNode[];
+          const { el: contentDomEl, height: capacity, top: contentTop, paddingTop, paddingBottom } =
+            getContentMetrics(pageEl);
+          // Resolve content section node
+          const contentSection = pageNode
+            .getChildren()
+            .find($isContentNode) as ContentNode | null;
+          const blocks = (contentSection?.getChildren() ?? []) as unknown as LexicalElementNode[];
 
           // Deepest child bottom and sum of heights
           let deepestBottom = contentTop;
@@ -160,7 +166,8 @@ export function usePageFlow(settings: PageFlowSettings): void {
           }
           const usedDeepest = Math.max(0, deepestBottom - contentTop);
           const usedSum = sumHeights;
-          const usedScroll = getContentScrollHeight(pageEl, paddingTop, paddingBottom);
+          const targetForScroll = contentDomEl ?? pageEl;
+          const usedScroll = getContentScrollHeight(targetForScroll, paddingTop, paddingBottom);
 
           // Overflow if both metrics exceed, OR scroll-based says content exceeds capacity
           const tolDeepest = 1;
@@ -186,7 +193,10 @@ export function usePageFlow(settings: PageFlowSettings): void {
                       nextPage = $createPageNode();
                       pageNode.insertAfter(nextPage);
                     }
-                    (nextPage as PageNode).append(candidate);
+                    const nextContent = (nextPage
+                      .getChildren()
+                      .find($isContentNode) as ContentNode | null) as ContentNode | null;
+                    nextContent?.append(candidate);
                   }
                 }
               } else {
@@ -195,14 +205,20 @@ export function usePageFlow(settings: PageFlowSettings): void {
                   nextPage = $createPageNode();
                   pageNode.insertAfter(nextPage);
                 }
-                (nextPage as PageNode).append(candidate);
+                const nextContent = (nextPage
+                  .getChildren()
+                  .find($isContentNode) as ContentNode | null) as ContentNode | null;
+                nextContent?.append(candidate);
               }
 
               const selection = $getSelection();
               if ($isRangeSelection(selection)) {
                 const next = pageNode.getNextSibling();
                 if ($isPageNode(next)) {
-                  const firstChild = next.getFirstChild();
+                  const nextContent = next
+                    .getChildren()
+                    .find($isContentNode) as ContentNode | null;
+                  const firstChild = nextContent?.getFirstChild() ?? null;
                   if (firstChild != null) firstChild.selectStart();
                 }
               }

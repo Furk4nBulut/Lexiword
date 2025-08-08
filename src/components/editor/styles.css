@@ -301,6 +301,8 @@ li {
   margin: 0 0 20px 0;
   position: relative;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 .page-observer-target {
@@ -331,4 +333,28 @@ li {
 .page-container div {
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+/* Page sections */
+.page-section {
+  padding: 10mm 15mm;
+}
+.page-section--header {
+  flex: none;
+  border-bottom: 1px solid #eee;
+  min-height: 15mm;
+}
+.page-section--content {
+  flex: 1;
+  padding-top: 12mm;
+  padding-bottom: 12mm;
+}
+.page-section--footer {
+  flex: none;
+  border-top: 1px solid #eee;
+  min-height: 15mm;
+}
+.page-section--editing {
+  outline: 2px dashed #0078d4;
+  outline-offset: -2px;
 }

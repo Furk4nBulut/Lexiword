@@ -16,6 +16,12 @@ import './styles.css';
 import { BannerNode, BannerPlugin } from './plugins/banner/BannerPlugin';
 import { $getRoot } from 'lexical';
 import { $createPageNode, PageNode, PageObserverPlugin, PageFlowPlugin } from './plugins/page';
+import {
+  HeaderNode,
+  ContentNode,
+  FooterNode
+} from './plugins/page-section/PageSectionNodes';
+import { PageSectionPlugin } from './plugins/page-section/PageSectionPlugin';
 
 const theme = {
   text: {
@@ -49,7 +55,7 @@ export default function Editor({
     theme,
     onError,
     editorState: initialEditorState,
-    nodes: [PageNode, BannerNode]
+    nodes: [PageNode, HeaderNode, ContentNode, FooterNode, BannerNode]
   } as const;
 
   return (
@@ -76,6 +82,7 @@ export default function Editor({
             marginTopMm={paginationSettings.marginTop}
             marginBottomMm={paginationSettings.marginBottom}
           />
+          <PageSectionPlugin />
           <HistoryPlugin />
           <WordCountPlugin onWordCountChange={onWordCountChange} />
         </LexicalComposer>

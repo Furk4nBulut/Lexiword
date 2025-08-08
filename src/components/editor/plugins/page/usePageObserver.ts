@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getNodeByKey, $getRoot } from 'lexical';
 import { $createPageNode, $isPageNode } from './PageNode';
+import { $isContentNode, type ContentNode } from '../page-section/PageSectionNodes';
 
 export function usePageObserver(): void {
   const [editor] = useLexicalComposerContext();
@@ -33,7 +34,10 @@ export function usePageObserver(): void {
                     if (!$isPageNode(nextSibling)) {
                       const newPage = $createPageNode();
                       node.insertAfter(newPage);
-                      const firstChild = newPage.getFirstChild();
+                      const content = newPage
+                        .getChildren()
+                        .find($isContentNode) as ContentNode | null;
+                      const firstChild = content?.getFirstChild();
                       if (firstChild != null) firstChild.selectStart();
                     }
                   }

@@ -7,6 +7,14 @@ import {
   type SerializedElementNode,
   type Spread
 } from 'lexical';
+import {
+  $createContentNode,
+  $createFooterNode,
+  $createHeaderNode,
+  ContentNode,
+  FooterNode,
+  HeaderNode
+} from '../page-section/PageSectionNodes';
 
 export type SerializedPageNode = Spread<
   {
@@ -31,11 +39,12 @@ export class PageNode extends ElementNode {
     const container = document.createElement('div');
     container.className = 'page-container';
     container.setAttribute('data-lexical-page', 'true');
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
 
     const sentinel = document.createElement('div');
     sentinel.className = 'page-observer-target';
     sentinel.setAttribute('aria-hidden', 'true');
-
     container.appendChild(sentinel);
     return container;
   }
@@ -59,8 +68,12 @@ export class PageNode extends ElementNode {
 
 export function $createPageNode(): PageNode {
   const pageNode = new PageNode();
-  const paragraph = $createParagraphNode();
-  pageNode.append(paragraph);
+  const header = $createHeaderNode(false);
+  const content = $createContentNode(true);
+  const footer = $createFooterNode(false);
+  pageNode.append(header);
+  pageNode.append(content);
+  pageNode.append(footer);
   return $applyNodeReplacement(pageNode);
 }
 
