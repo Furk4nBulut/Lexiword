@@ -54,7 +54,9 @@ export function usePageObserver(): void {
       observerRef.current = observer;
 
       const sentinels = rootElement.querySelectorAll('.page-observer-target');
-      sentinels.forEach((el) => { observer.observe(el); });
+      sentinels.forEach((el) => {
+        observer.observe(el);
+      });
     }
 
     const raf = requestAnimationFrame(setupObserver);

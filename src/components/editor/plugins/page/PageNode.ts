@@ -9,11 +9,11 @@ import {
 } from 'lexical';
 
 export type SerializedPageNode = Spread<
-{
-  type: 'page';
-  version: 1;
-},
-SerializedElementNode
+  {
+    type: 'page';
+    version: 1;
+  },
+  SerializedElementNode
 >;
 
 export class PageNode extends ElementNode {

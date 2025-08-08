@@ -326,7 +326,9 @@ li {
 }
 
 /* Help break long unspaced strings */
-.page-container, .page-container p, .page-container div {
+.page-container,
+.page-container p,
+.page-container div {
   overflow-wrap: anywhere;
   word-break: break-word;
 }
