@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   $getRoot,
@@ -6,8 +6,12 @@ import {
   COMMAND_PRIORITY_EDITOR,
   createCommand,
   type LexicalCommand,
-  type LexicalNode,
-  $createParagraphNode
+  $createParagraphNode,
+  $isTextNode,
+  $createTextNode,
+  $createRangeSelection,
+  $setSelection,
+  type LexicalNode
 } from 'lexical';
 import {
   $isHeaderNode,
@@ -21,7 +25,7 @@ import {
   type ContentNode
 } from './PageSectionNodes';
 import { DEFAULT_PAGE_SECTION_SETTINGS } from './PageSectionSettings';
-import { $createPageNode, $isPageNode, type PageNode } from '../page';
+import { $createPageNode, $isPageNode, type PageNode } from '../page/PageNode';
 import { DEFAULT_PAGINATION_SETTINGS } from '../pagebreak/PageBreakSettings';
 
 export type SectionMode = 'content' | 'header' | 'footer';
@@ -44,48 +48,70 @@ function updateAllSectionsEditable(mode: SectionMode): void {
   }
 }
 
-function syncSectionAcrossPages(selector: (nodes: any[]) => any | undefined, sourcePageKey?: string): void {
+function syncHeaderFooterContent(): void {
   const root = $getRoot();
   const pages = root.getChildren();
   if (pages.length <= 1) return;
-  const first = sourcePageKey
-    ? pages.find((p) => p.getKey() === sourcePageKey)
-    : pages[0];
-  if (!$isElementNode(first)) return;
-  const source = selector(first.getChildren());
-  if (source == null || !$isElementNode(source)) return;
-
-  const sourceChildren = source.getChildren();
-  for (const page of pages) {
-    if (page.getKey() === source.getParent()?.getKey()) continue;
+  
+  const firstPage = pages[0];
+  if (!$isElementNode(firstPage)) return;
+  
+  const firstHeader = firstPage.getChildren().find($isHeaderNode) as HeaderNode | undefined;
+  const firstFooter = firstPage.getChildren().find($isFooterNode) as FooterNode | undefined;
+  
+  if (!firstHeader || !firstFooter) return;
+  
+  // Copy header/footer content to all other pages
+  for (let i = 1; i < pages.length; i++) {
+    const page = pages[i];
     if (!$isElementNode(page)) continue;
-    const target = selector(page.getChildren());
-    if (target == null || !$isElementNode(target)) continue;
-    const newChildren = sourceChildren.map((c: LexicalNode) => c.clone());
-    target.clear().append(...newChildren);
-  }
-}
-
-function cloneHeaderFooterFrom(sourcePage: PageNode, targetPage: PageNode): void {
-  const first = sourcePage;
-  const srcHeader = first.getChildren().find($isHeaderNode) as HeaderNode | undefined;
-  const srcFooter = first.getChildren().find($isFooterNode) as FooterNode | undefined;
-  const dstHeader = targetPage.getChildren().find($isHeaderNode) as HeaderNode | undefined;
-  const dstFooter = targetPage.getChildren().find($isFooterNode) as FooterNode | undefined;
-  if (srcHeader && dstHeader) {
-    const newChildren = srcHeader.getChildren().map((c: LexicalNode) => c.clone());
-    dstHeader.clear().append(...newChildren);
-  }
-  if (srcFooter && dstFooter) {
-    const newChildren = srcFooter.getChildren().map((c: LexicalNode) => c.clone());
-    dstFooter.clear().append(...newChildren);
+    
+    const header = page.getChildren().find($isHeaderNode) as HeaderNode | undefined;
+    const footer = page.getChildren().find($isFooterNode) as FooterNode | undefined;
+    
+    if (header && footer) {
+      // Copy header content
+      header.clear();
+      for (const child of firstHeader.getChildren()) {
+        if ($isTextNode(child)) {
+          header.append($createTextNode(child.getTextContent()));
+        } else if (typeof child.clone === 'function') {
+          header.append(child.clone());
+        } else {
+          // For other nodes, try to create a new instance
+          const Ctor = (child as any).constructor;
+          if (typeof Ctor?.clone === 'function') {
+            header.append(Ctor.clone(child));
+          } else {
+            header.append(child);
+          }
+        }
+      }
+      
+      // Copy footer content
+      footer.clear();
+      for (const child of firstFooter.getChildren()) {
+        if ($isTextNode(child)) {
+          footer.append($createTextNode(child.getTextContent()));
+        } else if (typeof child.clone === 'function') {
+          footer.append(child.clone());
+        } else {
+          // For other nodes, try to create a new instance
+          const Ctor = (child as any).constructor;
+          if (typeof Ctor?.clone === 'function') {
+            footer.append(Ctor.clone(child));
+          } else {
+            footer.append(child);
+          }
+        }
+      }
+    }
   }
 }
 
 function ensurePageStructure(): void {
   const root = $getRoot();
   let pages = root.getChildren();
-  // Wrap stray nodes into a page content
   const stray = pages.filter((n) => !$isPageNode(n));
   if (stray.length > 0) {
     const page = $createPageNode();
@@ -119,7 +145,6 @@ function ensurePageStructure(): void {
       page.append(footer);
     }
 
-    // Ensure each section has at least one paragraph for caret
     const ensureParagraph = (node: any) => {
       if (!$isElementNode(node)) return;
       if (node.getChildren().length === 0) {
@@ -130,6 +155,9 @@ function ensurePageStructure(): void {
     ensureParagraph(content);
     ensureParagraph(footer);
   }
+  
+  // After ensuring structure, sync header/footer content
+  syncHeaderFooterContent();
 }
 
 function getActiveMode(): SectionMode {
@@ -144,11 +172,51 @@ function getActiveMode(): SectionMode {
   return 'content';
 }
 
+function selectAllInSection(mode: SectionMode): void {
+  const pages = $getRoot().getChildren().filter($isPageNode) as PageNode[];
+  if (pages.length === 0) return;
+
+  let allTextNodes: any[] = [];
+  const selector = ((): any => {
+    switch (mode) {
+      case 'header':
+        return $isHeaderNode;
+      case 'footer':
+        return $isFooterNode;
+      default:
+        return $isContentNode;
+    }
+  })();
+
+  // Collect all text nodes from the specified section across all pages
+  for (const page of pages) {
+    const section = page.getChildren().find(selector);
+    if (!section || !$isElementNode(section)) continue;
+    const collectTextNodes = (node: any): void => {
+      if ($isTextNode(node)) {
+        allTextNodes.push(node);
+      } else if ($isElementNode(node)) {
+        for (const child of node.getChildren()) {
+          collectTextNodes(child);
+        }
+      }
+    };
+    collectTextNodes(section);
+  }
+
+  if (allTextNodes.length > 0) {
+    const firstNode = allTextNodes[0];
+    const lastNode = allTextNodes[allTextNodes.length - 1];
+    const sel = $createRangeSelection();
+    sel.setTextNodeRange(firstNode, 0, lastNode, lastNode.getTextContentSize());
+    $setSelection(sel);
+  }
+}
+
 export function PageSectionPlugin(): null {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
-    // Default mode: content editable
     return editor.registerCommand(
       SET_SECTION_MODE_COMMAND,
       (mode: SectionMode) => {
@@ -162,7 +230,6 @@ export function PageSectionPlugin(): null {
   }, [editor]);
 
   useEffect(() => {
-    // Double click handler to switch modes + Ctrl+A scope
     const rootEl = editor.getRootElement();
     if (rootEl == null) return;
 
@@ -179,43 +246,12 @@ export function PageSectionPlugin(): null {
     const onKeyDown = (e: KeyboardEvent): void => {
       if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
         e.preventDefault();
-        editor.update(() => {
-          const mode = getActiveMode();
-          const pages = $getRoot().getChildren().filter($isPageNode) as PageNode[];
-          if (pages.length === 0) return;
-          const firstPage = pages[0];
-          const section = ((): any => {
-            switch (mode) {
-              case 'header':
-                return firstPage.getChildren().find($isHeaderNode);
-              case 'footer':
-                return firstPage.getChildren().find($isFooterNode);
-              default:
-                return firstPage.getChildren().find($isContentNode);
-            }
-          })();
-          if (!section || !$isElementNode(section)) return;
-          const findDeepFirst = (node: any): any => {
-            let cur: any = node.getFirstChild();
-            while (cur && $isElementNode(cur) && cur.getChildren().length > 0) {
-              cur = cur.getFirstChild();
-            }
-            return cur ?? node;
-          };
-          const findDeepLast = (node: any): any => {
-            let cur: any = node.getLastChild();
-            while (cur && $isElementNode(cur) && cur.getChildren().length > 0) {
-              cur = cur.getLastChild();
-            }
-            return cur ?? node;
-          };
-          const startNode = findDeepFirst(section);
-          const endNode = findDeepLast(section);
-          if (startNode && endNode) {
-            startNode.selectStart();
-            endNode.selectEnd();
-          }
-        });
+        setTimeout(() => {
+          editor.update(() => {
+            const mode = getActiveMode();
+            selectAllInSection(mode);
+          });
+        }, 0);
       }
     };
 
@@ -228,94 +264,87 @@ export function PageSectionPlugin(): null {
   }, [editor]);
 
   useEffect(() => {
-    // Enforce structure and sync header/footer on updates
     return editor.registerUpdateListener(() => {
-      editor.update(() => {
-        ensurePageStructure();
-        // Apply fixed DOM heights for header/footer and max height for content
-        const rootEl = editor.getRootElement();
-        if (rootEl) {
-          const headerEls = rootEl.querySelectorAll('[data-lexical-page-section="header"]');
-          const footerEls = rootEl.querySelectorAll('[data-lexical-page-section="footer"]');
-          const contentEls = rootEl.querySelectorAll('[data-lexical-page-section="content"]');
-          headerEls.forEach(
-            (el) => ((el as HTMLElement).style.minHeight = `${DEFAULT_PAGE_SECTION_SETTINGS.headerHeightMm}mm`)
-          );
-          footerEls.forEach(
-            (el) => ((el as HTMLElement).style.minHeight = `${DEFAULT_PAGE_SECTION_SETTINGS.footerHeightMm}mm`)
-          );
-          const capacityMm =
-            DEFAULT_PAGINATION_SETTINGS.pageHeight -
-            DEFAULT_PAGINATION_SETTINGS.marginTop -
-            DEFAULT_PAGINATION_SETTINGS.marginBottom -
-            DEFAULT_PAGE_SECTION_SETTINGS.headerHeightMm -
-            DEFAULT_PAGE_SECTION_SETTINGS.footerHeightMm;
-          contentEls.forEach((el) => {
-            const elt = el as HTMLElement;
-            elt.style.maxHeight = `${capacityMm}mm`;
-            elt.style.overflow = 'hidden';
-          });
-        }
-
-        // Sync header/footer content if in their edit modes
-        const activeElement = document.activeElement;
-        if (activeElement) {
-          const activeSection = activeElement.closest('[data-lexical-page-section]');
-          if (activeSection) {
-            const sectionType = activeSection.getAttribute('data-lexical-page-section');
-            const page = activeElement.closest('.page-container');
-            if (page) {
-              const pageKey = (page as any)._lexicalKey;
-              if (pageKey) {
-                if (sectionType === 'header') {
-                  syncSectionAcrossPages((children) => children.find($isHeaderNode), pageKey);
-                } else if (sectionType === 'footer') {
-                  syncSectionAcrossPages((children) => children.find($isFooterNode), pageKey);
-                }
-              }
-            }
+      setTimeout(() => {
+        editor.update(() => {
+          ensurePageStructure();
+          const rootEl = editor.getRootElement();
+          if (rootEl) {
+            const headerEls = rootEl.querySelectorAll('[data-lexical-page-section="header"]');
+            const footerEls = rootEl.querySelectorAll('[data-lexical-page-section="footer"]');
+            const contentEls = rootEl.querySelectorAll('[data-lexical-page-section="content"]');
+            headerEls.forEach(
+              (el) => ((el as HTMLElement).style.minHeight = `${DEFAULT_PAGE_SECTION_SETTINGS.headerHeightMm}mm`)
+            );
+            footerEls.forEach(
+              (el) => ((el as HTMLElement).style.minHeight = `${DEFAULT_PAGE_SECTION_SETTINGS.footerHeightMm}mm`)
+            );
+            const capacityMm =
+              DEFAULT_PAGINATION_SETTINGS.pageHeight -
+              DEFAULT_PAGINATION_SETTINGS.marginTop -
+              DEFAULT_PAGINATION_SETTINGS.marginBottom -
+              DEFAULT_PAGE_SECTION_SETTINGS.headerHeightMm -
+              DEFAULT_PAGE_SECTION_SETTINGS.footerHeightMm;
+            contentEls.forEach((el) => {
+              const elt = el as HTMLElement;
+              elt.style.maxHeight = `${capacityMm}mm`;
+              elt.style.overflow = 'hidden';
+            });
           }
-        }
-      });
+        });
+      }, 0);
     });
   }, [editor]);
 
   useEffect(() => {
-    // Overflow detection: when content section scrollHeight exceeds clientHeight slightly, append new page.
+    // Content overflow detection: create new page when content overflows
     const rootEl = editor.getRootElement();
     if (rootEl == null) return;
 
     let raf: number | null = null;
+    let isAdding = false;
 
-    const checkOverflow = (): void => {
+    const checkContentOverflow = (): void => {
       raf = requestAnimationFrame(() => {
-        editor.update(() => {
-          const pages = $getRoot().getChildren().filter($isPageNode) as PageNode[];
-          for (const page of pages) {
-            const dom = editor.getElementByKey(page.getKey());
-            if (!dom) continue;
-            const contentEl = dom.querySelector('[data-lexical-page-section="content"]') as HTMLElement | null;
-            const container = dom as HTMLElement;
-            const target = contentEl ?? container;
-            if (target.clientHeight === 0) continue;
-            const tol = 2; // px tolerance
-            if (target.scrollHeight > target.clientHeight + tol) {
-              // Append a new page after this one and copy header/footer from the current page
-              const newPage = $createPageNode();
-              page.insertAfter(newPage);
-              cloneHeaderFooterFrom(page, newPage);
-              break;
-            }
-          }
-        });
+        if (isAdding) return;
+        const pageEls = Array.from(rootEl.querySelectorAll('.page-container')) as HTMLElement[];
+        for (const pageEl of pageEls) {
+          const contentEl = pageEl.querySelector('[data-lexical-page-section="content"]') as HTMLElement | null;
+          if (!contentEl) continue;
+          if (contentEl.clientHeight === 0) continue;
+          const tol = 2;
+          const overflow = contentEl.scrollHeight > contentEl.clientHeight + tol;
+          if (!overflow) continue;
+
+          isAdding = true;
+          setTimeout(() => {
+            editor.update(() => {
+              const pages = $getRoot().getChildren().filter($isPageNode) as PageNode[];
+              const page = pages.find((p) => editor.getElementByKey(p.getKey()) === pageEl);
+              if (!page) {
+                isAdding = false;
+                return;
+              }
+              const hasNextPage = $isPageNode((page as any).getNextSibling?.());
+              if (!hasNextPage) {
+                const newPage = $createPageNode();
+                page.insertAfter(newPage);
+                // Sync header/footer content after creating new page
+                syncHeaderFooterContent();
+              }
+              isAdding = false;
+            });
+          }, 0);
+          break;
+        }
       });
     };
 
-    const observer = new ResizeObserver(() => checkOverflow());
+    const observer = new ResizeObserver(() => checkContentOverflow());
     const pageContainers = rootEl.querySelectorAll('.page-container');
     pageContainers.forEach((el) => observer.observe(el));
 
-    const interval = setInterval(checkOverflow, 300);
+    const interval = setInterval(checkContentOverflow, 300);
 
     return () => {
       if (raf != null) cancelAnimationFrame(raf);
@@ -324,7 +353,6 @@ export function PageSectionPlugin(): null {
     };
   }, [editor]);
 
-  // Ensure initial state: content editable, others readonly
   useEffect(() => {
     editor.update(() => {
       updateAllSectionsEditable('content');
@@ -333,4 +361,4 @@ export function PageSectionPlugin(): null {
   }, [editor]);
 
   return null;
-}
+} 

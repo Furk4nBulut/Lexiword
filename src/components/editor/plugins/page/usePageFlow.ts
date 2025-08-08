@@ -10,7 +10,7 @@ import {
   $createParagraphNode
 } from 'lexical';
 import { $createPageNode, $isPageNode, type PageNode } from './PageNode';
-import { $isContentNode, type ContentNode } from '../page-section/PageSectionNodes';
+import { $isContentNode, $isHeaderNode, $isFooterNode, type ContentNode, type HeaderNode, type FooterNode } from '../page-section/PageSectionNodes';
 
 export interface PageFlowSettings {
   pageHeightMm: number;

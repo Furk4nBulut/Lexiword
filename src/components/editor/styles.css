@@ -338,11 +338,18 @@ li {
 /* Page sections */
 .page-section {
   padding: 10mm 15mm;
+  transition: all 0.2s ease;
+  cursor: text;
 }
 .page-section--header {
   flex: none;
   border-bottom: 1px solid #eee;
   min-height: 15mm;
+  background: #fafafa;
+}
+.page-section--header:hover {
+  background: #f0f0f0;
+  border-bottom-color: #0078d4;
 }
 .page-section--content {
   flex: 1;
@@ -353,8 +360,17 @@ li {
   flex: none;
   border-top: 1px solid #eee;
   min-height: 15mm;
+  background: #fafafa;
+}
+.page-section--footer:hover {
+  background: #f0f0f0;
+  border-top-color: #0078d4;
 }
 .page-section--editing {
   outline: 2px dashed #0078d4;
   outline-offset: -2px;
+  background: #fff !important;
+}
+.page-section--editing:hover {
+  background: #fff !important;
 }
