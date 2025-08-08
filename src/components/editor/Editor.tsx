@@ -4,16 +4,20 @@ import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
-import { PageBreakPlugin } from './plugins/pagebreak/PageBreakPlugin';
+// import { PageBreakPlugin } from './plugins/pagebreak/PageBreakPlugin';
 import {
   DEFAULT_PAGINATION_SETTINGS,
   type PageBreakSettings
 } from './plugins/pagebreak/PageBreakSettings';
-import { PageBreakNode } from './plugins/pagebreak/PageBreakNode';
+// import { PageBreakNode } from './plugins/pagebreak/PageBreakNode';
 import { WordCountPlugin } from './plugins/wordcount/WordCountPlugin';
 import { ToolbarPlugin } from '../toolbar/Toolbar';
 import './styles.css';
 import { BannerNode, BannerPlugin } from './plugins/banner/BannerPlugin';
+import { $getRoot } from 'lexical';
+import { $createPageNode, PageNode } from '../../nodes/PageNode';
+import { usePageObserver } from '../../hooks/usePageObserver';
+import { usePageFlow } from '../../hooks/usePageFlow';
 
 const theme = {
   text: {
@@ -27,6 +31,28 @@ function onError(error: Error): void {
   console.error(error);
 }
 
+function initialEditorState(): void {
+  const root = $getRoot();
+  if (root.getChildrenSize() === 0) {
+    const firstPage = $createPageNode();
+    root.append(firstPage);
+  }
+}
+
+function PageObserver(): null {
+  usePageObserver();
+  return null;
+}
+
+function PageFlow({ settings }: { settings: PageBreakSettings }): null {
+  usePageFlow({
+    pageHeightMm: settings.pageHeight,
+    marginTopMm: settings.marginTop,
+    marginBottomMm: settings.marginBottom
+  });
+  return null;
+}
+
 export default function Editor({
   onWordCountChange
 }: {
@@ -38,8 +64,9 @@ export default function Editor({
     namespace: 'SimpleEditor',
     theme,
     onError,
-    nodes: [PageBreakNode, BannerNode]
-  };
+    editorState: initialEditorState,
+    nodes: [PageNode, BannerNode]
+  } as const;
 
   return (
     <div className="editor-container paginated">
@@ -59,8 +86,9 @@ export default function Editor({
             placeholder={<div className="placeholder">Start typing...</div>}
             ErrorBoundary={LexicalErrorBoundary}
           />
+          <PageObserver />
+          <PageFlow settings={paginationSettings} />
           <HistoryPlugin />
-          <PageBreakPlugin settings={paginationSettings} />
           <WordCountPlugin onWordCountChange={onWordCountChange} />
         </LexicalComposer>
       </div>

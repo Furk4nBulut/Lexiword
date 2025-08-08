@@ -282,3 +282,44 @@ li {
   left: 20px;
   pointer-events: none;
 }
+
+/* Page-based layout */
+.editor-container {
+  /* center pages in viewport */
+  display: flex;
+  justify-content: center;
+}
+
+.page-container {
+  width: 210mm; /* A4 width */
+  min-height: 297mm; /* A4 height */
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  margin: 0 0 20px 0;
+  position: relative;
+  box-sizing: border-box;
+  padding: 25mm 20mm; /* content margins */
+}
+
+.page-observer-target {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* When using page containers, keep contentEditable transparent as a stack holder */
+.editor-container.paginated .contentEditable {
+  background: transparent;
+  box-shadow: none;
+  padding: 0; /* padding is on .page-container */
+}
+
+/* Make sure paragraphs inside a page look good */
+.page-container p {
+  margin: 0 0 8pt 0;
+}
