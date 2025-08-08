@@ -20,7 +20,7 @@ import {
   type ContentNode
 } from './PageSectionNodes';
 import { DEFAULT_PAGE_SECTION_SETTINGS } from './PageSectionSettings';
-import { $createPageNode, $isPageNode } from '../page/PageNode';
+import { $createPageNode, $isPageNode, type PageNode } from '../page/PageNode';
 import { DEFAULT_PAGINATION_SETTINGS } from '../pagebreak/PageBreakSettings';
 
 export type SectionMode = 'content' | 'header' | 'footer';
@@ -63,18 +63,35 @@ function syncSectionAcrossPages(selector: (nodes: any[]) => any | undefined): vo
   }
 }
 
+function cloneHeaderFooterFromFirstTo(targetPage: PageNode): void {
+  const pages = $getRoot().getChildren();
+  const first = pages[0];
+  if (!$isElementNode(first)) return;
+  const srcHeader = first.getChildren().find($isHeaderNode) as HeaderNode | undefined;
+  const srcFooter = first.getChildren().find($isFooterNode) as FooterNode | undefined;
+  const dstHeader = targetPage.getChildren().find($isHeaderNode) as HeaderNode | undefined;
+  const dstFooter = targetPage.getChildren().find($isFooterNode) as FooterNode | undefined;
+  if (srcHeader && dstHeader) {
+    const children = srcHeader.getChildren().map((c) => c.clone());
+    dstHeader.clear();
+    children.forEach((c) => dstHeader.append(c));
+  }
+  if (srcFooter && dstFooter) {
+    const children = srcFooter.getChildren().map((c) => c.clone());
+    dstFooter.clear();
+    children.forEach((c) => dstFooter.append(c));
+  }
+}
+
 function ensurePageStructure(): void {
   const root = $getRoot();
   let pages = root.getChildren();
   // Wrap stray nodes into a page content
-  if (pages.some((n) => !$isElementNode(n) || !$isPageNode(n))) {
+  const stray = pages.filter((n) => !$isPageNode(n));
+  if (stray.length > 0) {
     const page = $createPageNode();
-    for (const n of pages) {
-      if (!$isPageNode(n)) {
-        const content = page.getChildren().find($isContentNode) as ContentNode | undefined;
-        content?.append(n);
-      }
-    }
+    const content = page.getChildren().find($isContentNode) as ContentNode | undefined;
+    stray.forEach((n) => content?.append(n));
     root.clear();
     root.append(page);
     pages = root.getChildren();
@@ -128,10 +145,6 @@ function getActiveMode(): SectionMode {
   return 'content';
 }
 
-function mmToPx(mm: number): number {
-  return (mm / 25.4) * 96;
-}
-
 export function PageSectionPlugin(): null {
   const [editor] = useLexicalComposerContext();
 
@@ -150,7 +163,7 @@ export function PageSectionPlugin(): null {
   }, [editor]);
 
   useEffect(() => {
-    // Double click handler to switch modes
+    // Double click handler to switch modes + Ctrl+A scope
     const rootEl = editor.getRootElement();
     if (rootEl == null) return;
 
@@ -169,7 +182,7 @@ export function PageSectionPlugin(): null {
         e.preventDefault();
         editor.update(() => {
           const mode = getActiveMode();
-          const pages = $getRoot().getChildren().filter($isElementNode) as any[];
+          const pages = $getRoot().getChildren().filter($isPageNode) as PageNode[];
           if (pages.length === 0) return;
           const firstPage = pages[0];
           const section = ((): any => {
@@ -183,7 +196,6 @@ export function PageSectionPlugin(): null {
             }
           })();
           if (!section || !$isElementNode(section)) return;
-          // Find deepest first and last nodes to select across the section
           const findDeepFirst = (node: any): any => {
             let cur: any = node.getFirstChild();
             while (cur && $isElementNode(cur) && cur.getChildren().length > 0) {
@@ -279,9 +291,9 @@ export function PageSectionPlugin(): null {
     const checkOverflow = (): void => {
       raf = requestAnimationFrame(() => {
         editor.update(() => {
-          const pages = $getRoot().getChildren().filter($isElementNode);
+          const pages = $getRoot().getChildren().filter($isPageNode) as PageNode[];
           for (const page of pages) {
-            const dom = editor.getElementByKey((page as any).getKey());
+            const dom = editor.getElementByKey(page.getKey());
             if (!dom) continue;
             const contentEl = dom.querySelector('[data-lexical-page-section="content"]') as HTMLElement | null;
             const container = dom as HTMLElement;
@@ -289,9 +301,10 @@ export function PageSectionPlugin(): null {
             if (target.clientHeight === 0) continue;
             const tol = 2; // px tolerance
             if (target.scrollHeight > target.clientHeight + tol) {
-              // Append a new page after this one
+              // Append a new page after this one and copy header/footer from first
               const newPage = $createPageNode();
-              (page as any).insertAfter(newPage);
+              page.insertAfter(newPage);
+              cloneHeaderFooterFromFirstTo(newPage);
               break;
             }
           }
