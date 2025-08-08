@@ -4,12 +4,12 @@ import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
-import { PaginationPlugin } from './plugins/pagination/PaginationPlugin';
+import { PageBreakPlugin } from './plugins/pagebreak/PageBreakPlugin';
 import {
   DEFAULT_PAGINATION_SETTINGS,
-  type PaginationSettings
-} from './plugins/pagination/PaginationSettings';
-import { PageBreakNode } from './plugins/pagination/PageBreakNode';
+  type PageBreakSettings
+} from './plugins/pagebreak/PageBreakSettings';
+import { PageBreakNode } from './plugins/pagebreak/PageBreakNode';
 import { WordCountPlugin } from './plugins/wordcount/WordCountPlugin';
 import { ToolbarPlugin } from '../toolbar/Toolbar';
 import './styles.css';
@@ -32,7 +32,7 @@ export default function Editor({
 }: {
   onWordCountChange?: (words: number, chars: number) => void;
 }): JSX.Element {
-  const paginationSettings: PaginationSettings = DEFAULT_PAGINATION_SETTINGS;
+  const paginationSettings: PageBreakSettings = DEFAULT_PAGINATION_SETTINGS;
 
   const initialConfig = {
     namespace: 'SimpleEditor',
@@ -60,7 +60,7 @@ export default function Editor({
             ErrorBoundary={LexicalErrorBoundary}
           />
           <HistoryPlugin />
-          <PaginationPlugin settings={paginationSettings} />
+          <PageBreakPlugin settings={paginationSettings} />
           <WordCountPlugin onWordCountChange={onWordCountChange} />
         </LexicalComposer>
       </div>

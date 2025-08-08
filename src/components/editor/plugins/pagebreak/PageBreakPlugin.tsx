@@ -2,13 +2,13 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { $getRoot } from 'lexical';
 import { useEffect, useCallback } from 'react';
 import { $createPageBreakNode, $isPageBreakNode, type PageBreakNode } from './PageBreakNode';
-import { type PaginationSettings, DEFAULT_PAGINATION_SETTINGS } from './PaginationSettings';
+import { type PageBreakSettings, DEFAULT_PAGINATION_SETTINGS } from './PageBreakSettings';
 
-export function PaginationPlugin({
+export function PageBreakPlugin({
   settings = DEFAULT_PAGINATION_SETTINGS,
   onPageCountChange
 }: {
-  settings?: Partial<PaginationSettings>;
+  settings?: Partial<PageBreakSettings>;
   onPageCountChange?: (pageCount: number) => void;
 }): null {
   const [editor] = useLexicalComposerContext();

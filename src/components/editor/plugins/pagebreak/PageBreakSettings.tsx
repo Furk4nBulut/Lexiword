@@ -1,4 +1,4 @@
-export interface PaginationSettings {
+export interface PageBreakSettings {
   pageHeight: number; // mm
   pageWidth: number; // mm
   marginTop: number; // mm
@@ -7,7 +7,7 @@ export interface PaginationSettings {
   marginRight: number; // mm
 }
 
-export const DEFAULT_PAGINATION_SETTINGS: PaginationSettings = {
+export const DEFAULT_PAGINATION_SETTINGS: PageBreakSettings = {
   pageHeight: 297, // A4 height
   pageWidth: 210,
   marginTop: 0,
