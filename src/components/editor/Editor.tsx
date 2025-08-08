@@ -15,9 +15,7 @@ import { ToolbarPlugin } from '../toolbar/Toolbar';
 import './styles.css';
 import { BannerNode, BannerPlugin } from './plugins/banner/BannerPlugin';
 import { $getRoot } from 'lexical';
-import { $createPageNode, PageNode } from '../../nodes/PageNode';
-import { usePageObserver } from '../../hooks/usePageObserver';
-import { usePageFlow } from '../../hooks/usePageFlow';
+import { $createPageNode, PageNode, PageObserverPlugin, PageFlowPlugin } from './plugins/page';
 
 const theme = {
   text: {
@@ -37,20 +35,6 @@ function initialEditorState(): void {
     const firstPage = $createPageNode();
     root.append(firstPage);
   }
-}
-
-function PageObserver(): null {
-  usePageObserver();
-  return null;
-}
-
-function PageFlow({ settings }: { settings: PageBreakSettings }): null {
-  usePageFlow({
-    pageHeightMm: settings.pageHeight,
-    marginTopMm: settings.marginTop,
-    marginBottomMm: settings.marginBottom
-  });
-  return null;
 }
 
 export default function Editor({
@@ -86,8 +70,12 @@ export default function Editor({
             placeholder={<div className="placeholder">Start typing...</div>}
             ErrorBoundary={LexicalErrorBoundary}
           />
-          <PageObserver />
-          <PageFlow settings={paginationSettings} />
+          <PageObserverPlugin />
+          <PageFlowPlugin
+            pageHeightMm={paginationSettings.pageHeight}
+            marginTopMm={paginationSettings.marginTop}
+            marginBottomMm={paginationSettings.marginBottom}
+          />
           <HistoryPlugin />
           <WordCountPlugin onWordCountChange={onWordCountChange} />
         </LexicalComposer>

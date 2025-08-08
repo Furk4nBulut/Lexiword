@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getNodeByKey, $getRoot } from 'lexical';
-import { $createPageNode, $isPageNode } from '../nodes/PageNode';
+import { $createPageNode, $isPageNode } from './PageNode';
 
 export function usePageObserver(): void {
   const [editor] = useLexicalComposerContext();
@@ -9,7 +9,6 @@ export function usePageObserver(): void {
 
   useEffect(() => {
     function setupObserver(): void {
-      // Disconnect previous observer
       observerRef.current?.disconnect();
 
       const rootElement = editor.getRootElement();
@@ -39,7 +38,6 @@ export function usePageObserver(): void {
                     }
                   }
                 } else {
-                  // Fallback: ensure at least one page exists
                   const lastChild = root.getLastChild();
                   if (!$isPageNode(lastChild)) {
                     const newPage = $createPageNode();
@@ -50,27 +48,18 @@ export function usePageObserver(): void {
             }
           }
         },
-        {
-          // Observe relative to viewport for simplicity
-          root: null,
-          threshold: 1.0,
-          rootMargin: '0px 0px 200px 0px' // pre-emptive creation before exact bottom
-        }
+        { root: null, threshold: 1.0, rootMargin: '0px 0px 200px 0px' }
       );
 
       observerRef.current = observer;
 
-      // Attach observer to all sentinels
       const sentinels = rootElement.querySelectorAll('.page-observer-target');
       sentinels.forEach((el) => observer.observe(el));
     }
 
-    // Initial setup after mount and DOM paint
     const raf = requestAnimationFrame(setupObserver);
 
-    // Re-attach observers on editor updates (DOM may change)
     const unregister = editor.registerUpdateListener(() => {
-      // Wait for DOM reconciliation, then re-attach
       setTimeout(setupObserver, 0);
     });
 

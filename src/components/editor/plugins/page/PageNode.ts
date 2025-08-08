@@ -35,19 +35,15 @@ export class PageNode extends ElementNode {
     container.className = 'page-container';
     container.setAttribute('data-lexical-page', 'true');
 
-    // Invisible sentinel at the bottom for IntersectionObserver
     const sentinel = document.createElement('div');
     sentinel.className = 'page-observer-target';
     sentinel.setAttribute('aria-hidden', 'true');
 
-    // Position sentinel within the container
     container.appendChild(sentinel);
-
     return container;
   }
 
   updateDOM(_prevNode: PageNode, _dom: HTMLElement): boolean {
-    // No dynamic updates required for now
     return false;
   }
 
