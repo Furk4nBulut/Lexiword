@@ -32,14 +32,18 @@ export function usePageFlow(settings: PageFlowSettings): void {
       return editor.getElementByKey(page.getKey());
     }
 
-    function getContentBox(pageEl: HTMLElement): { top: number; bottom: number; height: number } {
+    function getContentBox(pageEl: HTMLElement): { top: number; bottom: number; height: number; paddingTop: number; paddingBottom: number } {
       const rect = pageEl.getBoundingClientRect();
       const styles = window.getComputedStyle(pageEl);
       const paddingTop = parseFloat(styles.paddingTop) || 0;
       const paddingBottom = parseFloat(styles.paddingBottom) || 0;
       const top = rect.top + paddingTop;
       const bottom = rect.bottom - paddingBottom;
-      return { top, bottom, height: bottom - top };
+      return { top, bottom, height: bottom - top, paddingTop, paddingBottom };
+    }
+
+    function getContentScrollHeight(pageEl: HTMLElement, paddingTop: number, paddingBottom: number): number {
+      return pageEl.scrollHeight - paddingTop - paddingBottom;
     }
 
     function proportionalSplitParagraphByHeight(
@@ -127,10 +131,10 @@ export function usePageFlow(settings: PageFlowSettings): void {
             continue;
           }
 
-          const { height: capacity, top: contentTop, bottom: contentBottom } = getContentBox(pageEl);
+          const { height: capacity, top: contentTop, bottom: contentBottom, paddingTop, paddingBottom } = getContentBox(pageEl);
           const blocks = pageNode.getChildren() as LexicalElementNode[];
 
-          // Deepest child bottom
+          // Deepest child bottom and sum of heights
           let deepestBottom = contentTop;
           let sumHeights = 0;
           for (let i = 0; i < blocks.length; i++) {
@@ -138,15 +142,17 @@ export function usePageFlow(settings: PageFlowSettings): void {
             if (!el) continue;
             const r = el.getBoundingClientRect();
             if (r.bottom > deepestBottom) deepestBottom = r.bottom;
-            sumHeights += el.offsetHeight; // excludes margins, stable
+            sumHeights += el.offsetHeight;
           }
           const usedDeepest = Math.max(0, deepestBottom - contentTop);
           const usedSum = sumHeights;
+          const usedScroll = getContentScrollHeight(pageEl, paddingTop, paddingBottom);
 
-          // Require both metrics to exceed capacity with tolerances to avoid false positives
-          const tolDeepest = 1; // px
-          const tolSum = 6; // px
-          const overflow = usedDeepest > capacity - tolDeepest && usedSum > capacity - tolSum;
+          // Overflow if both metrics exceed, OR scroll-based says content exceeds capacity
+          const tolDeepest = 1;
+          const tolSum = 6;
+          const scrollTol = 2;
+          const overflow = (usedDeepest > capacity - tolDeepest && usedSum > capacity - tolSum) || usedScroll > capacity + scrollTol;
 
           if (overflow) {
             const candidate = pickMovableBlock(blocks);
