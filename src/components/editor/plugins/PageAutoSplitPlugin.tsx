@@ -44,21 +44,25 @@ export function PageAutoSplitPlugin({
       paddingTop: number;
       paddingBottom: number;
     } {
-  const el = pageEl.querySelector('[data-lexical-page-section="content"]');
-  const contentEl = el instanceof HTMLElement ? el : null;
-  const target = contentEl ?? pageEl;
-  const rect = target.getBoundingClientRect();
-  const styles = window.getComputedStyle(target);
-  let paddingTop = parseFloat(styles.paddingTop);
-  let paddingBottom = parseFloat(styles.paddingBottom);
-  if (Number.isNaN(paddingTop)) paddingTop = 0;
-  if (Number.isNaN(paddingBottom)) paddingBottom = 0;
-  const top = rect.top + paddingTop;
-  const bottom = rect.bottom - paddingBottom;
-  return { el: contentEl, top, bottom, height: bottom - top, paddingTop, paddingBottom };
+      const el = pageEl.querySelector('[data-lexical-page-section="content"]');
+      const contentEl = el instanceof HTMLElement ? el : null;
+      const target = contentEl ?? pageEl;
+      const rect = target.getBoundingClientRect();
+      const styles = window.getComputedStyle(target);
+      let paddingTop = parseFloat(styles.paddingTop);
+      let paddingBottom = parseFloat(styles.paddingBottom);
+      if (Number.isNaN(paddingTop)) paddingTop = 0;
+      if (Number.isNaN(paddingBottom)) paddingBottom = 0;
+      const top = rect.top + paddingTop;
+      const bottom = rect.bottom - paddingBottom;
+      return { el: contentEl, top, bottom, height: bottom - top, paddingTop, paddingBottom };
     }
 
-    function getContentScrollHeight(targetEl: HTMLElement, paddingTop: number, paddingBottom: number): number {
+    function getContentScrollHeight(
+      targetEl: HTMLElement,
+      paddingTop: number,
+      paddingBottom: number
+    ): number {
       return targetEl.scrollHeight - paddingTop - paddingBottom;
     }
 
@@ -132,7 +136,9 @@ export function PageAutoSplitPlugin({
           children.forEach((n) => {
             if (!$isPageNode(n)) {
               // Move foreign nodes into first page's content section
-              const contentSection = page.getChildren().find((c: any): c is PageContentNode => isContentNode(c));
+              const contentSection = page
+                .getChildren()
+                .find((c: any): c is PageContentNode => isContentNode(c));
               if (contentSection != null) contentSection.append(n);
             }
           });
@@ -156,10 +162,17 @@ export function PageAutoSplitPlugin({
             continue;
           }
 
-          const { el: contentDomEl, height: capacity, top: contentTop, paddingTop, paddingBottom } =
-            getContentMetrics(pageEl);
+          const {
+            el: contentDomEl,
+            height: capacity,
+            top: contentTop,
+            paddingTop,
+            paddingBottom
+          } = getContentMetrics(pageEl);
           // Resolve content section node
-          const contentSection = pageNode.getChildren().find((c: any): c is PageContentNode => isContentNode(c));
+          const contentSection = pageNode
+            .getChildren()
+            .find((c: any): c is PageContentNode => isContentNode(c));
           const blocks = contentSection?.getChildren() ?? [];
 
           // Deepest child bottom and sum of heights
@@ -186,7 +199,10 @@ export function PageAutoSplitPlugin({
             usedScroll > capacity + scrollTol;
 
           if (overflow) {
-            const elementBlocks = blocks.filter((b): b is LexicalElementNode => typeof (b as LexicalElementNode).getChildren === 'function');
+            const elementBlocks = blocks.filter(
+              (b): b is LexicalElementNode =>
+                typeof (b as LexicalElementNode).getChildren === 'function'
+            );
             const candidate = pickMovableBlock(elementBlocks);
             if (candidate != null) {
               if (blocks.length === 1) {
@@ -202,7 +218,9 @@ export function PageAutoSplitPlugin({
                       nextPage = $createPageNode();
                       pageNode.insertAfter(nextPage);
                     }
-                    const nextContent = nextPage.getChildren().find((c: any): c is PageContentNode => isContentNode(c));
+                    const nextContent = nextPage
+                      .getChildren()
+                      .find((c: any): c is PageContentNode => isContentNode(c));
                     if (nextContent != null) nextContent.append(candidate);
                   }
                 }
@@ -212,7 +230,9 @@ export function PageAutoSplitPlugin({
                   nextPage = $createPageNode();
                   pageNode.insertAfter(nextPage);
                 }
-                const nextContent = nextPage.getChildren().find((c: any): c is PageContentNode => isContentNode(c));
+                const nextContent = nextPage
+                  .getChildren()
+                  .find((c: any): c is PageContentNode => isContentNode(c));
                 if (nextContent != null) nextContent.append(candidate);
               }
 
@@ -221,7 +241,9 @@ export function PageAutoSplitPlugin({
               if ($isRangeSelection(selection)) {
                 const next = pageNode.getNextSibling();
                 if ($isPageNode(next)) {
-                  const nextContent = next.getChildren().find((c: any): c is PageContentNode => isContentNode(c));
+                  const nextContent = next
+                    .getChildren()
+                    .find((c: any): c is PageContentNode => isContentNode(c));
                   const firstChild = nextContent?.getFirstChild() ?? null;
                   if (firstChild != null) {
                     firstChild.selectStart();
@@ -263,14 +285,22 @@ export function PageAutoSplitPlugin({
           let headerNode = null;
           let footerNode = null;
           if (prevHeader !== null && prevHeader !== undefined) {
-            headerNode = new PageHeaderNode(prevHeader.__text ?? '', undefined, prevHeader.__visible ?? false);
+            headerNode = new PageHeaderNode(
+              prevHeader.__text ?? '',
+              undefined,
+              prevHeader.__visible ?? false
+            );
             newPage.append(headerNode);
           }
           // Her zaman yeni bir content node ekle
           const contentNode = new PageContentNode();
           newPage.append(contentNode);
           if (prevFooter !== null && prevFooter !== undefined) {
-            footerNode = new PageFooterNode(prevFooter.__text ?? '', undefined, prevFooter.__visible ?? false);
+            footerNode = new PageFooterNode(
+              prevFooter.__text ?? '',
+              undefined,
+              prevFooter.__visible ?? false
+            );
             newPage.append(footerNode);
           }
           lastPageNode.insertAfter(newPage);
