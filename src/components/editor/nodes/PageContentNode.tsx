@@ -1,5 +1,4 @@
 import { ElementNode, SerializedElementNode } from 'lexical';
-import * as React from 'react';
 
 export type SerializedPageContentNode = SerializedElementNode & {
   type: 'page-content';

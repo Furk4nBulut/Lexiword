@@ -12,8 +12,6 @@ import {
   UnderlineIcon,
 } from '@radix-ui/react-icons';
 import { OrderedListIcon, UnorderedListIcon } from './icons';
-import { PageSectionVisibilityToolbar } from './PageSectionVisibilityToolbar';
-
 
 interface ToolbarButtonProps {
   className?: string;
@@ -98,7 +96,6 @@ function TextFormatToolbarPlugin(): JSX.Element {
   );
 }
 
-
 type HeadingTag = 'h1' | 'h2' | 'h3';
 function HeadingToolbarPlugin(): JSX.Element {
   const [editor] = useLexicalComposerContext();
@@ -178,13 +175,52 @@ function ListToolbarPlugin(): JSX.Element {
   );
 }
 
-export function ToolbarPlugin(): JSX.Element {
+interface ToolbarPluginProps {
+  editMode: boolean;
+  setEditMode: (v: boolean) => void;
+  showHeader: boolean;
+  setShowHeader: (v: boolean) => void;
+  showFooter: boolean;
+  setShowFooter: (v: boolean) => void;
+}
+
+export function ToolbarPlugin({
+  editMode,
+  setEditMode,
+  showHeader,
+  setShowHeader,
+  showFooter,
+  setShowFooter,
+}: ToolbarPluginProps): JSX.Element {
   return (
     <Toolbar.Root className="toolbarRoot">
       <TextFormatToolbarPlugin />
       <HeadingToolbarPlugin />
       <ListToolbarPlugin />
-      <PageSectionVisibilityToolbar />
+      <ToolbarButton
+        onClick={() => setEditMode(!editMode)}
+        title={editMode ? 'Düzenleme Modunu Kapat' : 'Header/Footer Düzenle'}
+        className={editMode ? 'active' : ''}
+        style={{ marginLeft: 16 }}
+      >
+        {editMode ? 'Düzenleme Modunu Kapat' : 'Header/Footer Düzenle'}
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => setShowHeader(!showHeader)}
+        title={showHeader ? 'Header Kaldır' : 'Header Ekle'}
+        className={showHeader ? 'active' : ''}
+        style={{ marginLeft: 8 }}
+      >
+        {showHeader ? 'Header Kaldır' : 'Header Ekle'}
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => setShowFooter(!showFooter)}
+        title={showFooter ? 'Footer Kaldır' : 'Footer Ekle'}
+        className={showFooter ? 'active' : ''}
+        style={{ marginLeft: 8 }}
+      >
+        {showFooter ? 'Footer Kaldır' : 'Footer Ekle'}
+      </ToolbarButton>
     </Toolbar.Root>
   );
 }
