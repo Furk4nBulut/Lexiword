@@ -1,5 +1,7 @@
-import { ElementNode, SerializedElementNode, EditorConfig, LexicalNode, Spread } from 'lexical';
+import { DecoratorNode, type SerializedElementNode, type EditorConfig, type Spread, $getNodeByKey, type NodeKey, type LexicalEditor } from 'lexical';
 import * as React from 'react';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { useEditModeContext } from '../EditModeContext';
 
 export type SerializedPageHeaderNode = Spread<
   {
@@ -11,7 +13,7 @@ export type SerializedPageHeaderNode = Spread<
   SerializedElementNode
 >;
 
-export class PageHeaderNode extends ElementNode {
+export class PageHeaderNode extends DecoratorNode<JSX.Element> {
   __text: string;
   __visible: boolean;
 
@@ -42,32 +44,13 @@ export class PageHeaderNode extends ElementNode {
     writable.__text = text;
   }
 
-  createDOM(config: EditorConfig): HTMLElement {
-    const dom = document.createElement('div');
-    dom.className = 'a4-header';
-    // Edit mode kontrolü
-    const editMode = typeof window !== 'undefined' ? ((window as any).__headerFooterEditMode || (window as any).__headerEditMode) : false;
-    dom.contentEditable = editMode ? 'true' : 'false';
-    dom.innerText = this.__text;
-    dom.style.display = this.__visible ? '' : 'none';
-    dom.style.outline = editMode ? '2px solid #1976d2' : 'none';
-    if (editMode) {
-      dom.addEventListener('input', (e) => {
-        this.__text = (e.target as HTMLElement).innerText;
-      });
-    }
-    return dom;
+  createDOM(_config: EditorConfig): HTMLElement {
+    const span = document.createElement('span');
+    // React will manage content via decorate
+    return span;
   }
 
-  updateDOM(prevNode: PageHeaderNode, dom: HTMLElement): boolean {
-    // Edit mode kontrolü
-    const editMode = typeof window !== 'undefined' ? ((window as any).__headerFooterEditMode || (window as any).__headerEditMode) : false;
-    dom.contentEditable = editMode ? 'true' : 'false';
-    dom.style.outline = editMode ? '2px solid #1976d2' : 'none';
-    if (prevNode.__text !== this.__text) {
-      dom.innerText = this.__text;
-    }
-    dom.style.display = this.__visible ? '' : 'none';
+  updateDOM(): boolean {
     return false;
   }
 
@@ -77,54 +60,29 @@ export class PageHeaderNode extends ElementNode {
   }
 
   exportJSON(): SerializedPageHeaderNode {
-    return {
+    const json = {
       ...super.exportJSON(),
       type: 'page-header',
       version: 1,
       text: this.__text,
       visible: this.__visible,
-    };
+    } as SerializedPageHeaderNode;
+    return json;
   }
 
-  decorate(): JSX.Element | null {
-    if (!this.__visible) return null;
-    const editMode = typeof window !== 'undefined' ? ((window as any).__headerFooterEditMode || (window as any).__headerEditMode) : false;
-    return (
-      <HeaderEditable
-        text={this.__text}
-        nodeKey={this.getKey()}
-        readOnly={!editMode}
-      />
+  decorate(_editor: LexicalEditor, _config: EditorConfig): JSX.Element {
+    // When not visible, render empty placeholder to satisfy return type
+    return this.__visible ? (
+      <HeaderEditable text={this.__text} nodeKey={this.getKey()} />
+    ) : (
+      <></>
     );
-  }
-
-  isSelected(): boolean {
-    // Lexical'ın selection API'si ile bu node seçili mi kontrolü
-    if (typeof window === 'undefined') return false;
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return false;
-    const anchorNode = selection.anchorNode as HTMLElement | null;
-    if (!anchorNode) return false;
-    // En yakın a4-header class'ı var mı?
-    return !!anchorNode.closest('.a4-header');
-  }
-
-  // Header'ın asla silinememesi için remove ve removeChild'ı override et
-  remove(): void {
-    // Sadece düzenleme modunda silinebilir
-    if (typeof window !== 'undefined' && ((window as any).__headerFooterEditMode || (window as any).__headerEditMode)) {
-      super.remove();
-    }
-    // Mod kapalıysa hiçbir şey yapma
-  }
-  removeChild(): void {
-    if (typeof window !== 'undefined' && ((window as any).__headerFooterEditMode || (window as any).__headerEditMode)) {
-      super.removeChild();
-    }
   }
 }
 
-function HeaderEditable({ text, nodeKey, readOnly }: { text: string; nodeKey: string, readOnly: boolean }) {
+function HeaderEditable({ text, nodeKey }: { text: string; nodeKey: NodeKey }) {
+  const [editor] = useLexicalComposerContext();
+  const { headerFooterEditMode } = useEditModeContext();
   const divRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -133,35 +91,17 @@ function HeaderEditable({ text, nodeKey, readOnly }: { text: string; nodeKey: st
     }
   }, [text]);
 
-  React.useEffect(() => {
-    if (divRef.current) {
-      divRef.current.contentEditable = (!readOnly).toString();
-    }
-  }, [readOnly]);
+  const commit = React.useCallback((newText: string) => {
+    editor.update(() => {
+      const node = $getNodeByKey(nodeKey) as PageHeaderNode | null;
+      if (node) node.setText(newText);
+    });
+  }, [editor, nodeKey]);
 
   const handleInput = React.useCallback((e: React.FormEvent<HTMLDivElement>) => {
     const newText = (e.target as HTMLDivElement).innerText;
-    if (typeof window !== 'undefined' && window.editor) {
-      window.editor.update(() => {
-        const node = window.editor.getEditorState().read(() => window.editor.getElementByKey(nodeKey));
-        if (node && typeof node.setText === 'function') {
-          node.setText(newText);
-        }
-      });
-    }
-  }, [nodeKey]);
-
-  const handleBlur = React.useCallback((e: React.FocusEvent<HTMLDivElement>) => {
-    const newText = (e.target as HTMLDivElement).innerText;
-    if (typeof window !== 'undefined' && window.editor) {
-      window.editor.update(() => {
-        const node = window.editor.getEditorState().read(() => window.editor.getElementByKey(nodeKey));
-        if (node && typeof node.setText === 'function') {
-          node.setText(newText);
-        }
-      });
-    }
-  }, [nodeKey]);
+    commit(newText);
+  }, [commit]);
 
   const handleKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.ctrlKey && (e.key === 'a' || e.key === 'A')) {
@@ -181,13 +121,12 @@ function HeaderEditable({ text, nodeKey, readOnly }: { text: string; nodeKey: st
     <div
       ref={divRef}
       className="a4-header"
-      contentEditable={!readOnly}
+      contentEditable={headerFooterEditMode}
       suppressContentEditableWarning
       onInput={handleInput}
-      onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       data-node-key={nodeKey}
-      style={{ minHeight: '32px', outline: readOnly ? 'none' : '2px solid #1976d2' }}
+      style={{ minHeight: '32px', outline: headerFooterEditMode ? '2px solid #1976d2' : 'none' }}
     />
   );
 }

@@ -10,7 +10,7 @@ export function PageInitializerPlugin() {
     editor.update(() => {
       const root = $getRoot();
       if (root.getChildrenSize() === 0) {
-        const page = new PageNode();
+        const page = new PageNode({});
         page.appendInitialChildren(); // Always add header/footer/content (header/footer hidden by default)
         root.append(page);
       }

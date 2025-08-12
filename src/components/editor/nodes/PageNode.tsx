@@ -1,4 +1,4 @@
-import { ElementNode, SerializedElementNode } from 'lexical';
+import { ElementNode, type SerializedElementNode } from 'lexical';
 import { PageHeaderNode } from './PageHeaderNode';
 import { PageFooterNode } from './PageFooterNode';
 import { PageContentNode } from './PageContentNode';
@@ -14,10 +14,10 @@ export class PageNode extends ElementNode {
   }
 
   static clone(node: PageNode): PageNode {
-    return new PageNode(node.__key);
+    return new PageNode({ key: node.__key });
   }
 
-  constructor(key?: string) {
+  constructor({ key }: { key?: string }) {
     super(key);
   }
 
@@ -26,10 +26,10 @@ export class PageNode extends ElementNode {
     dom.className = 'a4-page';
     dom.style.display = 'flex';
     dom.style.flexDirection = 'column';
-    dom.style.width = '210mm';
-    dom.style.height = '297mm';
+    // Use px to be consistent with runtime measurements (96dpi approx)
+    dom.style.width = '794px'; // 210mm ~ 8.27in * 96
+    dom.style.height = '1122px'; // 297mm ~ 11.69in * 96
     dom.style.background = '#fff';
-    dom.style.boxShadow = '0 0 8px #ccc';
     dom.style.position = 'relative';
     dom.style.overflow = 'hidden';
     return dom;
@@ -40,7 +40,7 @@ export class PageNode extends ElementNode {
   }
 
   static importJSON(serializedNode: SerializedPageNode): PageNode {
-    const node = new PageNode();
+    const node = new PageNode({});
     return node;
   }
 

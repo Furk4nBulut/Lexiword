@@ -7,7 +7,6 @@ function App() {
   const [showFooter, setShowFooter] = React.useState(false);
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f4f4f4' }}>
       <Editor
         showHeader={showHeader}
         setShowHeader={setShowHeader}
@@ -16,7 +15,6 @@ function App() {
         editMode={editMode}
         setEditMode={setEditMode}
       />
-    </div>
   );
 }
 

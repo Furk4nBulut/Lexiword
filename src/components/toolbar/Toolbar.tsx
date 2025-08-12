@@ -192,7 +192,7 @@ function PageSectionPlugin({
   const handleHeader = () => {
     editor.update(() => {
       const root = $getRoot();
-      const pageNode = root.getChildren().find((n) => n.__type === 'page') as PageNode | undefined;
+      const pageNode = root.getChildren().find((n) => n.getType && n.getType() === 'page') as PageNode | undefined;
       if (!pageNode) return;
       const headerNode = pageNode.getHeaderNode();
       if (!headerNode) return;
@@ -202,7 +202,7 @@ function PageSectionPlugin({
   const handleFooter = () => {
     editor.update(() => {
       const root = $getRoot();
-      const pageNode = root.getChildren().find((n) => n.__type === 'page') as PageNode | undefined;
+      const pageNode = root.getChildren().find((n) => n.getType && n.getType() === 'page') as PageNode | undefined;
       if (!pageNode) return;
       const footerNode = pageNode.getFooterNode();
       if (!footerNode) return;
@@ -215,9 +215,6 @@ function PageSectionPlugin({
       <ToolbarButton
         onClick={() => {
           setHeaderFooterEditMode(!headerFooterEditMode);
-          if (typeof window !== 'undefined') {
-            (window as any).__headerFooterEditMode = !headerFooterEditMode;
-          }
         }}
         title="Header/Footer Düzenle"
       >

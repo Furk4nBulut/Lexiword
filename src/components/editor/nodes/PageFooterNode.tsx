@@ -1,5 +1,7 @@
-import { ElementNode, type SerializedElementNode, type EditorConfig, type Spread } from 'lexical';
+import { DecoratorNode, type SerializedElementNode, type EditorConfig, type Spread, $getNodeByKey, type NodeKey, type LexicalEditor } from 'lexical';
 import * as React from 'react';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { useEditModeContext } from '../EditModeContext';
 
 export type SerializedPageFooterNode = Spread<
   {
@@ -11,7 +13,7 @@ export type SerializedPageFooterNode = Spread<
   SerializedElementNode
 >;
 
-export class PageFooterNode extends ElementNode {
+export class PageFooterNode extends DecoratorNode<JSX.Element> {
   __text: string;
   __visible: boolean;
 
@@ -43,32 +45,12 @@ export class PageFooterNode extends ElementNode {
     writable.__text = text;
   }
 
-  createDOM(config: EditorConfig): HTMLElement {
-    const dom = document.createElement('div');
-    dom.className = 'a4-footer';
-    // Edit mode kontrolü
-    const editMode = typeof window !== 'undefined' ? ((window as any).__headerFooterEditMode || (window as any).__footerEditMode) : false;
-    dom.contentEditable = editMode ? 'true' : 'false';
-    dom.innerText = this.__text;
-    dom.style.display = this.__visible ? '' : 'none';
-    dom.style.outline = editMode ? '2px solid #1976d2' : 'none';
-    if (editMode) {
-      dom.addEventListener('input', (e) => {
-        this.__text = (e.target as HTMLElement).innerText;
-      });
-    }
-    return dom;
+  createDOM(_config: EditorConfig): HTMLElement {
+    const span = document.createElement('span');
+    return span;
   }
 
-  updateDOM(prevNode: PageFooterNode, dom: HTMLElement): boolean {
-    // Edit mode kontrolü
-    const editMode = typeof window !== 'undefined' ? ((window as any).__headerFooterEditMode || (window as any).__footerEditMode) : false;
-    dom.contentEditable = editMode ? 'true' : 'false';
-    dom.style.outline = editMode ? '2px solid #1976d2' : 'none';
-    if (prevNode.__text !== this.__text) {
-      dom.innerText = this.__text;
-    }
-    dom.style.display = this.__visible ? '' : 'none';
+  updateDOM(): boolean {
     return false;
   }
 
@@ -78,52 +60,29 @@ export class PageFooterNode extends ElementNode {
   }
 
   exportJSON(): SerializedPageFooterNode {
-    return {
+    const json = {
       ...super.exportJSON(),
       type: 'page-footer',
       version: 1,
       text: this.__text,
       visible: this.__visible,
-    };
+    } as SerializedPageFooterNode;
+    return json;
   }
 
-  decorate(): JSX.Element | null {
-    if (!this.__visible) return null;
-    const editMode = typeof window !== 'undefined' ? ((window as any).__headerFooterEditMode || (window as any).__footerEditMode) : false;
-    return (
-      <FooterEditable
-        text={this.__text}
-        nodeKey={this.getKey()}
-        readOnly={!editMode}
-      />
+  decorate(_editor: LexicalEditor, _config: EditorConfig): JSX.Element {
+    return this.__visible ? (
+      <FooterEditable text={this.__text} nodeKey={this.getKey()} />
+    ) : (
+      <></>
     );
   }
 
-  isSelected(): boolean {
-    if (typeof window === 'undefined') return false;
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return false;
-    const anchorNode = selection.anchorNode as HTMLElement | null;
-    if (!anchorNode) return false;
-    return !!anchorNode.closest('.a4-footer');
-  }
-
-  // Footer'ın asla silinememesi için remove ve removeChild'ı override et
-  remove(): void {
-    // Sadece düzenleme modunda silinebilir
-    if (typeof window !== 'undefined' && ((window as any).__headerFooterEditMode || (window as any).__footerEditMode)) {
-      super.remove();
-    }
-    // Mod kapalıysa hiçbir şey yapma
-  }
-  removeChild(): void {
-    if (typeof window !== 'undefined' && ((window as any).__headerFooterEditMode || (window as any).__footerEditMode)) {
-      super.removeChild();
-    }
-  }
 }
 
-function FooterEditable({ text, nodeKey, readOnly }: { text: string; nodeKey: string; readOnly: boolean }) {
+function FooterEditable({ text, nodeKey }: { text: string; nodeKey: NodeKey }) {
+  const [editor] = useLexicalComposerContext();
+  const { headerFooterEditMode } = useEditModeContext();
   const divRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -132,23 +91,17 @@ function FooterEditable({ text, nodeKey, readOnly }: { text: string; nodeKey: st
     }
   }, [text]);
 
-  React.useEffect(() => {
-    if (divRef.current) {
-      divRef.current.contentEditable = (!readOnly).toString();
-    }
-  }, [readOnly]);
+  const commit = React.useCallback((newText: string) => {
+    editor.update(() => {
+      const node = $getNodeByKey(nodeKey) as PageFooterNode | null;
+      if (node) node.setText(newText);
+    });
+  }, [editor, nodeKey]);
 
   const handleInput = React.useCallback((e: React.FormEvent<HTMLDivElement>) => {
     const newText = (e.target as HTMLDivElement).innerText;
-    if (typeof window !== 'undefined' && window.editor) {
-      window.editor.update(() => {
-        const node = window.editor.getEditorState().read(() => window.editor.getElementByKey(nodeKey));
-        if (node && typeof node.setText === 'function') {
-          node.setText(newText);
-        }
-      });
-    }
-  }, [nodeKey]);
+    commit(newText);
+  }, [commit]);
 
   const handleKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.ctrlKey && (e.key === 'a' || e.key === 'A')) {
@@ -168,12 +121,12 @@ function FooterEditable({ text, nodeKey, readOnly }: { text: string; nodeKey: st
     <div
       ref={divRef}
       className="a4-footer"
-      contentEditable={!readOnly}
+      contentEditable={headerFooterEditMode}
       suppressContentEditableWarning
       onInput={handleInput}
       onKeyDown={handleKeyDown}
       data-node-key={nodeKey}
-      style={{ minHeight: '32px', outline: readOnly ? 'none' : '2px solid #1976d2' }}
+      style={{ minHeight: '32px', outline: headerFooterEditMode ? '2px solid #1976d2' : 'none' }}
     />
   );
 }
