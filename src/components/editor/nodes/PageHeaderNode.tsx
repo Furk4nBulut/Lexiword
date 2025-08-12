@@ -37,19 +37,33 @@ export class PageHeaderNode extends ElementNode {
     return this.__visible;
   }
 
+  setText(text: string): void {
+    const writable = this.getWritable();
+    writable.__text = text;
+  }
+
   createDOM(config: EditorConfig): HTMLElement {
     const dom = document.createElement('div');
     dom.className = 'a4-header';
-    dom.contentEditable = 'true';
+    // Edit mode kontrolü
+    const editMode = typeof window !== 'undefined' ? ((window as any).__headerFooterEditMode || (window as any).__headerEditMode) : false;
+    dom.contentEditable = editMode ? 'true' : 'false';
     dom.innerText = this.__text;
     dom.style.display = this.__visible ? '' : 'none';
-    dom.addEventListener('input', (e) => {
-      this.__text = (e.target as HTMLElement).innerText;
-    });
+    dom.style.outline = editMode ? '2px solid #1976d2' : 'none';
+    if (editMode) {
+      dom.addEventListener('input', (e) => {
+        this.__text = (e.target as HTMLElement).innerText;
+      });
+    }
     return dom;
   }
 
   updateDOM(prevNode: PageHeaderNode, dom: HTMLElement): boolean {
+    // Edit mode kontrolü
+    const editMode = typeof window !== 'undefined' ? ((window as any).__headerFooterEditMode || (window as any).__headerEditMode) : false;
+    dom.contentEditable = editMode ? 'true' : 'false';
+    dom.style.outline = editMode ? '2px solid #1976d2' : 'none';
     if (prevNode.__text !== this.__text) {
       dom.innerText = this.__text;
     }
@@ -74,7 +88,7 @@ export class PageHeaderNode extends ElementNode {
 
   decorate(): JSX.Element | null {
     if (!this.__visible) return null;
-    const editMode = typeof window !== 'undefined' ? (window as any).__headerEditMode : false;
+    const editMode = typeof window !== 'undefined' ? ((window as any).__headerFooterEditMode || (window as any).__headerEditMode) : false;
     return (
       <HeaderEditable
         text={this.__text}
@@ -111,31 +125,54 @@ export class PageHeaderNode extends ElementNode {
 }
 
 function HeaderEditable({ text, nodeKey, readOnly }: { text: string; nodeKey: string, readOnly: boolean }) {
-  const [value, setValue] = React.useState(text);
-  // Lexical update tetikleyici
-  const forceUpdate = React.useReducer(x => x + 1, 0)[1];
+  const divRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (divRef.current && divRef.current.innerText !== text) {
+      divRef.current.innerText = text;
+    }
+  }, [text]);
+
+  React.useEffect(() => {
+    if (divRef.current) {
+      divRef.current.contentEditable = (!readOnly).toString();
+    }
+  }, [readOnly]);
+
+  const handleInput = React.useCallback((e: React.FormEvent<HTMLDivElement>) => {
+    const newText = (e.target as HTMLDivElement).innerText;
+    if (typeof window !== 'undefined' && window.editor) {
+      window.editor.update(() => {
+        const node = window.editor.getEditorState().read(() => window.editor.getElementByKey(nodeKey));
+        if (node && typeof node.setText === 'function') {
+          node.setText(newText);
+        }
+      });
+    }
+  }, [nodeKey]);
+
+  const handleBlur = React.useCallback((e: React.FocusEvent<HTMLDivElement>) => {
+    const newText = (e.target as HTMLDivElement).innerText;
+    if (typeof window !== 'undefined' && window.editor) {
+      window.editor.update(() => {
+        const node = window.editor.getEditorState().read(() => window.editor.getElementByKey(nodeKey));
+        if (node && typeof node.setText === 'function') {
+          node.setText(newText);
+        }
+      });
+    }
+  }, [nodeKey]);
+
   return (
     <div
+      ref={divRef}
       className="a4-header"
       contentEditable={!readOnly}
       suppressContentEditableWarning
-      onInput={e => setValue((e.target as HTMLElement).innerText)}
-      onDoubleClick={() => {
-        if (typeof window !== 'undefined') {
-          (window as any).__headerEditMode = true;
-          forceUpdate();
-        }
-      }}
-      onBlur={() => {
-        if (typeof window !== 'undefined') {
-          (window as any).__headerEditMode = false;
-          forceUpdate();
-        }
-      }}
+      onInput={handleInput}
+      onBlur={handleBlur}
       data-node-key={nodeKey}
       style={{ minHeight: '32px', outline: readOnly ? 'none' : '2px solid #1976d2' }}
-    >
-      {value}
-    </div>
+    />
   );
 }
