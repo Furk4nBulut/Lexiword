@@ -76,7 +76,6 @@
   color: #333;
   box-sizing: border-box;
   overflow: hidden; /* Taşmayı engelle */
-  display: flex;          /* ekstra satır kutusunu engelle */
   align-items: center;    /* tek satırı dikey hizala */
   line-height: 1.2;       /* satır kutusunu daralt */
 }

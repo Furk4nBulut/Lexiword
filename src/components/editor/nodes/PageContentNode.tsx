@@ -32,6 +32,7 @@ export class PageContentNode extends ElementNode {
   createDOM(): HTMLElement {
     const dom = document.createElement('div');
     dom.className = 'a4-content';
+    dom.setAttribute('data-lexical-node-key', this.getKey());
     return dom;
   }
 

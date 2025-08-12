@@ -10,6 +10,7 @@ import { editorNodes } from './nodes';
 import { PageInitializerPlugin } from './plugins/PageInitializerPlugin';
 import { EditModeProvider } from './EditModeContext';
 import { ContentSelectAllPlugin } from './plugins/ContentSelectAllPlugin';
+import { PageAutoSplitPlugin } from './plugins/PageAutoSplitPlugin';
 
 const theme = {
   text: {
@@ -53,6 +54,7 @@ export default function Editor(): JSX.Element {
           <PageInitializerPlugin />
           <HistoryPlugin />
           <ContentSelectAllPlugin />
+          <PageAutoSplitPlugin />
         </EditModeProvider>
       </LexicalComposer>
     </div>

@@ -55,14 +55,6 @@
             </PendingDiffInfo>
           </value>
         </entry>
-        <entry key="$PROJECT_DIR$/src/components/toolbar/Toolbar.css">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/src/components/toolbar/Toolbar.css" />
-              <option name="updatedContent" value=".toolbarRoot {&#10;  display: flex;&#10;  align-items: center;&#10;  gap: 12px;&#10;  background: #fff;&#10;  border-radius: 8px;&#10;  box-shadow: 0 2px 8px rgba(0,0,0,0.06);&#10;  padding: 10px 20px;&#10;  margin-bottom: 24px;&#10;  position: relative;&#10;}&#10;&#10;.toolbarGroup {&#10;  display: flex;&#10;  align-items: center;&#10;  gap: 4px;&#10;}&#10;&#10;.toolbarButton {&#10;  background: #f4f4f4;&#10;  border: 1px solid #e0e0e0;&#10;  border-radius: 4px;&#10;  padding: 6px 12px;&#10;  font-size: 15px;&#10;  color: #333;&#10;  cursor: pointer;&#10;  transition: background 0.15s, border 0.15s;&#10;  outline: none;&#10;  display: flex;&#10;  align-items: center;&#10;  gap: 4px;&#10;}&#10;&#10;.toolbarButton.active, .toolbarButton:active, .toolbarButton:focus {&#10;  background: #e0e7ef;&#10;  border-color: #b6c2d9;&#10;}&#10;&#10;.toolbarButton[disabled] {&#10;  opacity: 0.5;&#10;  cursor: not-allowed;&#10;}&#10;" />
-            </PendingDiffInfo>
-          </value>
-        </entry>
       </map>
     </option>
   </component>
