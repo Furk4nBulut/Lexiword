@@ -53,6 +53,26 @@
   font-size: 16px;
 }
 
+.a4-page.a4-limit-exceeded {
+  outline: 3px solid #e53935;
+  box-shadow: 0 0 16px #e53935;
+  position: relative;
+}
+.a4-page.a4-limit-exceeded::after {
+  content: 'A4 sınırı aşıldı!';
+  position: absolute;
+  top: 8px;
+  right: 16px;
+  background: #e53935;
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  z-index: 100;
+  pointer-events: none;
+}
+
 @media (max-width: 900px) {
   .a4-page {
     width: 100vw;

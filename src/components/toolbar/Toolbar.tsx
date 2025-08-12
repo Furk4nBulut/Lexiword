@@ -13,6 +13,7 @@ import {
 } from '@radix-ui/react-icons';
 import { OrderedListIcon, UnorderedListIcon } from './icons';
 import './Toolbar.css';
+import { PageNode } from '../editor/nodes/PageNode';
 
 interface ToolbarButtonProps {
   className?: string;
@@ -176,6 +177,51 @@ function ListToolbarPlugin(): JSX.Element {
   );
 }
 
+function SectionToolbarGroup({
+  editMode,
+  setEditMode,
+  showHeader,
+  setShowHeader,
+  showFooter,
+  setShowFooter,
+}: ToolbarPluginProps): JSX.Element {
+  const [editor] = useLexicalComposerContext();
+  const handleAddSection = () => {
+    PageNode.createSection(editor);
+  };
+  return (
+    <div className="toolbarGroup">
+      <ToolbarButton
+        onClick={() => setEditMode(!editMode)}
+        className={editMode ? 'active' : ''}
+        title={editMode ? 'Düzenleme Modunu Kapat' : 'Header/Footer Düzenle'}
+      >
+        {editMode ? 'Düzenleme Modunu Kapat' : 'Header/Footer Düzenle'}
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => setShowHeader(!showHeader)}
+        className={showHeader ? 'active' : ''}
+        title={showHeader ? 'Header Kaldır' : 'Header Ekle'}
+      >
+        {showHeader ? 'Header Kaldır' : 'Header Ekle'}
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => setShowFooter(!showFooter)}
+        className={showFooter ? 'active' : ''}
+        title={showFooter ? 'Footer Kaldır' : 'Footer Ekle'}
+      >
+        {showFooter ? 'Footer Kaldır' : 'Footer Ekle'}
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={handleAddSection}
+        title="Section Ekle"
+      >
+        Section Ekle
+      </ToolbarButton>
+    </div>
+  );
+}
+
 interface ToolbarPluginProps {
   editMode: boolean;
   setEditMode: (v: boolean) => void;
@@ -198,30 +244,14 @@ export function ToolbarPlugin({
       <TextFormatToolbarPlugin />
       <HeadingToolbarPlugin />
       <ListToolbarPlugin />
-      <ToolbarButton
-        onClick={() => setEditMode(!editMode)}
-        title={editMode ? 'Düzenleme Modunu Kapat' : 'Header/Footer Düzenle'}
-        className={editMode ? 'active' : ''}
-        style={{ marginLeft: 16 }}
-      >
-        {editMode ? 'Düzenleme Modunu Kapat' : 'Header/Footer Düzenle'}
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => setShowHeader(!showHeader)}
-        title={showHeader ? 'Header Kaldır' : 'Header Ekle'}
-        className={showHeader ? 'active' : ''}
-        style={{ marginLeft: 8 }}
-      >
-        {showHeader ? 'Header Kaldır' : 'Header Ekle'}
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => setShowFooter(!showFooter)}
-        title={showFooter ? 'Footer Kaldır' : 'Footer Ekle'}
-        className={showFooter ? 'active' : ''}
-        style={{ marginLeft: 8 }}
-      >
-        {showFooter ? 'Footer Kaldır' : 'Footer Ekle'}
-      </ToolbarButton>
+      <SectionToolbarGroup
+        editMode={editMode}
+        setEditMode={setEditMode}
+        showHeader={showHeader}
+        setShowHeader={setShowHeader}
+        showFooter={showFooter}
+        setShowFooter={setShowFooter}
+      />
     </Toolbar.Root>
   );
 }

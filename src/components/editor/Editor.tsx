@@ -9,6 +9,7 @@ import './styles.css';
 import { editorNodes } from './nodes';
 import { PageInitializerPlugin } from './plugins/PageInitializerPlugin';
 import { useState } from 'react';
+import { A4PageLimitPlugin } from './plugins/A4PageLimitPlugin';
 
 const theme = {
   text: {
@@ -85,6 +86,7 @@ export default function Editor({
         </div>
         <PageInitializerPlugin />
         <HistoryPlugin />
+        <A4PageLimitPlugin />
       </div>
     </LexicalComposer>
   );
