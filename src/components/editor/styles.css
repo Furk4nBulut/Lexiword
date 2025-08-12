@@ -66,7 +66,7 @@
   display: none;
 }
 
-.a4-footer {
+ .a4-footer {
   /* 20mm ≈ 76px at 96dpi */
   flex: 0 0 76px;
   background: #f8fafc;
@@ -78,6 +78,7 @@
   overflow: hidden; /* Taşmayı engelle */
   align-items: center; /* tek satırı dikey hizala */
   line-height: 1.2; /* satır kutusunu daralt */
+  margin-top: auto; /* Footer'ı her zaman en alta it */
 }
 
 /* Footer içindeki default margin'leri sıfırla */

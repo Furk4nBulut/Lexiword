@@ -21,6 +21,7 @@ export class PageFooterNode extends DecoratorNode<JSX.Element> {
 
   __visible: boolean;
 
+
   static getType(): string {
     return 'page-footer';
   }

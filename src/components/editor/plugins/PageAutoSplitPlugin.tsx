@@ -4,16 +4,16 @@ import {
   $getRoot,
   $getSelection,
   $isRangeSelection,
-  $getNodeByKey,
   $isTextNode,
   $createTextNode,
   $createParagraphNode
 } from 'lexical';
 import type { ElementNode as LexicalElementNode } from 'lexical';
-import { $createPageNode, $isPageNode } from '../nodes/PageNode';
-import { isContentNode } from '../nodes/sectionTypeGuards';
-import type { PageContentNode } from '../nodes/PageContentNode';
-import type { PageNode } from '../nodes/PageNode';
+import { $createPageNode, $isPageNode, type PageNode } from '../nodes/PageNode';
+import { isContentNode, isHeaderNode, isFooterNode } from '../nodes/sectionTypeGuards';
+import { PageHeaderNode } from '../nodes/PageHeaderNode';
+import { PageFooterNode } from '../nodes/PageFooterNode';
+import { PageContentNode } from '../nodes/PageContentNode';
 
 export interface PageFlowSettings {
   pageHeightMm: number;
@@ -30,10 +30,8 @@ export function PageAutoSplitPlugin({
   const rafRef = useRef<number | null>(null);
   const isReflowingRef = useRef(false);
   const unbreakableTooTallKeysRef = useRef<Set<string>>(new Set());
-  const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
-    // --- PAGE REFLOW LOGIC ---
     function getPageEl(page: PageNode): HTMLElement | null {
       return editor.getElementByKey(page.getKey());
     }
@@ -46,17 +44,18 @@ export function PageAutoSplitPlugin({
       paddingTop: number;
       paddingBottom: number;
     } {
-  const contentEl = pageEl.querySelector('[data-lexical-page-section="content"]');
-      const target = contentEl ?? pageEl;
-      const rect = target.getBoundingClientRect();
-      const styles = window.getComputedStyle(target);
-      let paddingTop = parseFloat(styles.paddingTop);
-      let paddingBottom = parseFloat(styles.paddingBottom);
-      if (Number.isNaN(paddingTop)) paddingTop = 0;
-      if (Number.isNaN(paddingBottom)) paddingBottom = 0;
-      const top = rect.top + paddingTop;
-      const bottom = rect.bottom - paddingBottom;
-      return { el: contentEl, top, bottom, height: bottom - top, paddingTop, paddingBottom };
+  const el = pageEl.querySelector('[data-lexical-page-section="content"]');
+  const contentEl = el instanceof HTMLElement ? el : null;
+  const target = contentEl ?? pageEl;
+  const rect = target.getBoundingClientRect();
+  const styles = window.getComputedStyle(target);
+  let paddingTop = parseFloat(styles.paddingTop);
+  let paddingBottom = parseFloat(styles.paddingBottom);
+  if (Number.isNaN(paddingTop)) paddingTop = 0;
+  if (Number.isNaN(paddingBottom)) paddingBottom = 0;
+  const top = rect.top + paddingTop;
+  const bottom = rect.bottom - paddingBottom;
+  return { el: contentEl, top, bottom, height: bottom - top, paddingTop, paddingBottom };
     }
 
     function getContentScrollHeight(targetEl: HTMLElement, paddingTop: number, paddingBottom: number): number {
@@ -127,11 +126,12 @@ export function PageAutoSplitPlugin({
         }
 
         const children = root.getChildren();
-        const hasNonPage = children.some((n) => n != null && !$isPageNode(n));
+        const hasNonPage = children.some((n) => !$isPageNode(n));
         if (hasNonPage) {
           const page = $createPageNode();
           children.forEach((n) => {
-            if (n != null && !$isPageNode(n)) {
+            if (!$isPageNode(n)) {
+              // Move foreign nodes into first page's content section
               const contentSection = page.getChildren().find((c: any): c is PageContentNode => isContentNode(c));
               if (contentSection != null) contentSection.append(n);
             }
@@ -139,11 +139,15 @@ export function PageAutoSplitPlugin({
           root.append(page);
         }
 
-  let page = root.getFirstChild();
-  while (page != null && $isPageNode(page)) {
+        let page = root.getFirstChild();
+        let lastPageNode: PageNode | null = null;
+        let lastPageEl: HTMLElement | null = null;
+        let lastCapacity = 0;
+        let lastUsedScroll = 0;
+        while ($isPageNode(page)) {
           const pageNode = page;
           const pageEl = getPageEl(pageNode);
-          if (pageEl == null) {
+          if (pageEl === null) {
             page = pageNode.getNextSibling();
             continue;
           }
@@ -154,9 +158,11 @@ export function PageAutoSplitPlugin({
 
           const { el: contentDomEl, height: capacity, top: contentTop, paddingTop, paddingBottom } =
             getContentMetrics(pageEl);
-          const contentSection = pageNode.getChildren().find((n: any): n is PageContentNode => isContentNode(n));
-          const blocks = (contentSection?.getChildren() ?? []) as LexicalElementNode[];
+          // Resolve content section node
+          const contentSection = pageNode.getChildren().find((c: any): c is PageContentNode => isContentNode(c));
+          const blocks = contentSection?.getChildren() ?? [];
 
+          // Deepest child bottom and sum of heights
           let deepestBottom = contentTop;
           let sumHeights = 0;
           for (let i = 0; i < blocks.length; i++) {
@@ -171,6 +177,7 @@ export function PageAutoSplitPlugin({
           const targetForScroll = contentDomEl ?? pageEl;
           const usedScroll = getContentScrollHeight(targetForScroll, paddingTop, paddingBottom);
 
+          // Overflow if both metrics exceed, OR scroll-based says content exceeds capacity
           const tolDeepest = 1;
           const tolSum = 6;
           const scrollTol = 2;
@@ -179,7 +186,8 @@ export function PageAutoSplitPlugin({
             usedScroll > capacity + scrollTol;
 
           if (overflow) {
-            const candidate = pickMovableBlock(blocks);
+            const elementBlocks = blocks.filter((b): b is LexicalElementNode => typeof (b as LexicalElementNode).getChildren === 'function');
+            const candidate = pickMovableBlock(elementBlocks);
             if (candidate != null) {
               if (blocks.length === 1) {
                 const el = editor.getElementByKey(candidate.getKey());
@@ -190,31 +198,41 @@ export function PageAutoSplitPlugin({
                   if (!ok) {
                     unbreakableTooTallKeysRef.current.add(key);
                     let nextPage = pageNode.getNextSibling();
-                    if (nextPage == null || !$isPageNode(nextPage)) {
+                    if (!$isPageNode(nextPage)) {
                       nextPage = $createPageNode();
                       pageNode.insertAfter(nextPage);
                     }
-                    const nextContent = nextPage.getChildren().find((n: any): n is PageContentNode => isContentNode(n));
+                    const nextContent = nextPage.getChildren().find((c: any): c is PageContentNode => isContentNode(c));
                     if (nextContent != null) nextContent.append(candidate);
                   }
                 }
               } else {
                 let nextPage = pageNode.getNextSibling();
-                if (nextPage == null || !$isPageNode(nextPage)) {
+                if (!$isPageNode(nextPage)) {
                   nextPage = $createPageNode();
                   pageNode.insertAfter(nextPage);
                 }
-                const nextContent = nextPage.getChildren().find((n: any): n is PageContentNode => isContentNode(n));
+                const nextContent = nextPage.getChildren().find((c: any): c is PageContentNode => isContentNode(c));
                 if (nextContent != null) nextContent.append(candidate);
               }
 
+              // Cursor otomatik yeni sayfaya taşınsın
               const selection = $getSelection();
               if ($isRangeSelection(selection)) {
                 const next = pageNode.getNextSibling();
-                if (next != null && $isPageNode(next)) {
-                  const nextContent = next.getChildren().find((n: any): n is PageContentNode => isContentNode(n));
+                if ($isPageNode(next)) {
+                  const nextContent = next.getChildren().find((c: any): c is PageContentNode => isContentNode(c));
                   const firstChild = nextContent?.getFirstChild() ?? null;
-                  if (firstChild != null) firstChild.selectStart();
+                  if (firstChild != null) {
+                    firstChild.selectStart();
+                    // Cursor yeni sayfaya taşındıysa scroll et
+                    setTimeout(() => {
+                      const el = editor.getElementByKey(firstChild.getKey());
+                      if (el !== null) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                    }, 0);
+                  }
                 }
               }
 
@@ -222,7 +240,55 @@ export function PageAutoSplitPlugin({
             }
           }
 
+          // Son sayfa ve doluysa yeni bir boş sayfa ekle
+          lastPageNode = pageNode;
+          lastPageEl = pageEl;
+          lastCapacity = capacity;
+          lastUsedScroll = usedScroll;
+
           page = pageNode.getNextSibling();
+        }
+
+        // Son sayfa doluysa yeni bir boş sayfa ekle
+        if (
+          lastPageNode !== null &&
+          lastPageEl !== null &&
+          lastUsedScroll > lastCapacity - 2 &&
+          lastPageNode.getNextSibling() === null
+        ) {
+          const newPage = $createPageNode();
+          // Header ve footer kopyala
+          const prevHeader = lastPageNode.getChildren().find((n) => isHeaderNode(n));
+          const prevFooter = lastPageNode.getChildren().find((n) => isFooterNode(n));
+          let headerNode = null;
+          let footerNode = null;
+          if (prevHeader !== null && prevHeader !== undefined) {
+            headerNode = new PageHeaderNode(prevHeader.__text ?? '', undefined, prevHeader.__visible ?? false);
+            newPage.append(headerNode);
+          }
+          // Her zaman yeni bir content node ekle
+          const contentNode = new PageContentNode();
+          newPage.append(contentNode);
+          if (prevFooter !== null && prevFooter !== undefined) {
+            footerNode = new PageFooterNode(prevFooter.__text ?? '', undefined, prevFooter.__visible ?? false);
+            newPage.append(footerNode);
+          }
+          lastPageNode.insertAfter(newPage);
+          // Cursor yeni content'e taşınsın ve scroll yapılsın
+          setTimeout(() => {
+            const el = editor.getElementByKey(newPage.getKey());
+            if (el !== null) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            // Cursor yeni content'e
+            const contentEl = editor.getElementByKey(contentNode.getKey());
+            if (contentEl !== null) {
+              contentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            editor.update(() => {
+              contentNode.selectStart();
+            });
+          }, 0);
         }
       });
 
@@ -255,71 +321,9 @@ export function PageAutoSplitPlugin({
       schedule();
     });
 
-    // --- INTERSECTION OBSERVER LOGIC ---
-    function setupObserver(): void {
-      observerRef.current?.disconnect();
-
-      const rootElement = editor.getRootElement();
-      if (rootElement === null) return;
-
-      const observer = new IntersectionObserver(
-        (entries) => {
-          for (const entry of entries) {
-            if (entry.isIntersecting) {
-              const target = entry.target as HTMLElement;
-              const pageElement = target.closest('[data-lexical-node-key]');
-
-              editor.update(() => {
-                const root = $getRoot();
-
-                if (pageElement !== null) {
-                  const key = pageElement.getAttribute('data-lexical-node-key');
-                  if (key == null || key === '') return;
-                  const node = $getNodeByKey(key);
-                  if (node != null && $isPageNode(node)) {
-                    const nextSibling = node.getNextSibling();
-                    if (nextSibling == null || !$isPageNode(nextSibling)) {
-                      const newPage = $createPageNode();
-                      node.insertAfter(newPage);
-                      const content = newPage.getChildren().find((n: any): n is PageContentNode => isContentNode(n));
-                      const firstChild = content?.getFirstChild();
-                      if (firstChild != null) firstChild.selectStart();
-                    }
-                  }
-                } else {
-                  const lastChild = root.getLastChild();
-                  if (lastChild == null || !$isPageNode(lastChild)) {
-                    const newPage = $createPageNode();
-                    root.append(newPage);
-                  }
-                }
-              });
-            }
-          }
-        },
-        { root: null, threshold: 1.0, rootMargin: '0px 0px 200px 0px' }
-      );
-
-      observerRef.current = observer;
-
-      const sentinels = rootElement.querySelectorAll('.page-observer-target');
-      sentinels.forEach((el) => {
-        observer.observe(el);
-      });
-    }
-
-  requestAnimationFrame(setupObserver);
-
-    const unregisterObs = editor.registerUpdateListener(() => {
-      setTimeout(setupObserver, 0);
-    });
-
-    return () => {
+    return (): void => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       unregister();
-      unregisterObs();
-      observerRef.current?.disconnect();
-      observerRef.current = null;
       isReflowingRef.current = false;
     };
   }, [editor, pageHeightMm, marginTopMm, marginBottomMm]);
