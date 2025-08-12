@@ -11,6 +11,7 @@ import { PageInitializerPlugin } from './plugins/PageInitializerPlugin';
 import { EditModeProvider } from './EditModeContext';
 import { ContentSelectAllPlugin } from './plugins/ContentSelectAllPlugin';
 import { PageAutoSplitPlugin } from './plugins/PageAutoSplitPlugin';
+import PageContentFlowPlugin from './plugins/PageContentFlowPlugin';
 
 const theme = {
   text: {
@@ -54,7 +55,8 @@ export default function Editor(): JSX.Element {
           <PageInitializerPlugin />
           <HistoryPlugin />
           <ContentSelectAllPlugin />
-          <PageAutoSplitPlugin />
+          <PageAutoSplitPlugin pageHeightMm={297} marginTopMm={20} marginBottomMm={20} />
+          <PageContentFlowPlugin />
         </EditModeProvider>
       </LexicalComposer>
     </div>
