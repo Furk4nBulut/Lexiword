@@ -62,32 +62,15 @@ export default function Editor({
         showFooter={showFooter}
         setShowFooter={setShowFooter}
       />
-      <div className="editor-a4-wrapper">
-        <div className="a4-page" style={{ display: 'flex', flexDirection: 'column', width: '210mm', height: '297mm', background: '#fff', boxShadow: '0 0 8px #ccc', position: 'relative' }}>
-          {showHeader && (
-            <div className="a4-header editable">
-              Header (Düzenlenebilir)
-              <button style={{ float: 'right' }} onClick={() => setShowHeader(false)}>Kaldır</button>
-            </div>
-          )}
-          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-            <RichTextPlugin
-              contentEditable={<ContentEditable className="a4-content" style={{ overflow: 'auto', height: '100%' }} />}
-              placeholder={<div className="editor-placeholder">Start typing...</div>}
-              ErrorBoundary={LexicalErrorBoundary}
-            />
-          </div>
-          {showFooter && (
-            <div className="a4-footer editable">
-              Footer (Düzenlenebilir)
-              <button style={{ float: 'right' }} onClick={() => setShowFooter(false)}>Kaldır</button>
-            </div>
-          )}
-        </div>
+          {/* Header/Footer statik gösterimi kaldırıldı, Lexical node'lar üzerinden render edilecek */}
+          <RichTextPlugin
+            contentEditable={<ContentEditable/>}
+            placeholder={<div className="editor-placeholder">Start typing...</div>}
+            ErrorBoundary={LexicalErrorBoundary}
+          />
         <PageInitializerPlugin />
         <HistoryPlugin />
         <A4PageLimitPlugin />
-      </div>
     </LexicalComposer>
   );
 }

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 
 // A4 yüksekliği: 1122px (96dpi için)
-const A4_HEIGHT_PX = 1122;
+const A4_HEIGHT_PX = 1123;
 
 export function A4PageLimitPlugin() {
   const [editor] = useLexicalComposerContext();

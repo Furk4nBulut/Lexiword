@@ -6,24 +6,35 @@ export type SerializedPageHeaderNode = Spread<
     type: 'page-header';
     version: 1;
     text: string;
+    visible: boolean;
   },
   SerializedElementNode
 >;
 
 export class PageHeaderNode extends ElementNode {
   __text: string;
+  __visible: boolean;
 
   static getType(): string {
     return 'page-header';
   }
 
   static clone(node: PageHeaderNode): PageHeaderNode {
-    return new PageHeaderNode(node.__text, node.__key);
+    return new PageHeaderNode(node.__text, node.__key, node.__visible);
   }
 
-  constructor(text = '', key?: string) {
+  constructor(text = '', key?: string, visible = false) {
     super(key);
     this.__text = text;
+    this.__visible = visible;
+  }
+
+  setVisible(visible: boolean) {
+    const writable = this.getWritable();
+    writable.__visible = visible;
+  }
+  isVisible() {
+    return this.__visible;
   }
 
   createDOM(config: EditorConfig): HTMLElement {
@@ -31,6 +42,7 @@ export class PageHeaderNode extends ElementNode {
     dom.className = 'a4-header';
     dom.contentEditable = 'true';
     dom.innerText = this.__text;
+    dom.style.display = this.__visible ? '' : 'none';
     dom.addEventListener('input', (e) => {
       this.__text = (e.target as HTMLElement).innerText;
     });
@@ -41,11 +53,12 @@ export class PageHeaderNode extends ElementNode {
     if (prevNode.__text !== this.__text) {
       dom.innerText = this.__text;
     }
+    dom.style.display = this.__visible ? '' : 'none';
     return false;
   }
 
   static importJSON(serializedNode: SerializedPageHeaderNode): PageHeaderNode {
-    const node = new PageHeaderNode(serializedNode.text);
+    const node = new PageHeaderNode(serializedNode.text, undefined, serializedNode.visible);
     return node;
   }
 
@@ -55,10 +68,12 @@ export class PageHeaderNode extends ElementNode {
       type: 'page-header',
       version: 1,
       text: this.__text,
+      visible: this.__visible,
     };
   }
 
-  decorate(): JSX.Element {
+  decorate(): JSX.Element | null {
+    if (!this.__visible) return null;
     return <HeaderEditable text={this.__text} nodeKey={this.getKey()} />;
   }
 }

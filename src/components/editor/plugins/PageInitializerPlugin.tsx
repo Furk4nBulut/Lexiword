@@ -11,7 +11,7 @@ export function PageInitializerPlugin() {
       const root = $getRoot();
       if (root.getChildrenSize() === 0) {
         const page = new PageNode();
-        // Do not add header or footer by default
+        page.appendInitialChildren(); // Always add header/footer/content (header/footer hidden by default)
         root.append(page);
       }
     });

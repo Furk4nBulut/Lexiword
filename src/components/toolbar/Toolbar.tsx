@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $setBlocksType_experimental } from '@lexical/selection';
-import { $isRangeSelection, $getSelection, type TextFormatType } from 'lexical';
+import { $isRangeSelection, $getSelection, type TextFormatType, $getRoot } from 'lexical';
 import { $createHeadingNode } from '@lexical/rich-text';
 import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND } from '@lexical/list';
 import * as Toolbar from '@radix-ui/react-toolbar';
@@ -186,9 +186,28 @@ function SectionToolbarGroup({
   setShowFooter,
 }: ToolbarPluginProps): JSX.Element {
   const [editor] = useLexicalComposerContext();
-  const handleAddSection = () => {
-    PageNode.createSection(editor);
+
+  const handleHeader = () => {
+    editor.update(() => {
+      const root = $getRoot();
+      const pageNode = root.getChildren().find((n) => n.__type === 'page') as PageNode | undefined;
+      if (!pageNode) return;
+      const headerNode = pageNode.getHeaderNode();
+      if (!headerNode) return;
+      headerNode.setVisible(!headerNode.isVisible());
+    });
   };
+  const handleFooter = () => {
+    editor.update(() => {
+      const root = $getRoot();
+      const pageNode = root.getChildren().find((n) => n.__type === 'page') as PageNode | undefined;
+      if (!pageNode) return;
+      const footerNode = pageNode.getFooterNode();
+      if (!footerNode) return;
+      footerNode.setVisible(!footerNode.isVisible());
+    });
+  };
+
   return (
     <div className="toolbarGroup">
       <ToolbarButton
@@ -199,21 +218,19 @@ function SectionToolbarGroup({
         {editMode ? 'Düzenleme Modunu Kapat' : 'Header/Footer Düzenle'}
       </ToolbarButton>
       <ToolbarButton
-        onClick={() => setShowHeader(!showHeader)}
-        className={showHeader ? 'active' : ''}
-        title={showHeader ? 'Header Kaldır' : 'Header Ekle'}
+        onClick={handleHeader}
+        title="Header Ekle/Kaldır"
       >
-        {showHeader ? 'Header Kaldır' : 'Header Ekle'}
+        Header Ekle/Kaldır
       </ToolbarButton>
       <ToolbarButton
-        onClick={() => setShowFooter(!showFooter)}
-        className={showFooter ? 'active' : ''}
-        title={showFooter ? 'Footer Kaldır' : 'Footer Ekle'}
+        onClick={handleFooter}
+        title="Footer Ekle/Kaldır"
       >
-        {showFooter ? 'Footer Kaldır' : 'Footer Ekle'}
+        Footer Ekle/Kaldır
       </ToolbarButton>
       <ToolbarButton
-        onClick={handleAddSection}
+        onClick={() => PageNode.createSection(editor)}
         title="Section Ekle"
       >
         Section Ekle
