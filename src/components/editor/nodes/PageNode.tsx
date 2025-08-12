@@ -1,4 +1,3 @@
-
 import { ElementNode, type SerializedElementNode, type LexicalNode } from 'lexical';
 import { PageHeaderNode } from './PageHeaderNode';
 import { PageFooterNode } from './PageFooterNode';
