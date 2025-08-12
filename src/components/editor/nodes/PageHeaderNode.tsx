@@ -163,6 +163,20 @@ function HeaderEditable({ text, nodeKey, readOnly }: { text: string; nodeKey: st
     }
   }, [nodeKey]);
 
+  const handleKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.ctrlKey && (e.key === 'a' || e.key === 'A')) {
+      e.preventDefault();
+      const el = divRef.current;
+      if (el) {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      }
+    }
+  }, []);
+
   return (
     <div
       ref={divRef}
@@ -171,6 +185,7 @@ function HeaderEditable({ text, nodeKey, readOnly }: { text: string; nodeKey: st
       suppressContentEditableWarning
       onInput={handleInput}
       onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
       data-node-key={nodeKey}
       style={{ minHeight: '32px', outline: readOnly ? 'none' : '2px solid #1976d2' }}
     />

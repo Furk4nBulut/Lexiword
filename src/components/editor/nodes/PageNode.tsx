@@ -53,7 +53,7 @@ export class PageNode extends ElementNode {
   }
 
   // Always ensure header, content, footer exist as children
-  appendInitialChildren() {
+  ensureHeaderFooterContentChildren() {
     // Sıralama: header -> content -> footer (section her zaman ortada)
     let header = this.getChildren().find(child => child.getType() === 'page-header');
     let content = this.getChildren().find(child => child.getType() === 'page-content');
@@ -68,44 +68,14 @@ export class PageNode extends ElementNode {
     this.append(footer);
   }
 
+  appendInitialChildren() {
+    this.ensureHeaderFooterContentChildren();
+  }
+
   getHeaderNode(): PageHeaderNode | undefined {
     return this.getChildren().find(child => child.getType() === 'page-header') as PageHeaderNode;
   }
   getFooterNode(): PageFooterNode | undefined {
     return this.getChildren().find(child => child.getType() === 'page-footer') as PageFooterNode;
-  }
-
-  addHeader() {
-    const header = this.getHeaderNode();
-    if (header) header.setVisible(true);
-  }
-  removeHeader() {
-    const header = this.getHeaderNode();
-    if (header) header.setVisible(false);
-  }
-  addFooter() {
-    const footer = this.getFooterNode();
-    if (footer) footer.setVisible(true);
-  }
-  removeFooter() {
-    const footer = this.getFooterNode();
-    if (footer) footer.setVisible(false);
-  }
-
-  // Section (content) asla silinemez: removeChild ve removeChildren tamamen engelleniyor
-  removeChild(child: ElementNode): void {
-    if (child.getType() === 'page-content') {
-      // Section silinemez, hiçbir şey yapma
-      return;
-    }
-    super.removeChild(child);
-  }
-
-  removeChildren(predicate?: (child: ElementNode) => boolean): void {
-    // Section'ı asla silme
-    super.removeChildren(child => {
-      if (child.getType() === 'page-content') return false;
-      return predicate ? predicate(child) : true;
-    });
   }
 }

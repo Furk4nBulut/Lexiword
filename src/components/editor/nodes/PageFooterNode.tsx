@@ -1,4 +1,4 @@
-import { ElementNode, SerializedElementNode, EditorConfig, LexicalNode, Spread } from 'lexical';
+import { ElementNode, type SerializedElementNode, type EditorConfig, type Spread } from 'lexical';
 import * as React from 'react';
 
 export type SerializedPageFooterNode = Spread<
@@ -29,6 +29,7 @@ export class PageFooterNode extends ElementNode {
     this.__visible = visible;
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   setVisible(visible: boolean) {
     const writable = this.getWritable();
     writable.__visible = visible;
@@ -149,6 +150,20 @@ function FooterEditable({ text, nodeKey, readOnly }: { text: string; nodeKey: st
     }
   }, [nodeKey]);
 
+  const handleKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.ctrlKey && (e.key === 'a' || e.key === 'A')) {
+      e.preventDefault();
+      const el = divRef.current;
+      if (el) {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      }
+    }
+  }, []);
+
   return (
     <div
       ref={divRef}
@@ -156,6 +171,7 @@ function FooterEditable({ text, nodeKey, readOnly }: { text: string; nodeKey: st
       contentEditable={!readOnly}
       suppressContentEditableWarning
       onInput={handleInput}
+      onKeyDown={handleKeyDown}
       data-node-key={nodeKey}
       style={{ minHeight: '32px', outline: readOnly ? 'none' : '2px solid #1976d2' }}
     />
