@@ -138,6 +138,7 @@ function HeaderEditable({ text, nodeKey }: { text: string; nodeKey: NodeKey }): 
       onInput={handleInput}
       onKeyDown={handleKeyDown}
       data-node-key={nodeKey}
+      data-lexical-node-key={nodeKey}
       style={{ minHeight: '32px', outline: headerFooterEditMode ? '2px solid #1976d2' : 'none' }}
     />
   );

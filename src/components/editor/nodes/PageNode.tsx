@@ -1,7 +1,16 @@
-import { ElementNode, type SerializedElementNode } from 'lexical';
+
+import { ElementNode, type SerializedElementNode, type LexicalNode } from 'lexical';
 import { PageHeaderNode } from './PageHeaderNode';
 import { PageFooterNode } from './PageFooterNode';
 import { PageContentNode } from './PageContentNode';
+
+export function $createPageNode(): PageNode {
+  return new PageNode({});
+}
+
+export function $isPageNode(node: LexicalNode | null | undefined): node is PageNode {
+  return node instanceof PageNode;
+}
 
 export type SerializedPageNode = {
   type: 'page';
