@@ -1,47 +1,39 @@
 import * as React from 'react';
-import './styles.css';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $setBlocksType_experimental } from '@lexical/selection';
 import { $isRangeSelection, $getSelection, type TextFormatType } from 'lexical';
 import { $createHeadingNode } from '@lexical/rich-text';
 import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND } from '@lexical/list';
-import { INSERT_BANNER_COMMAND } from '../editor/plugins/banner/BannerPlugin';
 import * as Toolbar from '@radix-ui/react-toolbar';
 import {
   StrikethroughIcon,
   FontBoldIcon,
   FontItalicIcon,
   UnderlineIcon,
-  PlusCircledIcon
 } from '@radix-ui/react-icons';
 import { OrderedListIcon, UnorderedListIcon } from './icons';
-import { BannerColorPickerPlugin } from '../editor/plugins/banner/BannerColorPickerPlugin';
-import {
-  SET_SECTION_MODE_COMMAND,
-  TOGGLE_HEADER_VISIBILITY_COMMAND,
-  TOGGLE_FOOTER_VISIBILITY_COMMAND
-} from '../editor/plugins/page-section/PageSectionPlugin';
+import { PageSectionVisibilityToolbar } from './PageSectionVisibilityToolbar';
+
 
 interface ToolbarButtonProps {
-  onClick: React.MouseEventHandler<HTMLButtonElement> | undefined;
-  children: React.ReactNode;
-  title?: string;
-  dataAttribute?: string;
   className?: string;
+  onClick?: () => void;
+  title?: string;
+  children: React.ReactNode;
+  disabled?: boolean;
 }
 
 function ToolbarButton(props: ToolbarButtonProps): JSX.Element {
-  const className = `toolbarButton ${props.className ?? ''}`;
-  const additionalProps = props.dataAttribute != null ? { [props.dataAttribute]: true } : {};
-
+  const { className, onClick, title, children, disabled, ...rest } = props;
   return (
     <Toolbar.Button
-      className={className}
-      onClick={props.onClick}
-      title={props.title}
-      {...additionalProps}
+      className={`toolbarButton ${className ?? ''}`}
+      onClick={onClick}
+      title={title}
+      disabled={disabled}
+      {...rest}
     >
-      {props.children}
+      {children}
     </Toolbar.Button>
   );
 }
@@ -97,7 +89,7 @@ function TextFormatToolbarPlugin(): JSX.Element {
             onClick(format);
           }}
           title={getTitle(format)}
-          dataAttribute="data-format"
+          data-format
         >
           {getIcon(format)}
         </ToolbarButton>
@@ -106,41 +98,6 @@ function TextFormatToolbarPlugin(): JSX.Element {
   );
 }
 
-function PageSectionVisibilityToolbar(): JSX.Element {
-  const [editor] = useLexicalComposerContext();
-  return (
-    <div className="toolbarGroup">
-      <ToolbarButton
-        onClick={() => editor.dispatchCommand(TOGGLE_HEADER_VISIBILITY_COMMAND, true)}
-        title="Header Ekle (Göster)"
-        dataAttribute="data-section-visibility"
-      >
-        Header Ekle
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.dispatchCommand(TOGGLE_HEADER_VISIBILITY_COMMAND, false)}
-        title="Header Kaldır (Gizle)"
-        dataAttribute="data-section-visibility"
-      >
-        Header Kaldır
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.dispatchCommand(TOGGLE_FOOTER_VISIBILITY_COMMAND, true)}
-        title="Footer Ekle (Göster)"
-        dataAttribute="data-section-visibility"
-      >
-        Footer Ekle
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.dispatchCommand(TOGGLE_FOOTER_VISIBILITY_COMMAND, false)}
-        title="Footer Kaldır (Gizle)"
-        dataAttribute="data-section-visibility"
-      >
-        Footer Kaldır
-      </ToolbarButton>
-    </div>
-  );
-}
 
 type HeadingTag = 'h1' | 'h2' | 'h3';
 function HeadingToolbarPlugin(): JSX.Element {
@@ -178,7 +135,7 @@ function HeadingToolbarPlugin(): JSX.Element {
           }}
           key={tag}
           title={getTitle(tag)}
-          dataAttribute="data-heading"
+          data-heading
         >
           {tag.toUpperCase()}
         </ToolbarButton>
@@ -204,7 +161,7 @@ function ListToolbarPlugin(): JSX.Element {
           onClick('ol');
         }}
         title="Numaralı liste"
-        dataAttribute="data-list"
+        data-list
       >
         <OrderedListIcon />
       </ToolbarButton>
@@ -213,55 +170,9 @@ function ListToolbarPlugin(): JSX.Element {
           onClick('ul');
         }}
         title="Madde işaretli liste"
-        dataAttribute="data-list"
+        data-list
       >
         <UnorderedListIcon />
-      </ToolbarButton>
-    </div>
-  );
-}
-
-function BannerToolbarPlugin(): JSX.Element {
-  const [editor] = useLexicalComposerContext();
-  const onClick = (): void => {
-    editor.dispatchCommand(INSERT_BANNER_COMMAND, undefined);
-  };
-
-  return (
-    <div className="toolbarGroup">
-      <ToolbarButton onClick={onClick} title="Banner ekle" dataAttribute="data-banner">
-        <PlusCircledIcon />
-        Banner
-      </ToolbarButton>
-      <BannerColorPickerPlugin />
-    </div>
-  );
-}
-
-function PageSectionModeToolbar(): JSX.Element {
-  const [editor] = useLexicalComposerContext();
-  return (
-    <div className="toolbarGroup">
-      <ToolbarButton
-        onClick={() => editor.dispatchCommand(SET_SECTION_MODE_COMMAND, 'header')}
-        title="Üstbilgiyi Düzenle"
-        dataAttribute="data-section"
-      >
-        Header
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.dispatchCommand(SET_SECTION_MODE_COMMAND, 'footer')}
-        title="Altbilgiyi Düzenle"
-        dataAttribute="data-section"
-      >
-        Footer
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.dispatchCommand(SET_SECTION_MODE_COMMAND, 'content')}
-        title="Ana İçeriği Düzenle"
-        dataAttribute="data-section"
-      >
-        Content
       </ToolbarButton>
     </div>
   );
@@ -273,9 +184,7 @@ export function ToolbarPlugin(): JSX.Element {
       <TextFormatToolbarPlugin />
       <HeadingToolbarPlugin />
       <ListToolbarPlugin />
-      <BannerToolbarPlugin />
       <PageSectionVisibilityToolbar />
-      <PageSectionModeToolbar />
     </Toolbar.Root>
   );
 }

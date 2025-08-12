@@ -1,374 +1,147 @@
-/* Sade ve temiz A4 Word benzeri tasarım */
-.editor-container {
+.editor-a4-wrapper {
   display: flex;
   justify-content: center;
-  background: #f3f2f1;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  align-items: flex-start;
+  min-height: 100vh;
+  background: #f4f4f4;
+  padding: 40px 0;
 }
 
-/* Pagination desteği için güncellenmiş container */
-.editor-container.paginated {
-  flex-direction: column;
-  align-items: center;
+.editor-a4-content {
+  outline: none;
+  width: 210mm;
+  min-height: 297mm;
+  background: #fff;
+  box-shadow: 0 0 16px rgba(0,0,0,0.14);
+  border-radius: 8px;
+  padding: 0;
+  position: relative;
+  font-size: 16px;
+  box-sizing: border-box;
+  margin-top: 24px;
+  margin-bottom: 24px;
+  transition: box-shadow 0.2s;
+}
+.editor-a4-content:focus {
+  box-shadow: 0 0 24px rgba(0,0,0,0.18);
 }
 
-/* Temiz A4 sayfa tasarımı */
 .a4-page {
   width: 210mm;
   min-height: 297mm;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   margin: 0 auto;
+  background: transparent;
+  position: relative;
   display: flex;
   flex-direction: column;
-  border-radius: 2px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-/* Pagination modunda sayfa düzeni */
-.editor-container.paginated .a4-page {
-  box-shadow: none;
-  background: transparent;
-  margin-bottom: 0;
+.a4-header {
+  min-height: 32mm;
+  max-height: 50mm;
+  background: #f8fafc;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 18px 32px 10px 32px;
+  font-weight: 600;
+  font-size: 20px;
+  color: #333;
+  letter-spacing: 0.01em;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
 }
 
-/* A4 içerik alanı - sade */
 .a4-content {
   flex: 1;
-  position: relative;
+  min-height: 180mm;
+  background: none;
+  padding: 24px 32px;
+  color: #222;
+  font-size: 16px;
+  line-height: 1.7;
 }
 
-/* Toolbar - minimal tasarım */
-.toolbar-wrapper {
-  background: #fafafa;
-  border-bottom: 1px solid #e0e0e0;
-  border-radius: 2px 2px 0 0;
+.a4-footer {
+  min-height: 20mm;
+  max-height: 40mm;
+  background: #f8fafc;
+  border-top: 1px solid #e0e0e0;
+  padding: 10px 32px 18px 32px;
+  font-size: 15px;
+  color: #666;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
 }
 
-/* Pagination modunda toolbar */
-.editor-container.paginated .toolbar-wrapper {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  margin-bottom: 20px;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Ana yazı alanı - Word benzeri */
-.contentEditable {
-  width: 100%;
-  min-height: calc(297mm - 60px);
-  border: none;
-  outline: none;
-  font-family: 'Calibri', 'Times New Roman', serif;
-  font-size: 11pt;
-  line-height: 1.15;
-  color: #000;
-  background: white;
-  caret-color: #0078d4;
-}
-
-/* Pagination modunda contentEditable */
-.editor-container.paginated .contentEditable {
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 2px;
-  margin-bottom: 20px;
-  min-height: auto;
-}
-
-.contentEditable:focus {
-  outline: none;
-}
-
-/* Placeholder - sade */
-.placeholder {
+.editor-placeholder {
   position: absolute;
-  top: 25mm;
-  left: 20mm;
-  color: #999;
+  left: 40px;
+  top: 40px;
+  color: #bbb;
   pointer-events: none;
-  font-family: 'Calibri', serif;
-  font-size: 11pt;
-  font-style: italic;
+  font-size: 16px;
 }
 
-/* Text formatting - basit ve etkili */
-.glyf-editor-bold {
-  font-weight: 700;
-}
-
-.glyf-editor-italic {
-  font-style: italic;
-}
-
-.glyf-editor-underline {
-  text-decoration: underline;
-}
-
-.glyf-editor-strikethrough {
-  text-decoration: line-through;
-}
-
-.glyf-editor-underlineStrikethrough {
-  text-decoration: underline line-through;
-}
-
-/* Başlık stilleri - Word'ün basit versiyonu */
-.glyf-editor-h1 {
-  font-family: 'Calibri', sans-serif;
-  font-size: 16pt;
-  font-weight: 600;
-  color: #2f5496;
-  margin: 0 0 8pt 0;
-  line-height: 1.2;
-}
-
-.glyf-editor-h2 {
-  font-family: 'Calibri', sans-serif;
-  font-size: 13pt;
-  font-weight: 600;
-  color: #2f5496;
-  margin: 8pt 0 6pt 0;
-  line-height: 1.2;
-}
-
-.glyf-editor-h3 {
-  font-family: 'Calibri', sans-serif;
-  font-size: 12pt;
-  font-weight: 600;
-  color: #1f3763;
-  margin: 6pt 0 4pt 0;
-  line-height: 1.2;
-}
-
-/* Paragraf - basit Word spacing */
-p {
-  margin: 0 0 8pt 0;
-  font-family: 'Calibri', serif;
-  font-size: 11pt;
-  line-height: 1.15;
-  color: #000;
-}
-
-/* Liste stilleri - minimal */
-ul,
-ol {
-  margin: 0 0 8pt 0;
-  padding-left: 18pt;
-  font-family: 'Calibri', serif;
-  font-size: 11pt;
-  line-height: 1.15;
-}
-
-li {
-  margin: 0 0 2pt 0;
-  padding: 0;
-  color: #000;
-}
-
-/* Banner - sade tasarım */
-.glyf-editor-banner {
-  margin: 8pt 0;
-  padding: 8pt 12pt;
-  border-left: 3px solid #0078d4;
-  background: #f8f9fa;
-  border-radius: 0 3px 3px 0;
-}
-
-/* Selection - Word mavi */
-::selection {
-  background-color: #0078d4;
-  color: white;
-}
-
-/* Scrollbar - minimal */
-.contentEditable::-webkit-scrollbar {
-  width: 8px;
-}
-
-.contentEditable::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.contentEditable::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 4px;
-}
-
-.contentEditable::-webkit-scrollbar-thumb:hover {
-  background: #999;
-}
-
-/* Print için temizlik */
-@media print {
-  .editor-container {
-    background: white;
-    padding: 0;
-  }
-
-  .a4-page {
-    box-shadow: none;
-    margin: 0;
-    border-radius: 0;
-  }
-
-  .toolbar-wrapper {
-    display: none;
-  }
-
-  .contentEditable {
-    padding: 20mm;
-    font-size: 12pt;
-    line-height: 1.5;
-  }
-}
-
-/* Responsive - mobil için */
-@media (max-width: 768px) {
-  .editor-container {
-    padding: 10px;
-  }
-
-  .a4-page {
-    width: 100%;
-    min-width: 300px;
-  }
-
-  .contentEditable {
-    padding: 15mm 10mm;
-    font-size: 12pt;
-  }
-
-  .placeholder {
-    left: 10mm;
-    top: 15mm;
-    font-size: 12pt;
-  }
-}
-
-.a4-page {
-  background: white;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-.contentEditable {
-  min-height: 100%;
-  outline: none;
-}
-
-.page-break {
-  border-top: 1px dashed #ccc;
-  margin: 10px 0;
-}
-
-.page-indicator {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  background: #f0f0f0;
-  padding: 5px 10px;
-  border-radius: 4px;
-}
-
-.placeholder {
-  color: #999;
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  pointer-events: none;
-}
-
-/* Page-based layout */
-.editor-container {
-  /* center pages in viewport */
+.toolbarRoot {
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 16px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  padding: 10px 24px;
+  margin: 0 auto 16px auto;
+  width: fit-content;
+  min-width: 320px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
-.page-container {
-  width: 210mm;
-  min-height: 297mm;
-  max-height: 297mm; /* enforce fixed page height */
-  overflow: hidden; /* hide overflow to avoid visual stretching */
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 2px;
-  margin: 0 0 20px 0;
-  position: relative;
-  box-sizing: border-box;
+.toolbarGroup {
   display: flex;
-  flex-direction: column;
+  gap: 8px;
 }
 
-.page-observer-target {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
+.toolbarButton {
+  background: #f4f4f4;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 15px;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  outline: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.toolbarButton.active, .toolbarButton:active, .toolbarButton:focus {
+  background: #2563eb;
+  color: #fff;
+}
+.toolbarButton:hover {
+  background: #e0e7ff;
+  color: #2563eb;
 }
 
-/* When using page containers, keep contentEditable transparent as a stack holder */
-.editor-container.paginated .contentEditable {
-  background: transparent;
-  box-shadow: none;
-  padding: 0; /* padding is on .page-container */
-}
-
-/* Make sure paragraphs inside a page look good */
-.page-container p {
-  margin: 0 0 8pt 0;
-}
-
-/* Help break long unspaced strings */
-.page-container,
-.page-container p,
-.page-container div {
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-/* Page sections */
-.page-section {
-  padding: 10mm 15mm;
-  transition: all 0.2s ease;
-  cursor: text;
-}
-.page-section--header {
-  flex: none;
-  border-bottom: 1px solid #eee;
-  min-height: 15mm;
-  background: #fafafa;
-}
-.page-section--header:hover {
-  background: #f0f0f0;
-  border-bottom-color: #0078d4;
-}
-.page-section--content {
-  flex: 1;
-  padding-top: 12mm;
-  padding-bottom: 12mm;
-}
-.page-section--footer {
-  flex: none;
-  border-top: 1px solid #eee;
-  min-height: 15mm;
-  background: #fafafa;
-}
-.page-section--footer:hover {
-  background: #f0f0f0;
-  border-top-color: #0078d4;
-}
-.page-section--editing {
-  outline: 2px dashed #0078d4;
-  outline-offset: -2px;
-  background: #fff !important;
-}
-.page-section--editing:hover {
-  background: #fff !important;
+@media (max-width: 900px) {
+  .editor-a4-content, .a4-page {
+    width: 100vw;
+    min-width: 0;
+    border-radius: 0;
+  }
+  .a4-header, .a4-content, .a4-footer {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .toolbarRoot {
+    min-width: 0;
+    width: 100vw;
+    border-radius: 0;
+  }
 }
