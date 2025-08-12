@@ -16,7 +16,11 @@ import {
 } from '@radix-ui/react-icons';
 import { OrderedListIcon, UnorderedListIcon } from './icons';
 import { BannerColorPickerPlugin } from '../editor/plugins/banner/BannerColorPickerPlugin';
-import { SET_SECTION_MODE_COMMAND } from '../editor/plugins/page-section/PageSectionPlugin';
+import {
+  SET_SECTION_MODE_COMMAND,
+  TOGGLE_HEADER_VISIBILITY_COMMAND,
+  TOGGLE_FOOTER_VISIBILITY_COMMAND
+} from '../editor/plugins/page-section/PageSectionPlugin';
 
 interface ToolbarButtonProps {
   onClick: React.MouseEventHandler<HTMLButtonElement> | undefined;
@@ -98,6 +102,42 @@ function TextFormatToolbarPlugin(): JSX.Element {
           {getIcon(format)}
         </ToolbarButton>
       ))}
+    </div>
+  );
+}
+
+function PageSectionVisibilityToolbar(): JSX.Element {
+  const [editor] = useLexicalComposerContext();
+  return (
+    <div className="toolbarGroup">
+      <ToolbarButton
+        onClick={() => editor.dispatchCommand(TOGGLE_HEADER_VISIBILITY_COMMAND, true)}
+        title="Header Ekle (Göster)"
+        dataAttribute="data-section-visibility"
+      >
+        Header Ekle
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.dispatchCommand(TOGGLE_HEADER_VISIBILITY_COMMAND, false)}
+        title="Header Kaldır (Gizle)"
+        dataAttribute="data-section-visibility"
+      >
+        Header Kaldır
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.dispatchCommand(TOGGLE_FOOTER_VISIBILITY_COMMAND, true)}
+        title="Footer Ekle (Göster)"
+        dataAttribute="data-section-visibility"
+      >
+        Footer Ekle
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.dispatchCommand(TOGGLE_FOOTER_VISIBILITY_COMMAND, false)}
+        title="Footer Kaldır (Gizle)"
+        dataAttribute="data-section-visibility"
+      >
+        Footer Kaldır
+      </ToolbarButton>
     </div>
   );
 }
@@ -234,6 +274,7 @@ export function ToolbarPlugin(): JSX.Element {
       <HeadingToolbarPlugin />
       <ListToolbarPlugin />
       <BannerToolbarPlugin />
+      <PageSectionVisibilityToolbar />
       <PageSectionModeToolbar />
     </Toolbar.Root>
   );

@@ -66,12 +66,10 @@
   color: #000;
   background: white;
   caret-color: #0078d4;
-  padding: 25mm 20mm;
 }
 
 /* Pagination modunda contentEditable */
 .editor-container.paginated .contentEditable {
-  padding: 25mm 20mm;
   background: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border-radius: 2px;

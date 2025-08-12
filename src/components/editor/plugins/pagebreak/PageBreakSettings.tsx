@@ -8,10 +8,10 @@ export interface PageBreakSettings {
 }
 
 export const DEFAULT_PAGINATION_SETTINGS: PageBreakSettings = {
-  pageHeight: 297, // A4 height
-  pageWidth: 210,
-  marginTop: 5,
+  pageHeight: 297, // A4 height in mm
+  pageWidth: 210,  // A4 width in mm
+  marginTop: 25,
   marginBottom: 25,
-  marginLeft: 20,
-  marginRight: 20
+  marginLeft: 25,
+  marginRight: 25
 };

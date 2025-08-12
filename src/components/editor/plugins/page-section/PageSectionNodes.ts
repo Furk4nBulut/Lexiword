@@ -15,6 +15,7 @@ export type PageSectionMode = 'header' | 'content' | 'footer';
 // Shared interface for section nodes containing an editable flag
 interface SerializedSectionNodeBase extends SerializedElementNode {
   editable?: boolean;
+  visible?: boolean;
 }
 
 export type SerializedHeaderNode = Spread<
@@ -43,10 +44,12 @@ export type SerializedFooterNode = Spread<
 
 abstract class BaseSectionNode<TSerialized extends SerializedSectionNodeBase> extends ElementNode {
   __editable: boolean;
+  __visible: boolean;
 
-  constructor(editable: boolean, key?: NodeKey) {
+  constructor(editable: boolean, visible: boolean, key?: NodeKey) {
     super(key);
     this.__editable = editable;
+    this.__visible = visible;
   }
 
   isEditableSection(): boolean {
@@ -58,16 +61,28 @@ abstract class BaseSectionNode<TSerialized extends SerializedSectionNodeBase> ex
     self.__editable = editable;
   }
 
+  isVisibleSection(): boolean {
+    return this.getLatest().__visible;
+  }
+
+  setVisible(visible: boolean): void {
+    const self = this.getWritable() as BaseSectionNode<TSerialized>;
+    self.__visible = visible;
+  }
+
   exportJSON(): TSerialized {
     return {
       ...super.exportJSON(),
-      editable: this.getLatest().__editable
+      editable: this.getLatest().__editable,
+      visible: this.getLatest().__visible
     } as TSerialized;
   }
 
   updateDOM(prevNode: this, dom: HTMLElement): boolean {
     const prevEditable = prevNode.__editable;
     const nextEditable = this.__editable;
+    const prevVisible = prevNode.__visible;
+    const nextVisible = this.__visible;
     if (prevEditable !== nextEditable) {
       dom.setAttribute('contenteditable', nextEditable ? 'true' : 'false');
       if (nextEditable) {
@@ -75,6 +90,10 @@ abstract class BaseSectionNode<TSerialized extends SerializedSectionNodeBase> ex
       } else {
         dom.classList.remove('page-section--editing');
       }
+    }
+    if (prevVisible !== nextVisible) {
+      dom.setAttribute('data-visible', nextVisible ? 'true' : 'false');
+      (dom as HTMLElement).style.display = nextVisible ? '' : 'none';
     }
     return false;
   }
@@ -86,11 +105,11 @@ export class HeaderNode extends BaseSectionNode<SerializedHeaderNode> {
   }
 
   static clone(node: HeaderNode): HeaderNode {
-    return new HeaderNode(node.__editable, node.__key);
+    return new HeaderNode(node.__editable, node.__visible, node.__key);
   }
 
   static importJSON(serializedNode: SerializedHeaderNode): HeaderNode {
-    const node = new HeaderNode(Boolean(serializedNode.editable));
+    const node = new HeaderNode(Boolean(serializedNode.editable), Boolean(serializedNode.visible));
     return $applyNodeReplacement(node);
   }
 
@@ -99,6 +118,8 @@ export class HeaderNode extends BaseSectionNode<SerializedHeaderNode> {
     container.className = 'page-section page-section--header';
     container.setAttribute('data-lexical-page-section', 'header');
     container.setAttribute('contenteditable', this.__editable ? 'true' : 'false');
+    container.setAttribute('data-visible', this.__visible ? 'true' : 'false');
+    (container as HTMLElement).style.display = this.__visible ? '' : 'none';
     if (this.__editable) container.classList.add('page-section--editing');
     return container;
   }
@@ -110,11 +131,11 @@ export class ContentNode extends BaseSectionNode<SerializedContentNode> {
   }
 
   static clone(node: ContentNode): ContentNode {
-    return new ContentNode(node.__editable, node.__key);
+    return new ContentNode(node.__editable, node.__visible, node.__key);
   }
 
   static importJSON(serializedNode: SerializedContentNode): ContentNode {
-    const node = new ContentNode(Boolean(serializedNode.editable));
+    const node = new ContentNode(Boolean(serializedNode.editable), Boolean(serializedNode.visible));
     return $applyNodeReplacement(node);
   }
 
@@ -123,6 +144,8 @@ export class ContentNode extends BaseSectionNode<SerializedContentNode> {
     container.className = 'page-section page-section--content';
     container.setAttribute('data-lexical-page-section', 'content');
     container.setAttribute('contenteditable', this.__editable ? 'true' : 'false');
+    container.setAttribute('data-visible', this.__visible ? 'true' : 'false');
+    (container as HTMLElement).style.display = this.__visible ? '' : 'none';
     if (this.__editable) container.classList.add('page-section--editing');
     return container;
   }
@@ -134,11 +157,11 @@ export class FooterNode extends BaseSectionNode<SerializedFooterNode> {
   }
 
   static clone(node: FooterNode): FooterNode {
-    return new FooterNode(node.__editable, node.__key);
+    return new FooterNode(node.__editable, node.__visible, node.__key);
   }
 
   static importJSON(serializedNode: SerializedFooterNode): FooterNode {
-    const node = new FooterNode(Boolean(serializedNode.editable));
+    const node = new FooterNode(Boolean(serializedNode.editable), Boolean(serializedNode.visible));
     return $applyNodeReplacement(node);
   }
 
@@ -147,26 +170,28 @@ export class FooterNode extends BaseSectionNode<SerializedFooterNode> {
     container.className = 'page-section page-section--footer';
     container.setAttribute('data-lexical-page-section', 'footer');
     container.setAttribute('contenteditable', this.__editable ? 'true' : 'false');
+    container.setAttribute('data-visible', this.__visible ? 'true' : 'false');
+    (container as HTMLElement).style.display = this.__visible ? '' : 'none';
     if (this.__editable) container.classList.add('page-section--editing');
     return container;
   }
 }
 
-export function $createHeaderNode(editable = false): HeaderNode {
-  const node = new HeaderNode(editable);
+export function $createHeaderNode(editable = false, visible = false): HeaderNode {
+  const node = new HeaderNode(editable, visible);
   // Put a paragraph inside for caret placement
   node.append($createParagraphNode());
   return $applyNodeReplacement(node);
 }
 
-export function $createContentNode(editable = true): ContentNode {
-  const node = new ContentNode(editable);
+export function $createContentNode(editable = true, visible = true): ContentNode {
+  const node = new ContentNode(editable, visible);
   node.append($createParagraphNode());
   return $applyNodeReplacement(node);
 }
 
-export function $createFooterNode(editable = false): FooterNode {
-  const node = new FooterNode(editable);
+export function $createFooterNode(editable = false, visible = false): FooterNode {
+  const node = new FooterNode(editable, visible);
   node.append($createParagraphNode());
   return $applyNodeReplacement(node);
 }
