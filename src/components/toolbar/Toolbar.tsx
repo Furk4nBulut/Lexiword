@@ -12,6 +12,7 @@ import {
   UnderlineIcon,
 } from '@radix-ui/react-icons';
 import { OrderedListIcon, UnorderedListIcon } from './icons';
+import './Toolbar.css';
 
 interface ToolbarButtonProps {
   className?: string;

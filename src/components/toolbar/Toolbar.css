@@ -1,0 +1,43 @@
+.toolbarRoot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  padding: 10px 20px;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.toolbarGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolbarButton {
+  background: #f4f4f4;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 15px;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.15s, border 0.15s;
+  outline: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolbarButton.active, .toolbarButton:active, .toolbarButton:focus {
+  background: #e0e7ef;
+  border-color: #b6c2d9;
+}
+
+.toolbarButton[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+

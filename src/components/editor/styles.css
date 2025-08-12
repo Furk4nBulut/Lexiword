@@ -33,7 +33,7 @@
   color: #222;
   background: none;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .a4-footer {
