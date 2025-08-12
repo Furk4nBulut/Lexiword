@@ -8,6 +8,15 @@
   padding: 40px 0;
 }
 
+.a4-page {
+  margin: 0 auto;
+  border: 1px solid #e5e7eb; /* subtle border */
+  box-shadow: 0 10px 20px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04);
+  border-radius: 8px;
+  overflow: hidden; /* ensure rounded corners clip children */
+  transition: box-shadow 180ms ease, border-color 180ms ease;
+}
+
 .toolbarRoot {
   margin-bottom: 24px;
   z-index: 10;
@@ -16,6 +25,7 @@
   /* 32mm ≈ 121px at 96dpi */
   flex: 0 0 121px;
   background: #f8fafc;
+  padding: 12px 24px;
   font-weight: 600;
   font-size: 20px;
   color: #333;
@@ -29,6 +39,8 @@
   max-height: none;
   padding: 16px 24px;
   font-size: 16px;
+  line-height: 1.55;
+  color: #111827;
   overflow: auto; /* Taşma olursa scroll çıksın */
 }
 
@@ -37,6 +49,7 @@
   flex: 0 0 76px;
   background: #f8fafc;
   border-top: 1px solid #e0e0e0;
+  padding: 8px 24px;
   font-size: 16px;
   color: #333;
   box-sizing: border-box;
@@ -47,7 +60,35 @@
   color: #bbb;
   pointer-events: none;
   font-size: 16px;
+  font-style: italic;
 }
+
+/* Contenteditable focus ring (header/footer edit modunda) */
+[contenteditable="true"]:focus {
+  outline: 2px solid #1976d2;
+  outline-offset: 2px;
+}
+
+/* Selection styling inside page */
+.a4-page ::selection {
+  background: #dbeafe;
+  color: #111827;
+}
+
+/* Typography improvements inside content */
+.a4-content h1 { font-size: 28px; line-height: 1.25; margin: 16px 0 8px; font-weight: 700; }
+.a4-content h2 { font-size: 24px; line-height: 1.3; margin: 14px 0 8px; font-weight: 700; }
+.a4-content h3 { font-size: 20px; line-height: 1.35; margin: 12px 0 6px; font-weight: 700; }
+.a4-content p { margin: 0 0 12px; }
+.a4-content ul, .a4-content ol { margin: 0 0 12px 22px; }
+.a4-content a { color: #1d4ed8; text-decoration: underline; }
+.a4-content hr { border: 0; border-top: 1px solid #e5e7eb; margin: 16px 0; }
+
+/* Subtle scrollbars for content area (webkit) */
+.a4-content::-webkit-scrollbar { width: 10px; height: 10px; }
+.a4-content::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 8px; }
+.a4-content::-webkit-scrollbar-thumb:hover { background: #a5b4fc; }
+.a4-content::-webkit-scrollbar-track { background: transparent; }
 
 @media (max-width: 900px) {
   .a4-page {
