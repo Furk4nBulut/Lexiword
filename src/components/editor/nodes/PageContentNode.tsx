@@ -1,4 +1,4 @@
-import { ElementNode, SerializedElementNode } from 'lexical';
+import { ElementNode, type SerializedElementNode } from 'lexical';
 
 export type SerializedPageContentNode = SerializedElementNode & {
   type: 'page-content';
@@ -14,6 +14,8 @@ export class PageContentNode extends ElementNode {
     return new PageContentNode(node.__key);
   }
 
+  // We need this constructor to forward the key to ElementNode for proper cloning behavior
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
   constructor(key?: string) {
     super(key);
   }
@@ -21,11 +23,10 @@ export class PageContentNode extends ElementNode {
   // Section'ın asla silinememesi için remove ve removeChild'ı override et
   remove(): void {
     // Hiçbir şey yapma, silinemez
-    return;
   }
+
   removeChild(): void {
     // Hiçbir şey yapma, silinemez
-    return;
   }
 
   createDOM(): HTMLElement {
@@ -46,7 +47,7 @@ export class PageContentNode extends ElementNode {
     return {
       ...super.exportJSON(),
       type: 'page-content',
-      version: 1,
+      version: 1
     };
   }
 }

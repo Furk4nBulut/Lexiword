@@ -48,34 +48,37 @@ export class PageNode extends ElementNode {
     return {
       ...super.exportJSON(),
       type: 'page',
-      version: 1,
+      version: 1
     };
   }
 
   // Always ensure header, content, footer exist as children
-  ensureHeaderFooterContentChildren() {
+  ensureHeaderFooterContentChildren(): void {
     // Sıralama: header -> content -> footer (section her zaman ortada)
-    let header = this.getChildren().find(child => child.getType() === 'page-header');
-    let content = this.getChildren().find(child => child.getType() === 'page-content');
-    let footer = this.getChildren().find(child => child.getType() === 'page-footer');
-    if (!header) header = new PageHeaderNode('', undefined, false);
-    if (!content) content = new PageContentNode();
-    if (!footer) footer = new PageFooterNode('', undefined, false);
+    let header = this.getChildren().find((child) => child.getType() === 'page-header');
+    let content = this.getChildren().find((child) => child.getType() === 'page-content');
+    let footer = this.getChildren().find((child) => child.getType() === 'page-footer');
+    if (header == null) header = new PageHeaderNode('', undefined, false);
+    if (content == null) content = new PageContentNode();
+    if (footer == null) footer = new PageFooterNode('', undefined, false);
     // Tüm çocukları kaldır ve doğru sırayla ekle
-    this.getChildren().forEach(child => child.remove());
+    this.getChildren().forEach((child) => {
+      child.remove();
+    });
     this.append(header);
     this.append(content);
     this.append(footer);
   }
 
-  appendInitialChildren() {
+  appendInitialChildren(): void {
     this.ensureHeaderFooterContentChildren();
   }
 
   getHeaderNode(): PageHeaderNode | undefined {
-    return this.getChildren().find(child => child.getType() === 'page-header') as PageHeaderNode;
+    return this.getChildren().find((child) => child.getType() === 'page-header') as PageHeaderNode;
   }
+
   getFooterNode(): PageFooterNode | undefined {
-    return this.getChildren().find(child => child.getType() === 'page-footer') as PageFooterNode;
+    return this.getChildren().find((child) => child.getType() === 'page-footer') as PageFooterNode;
   }
 }

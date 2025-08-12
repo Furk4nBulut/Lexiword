@@ -11,15 +11,6 @@
             </PendingDiffInfo>
           </value>
         </entry>
-        <entry key="$PROJECT_DIR$/src/components/editor/nodes/index.ts">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/src/components/editor/nodes/index.ts" />
-              <option name="originalContent" value="import { LexicalComposer } from '@lexical/react/LexicalComposer';&#10;import { PageNode } from './PageNode';&#10;import { PageHeaderNode } from './PageHeaderNode';&#10;import { PageContentNode } from './PageContentNode';&#10;import { PageFooterNode } from './PageFooterNode';&#10;import { SectionNode } from './SectionNode';&#10;import { SectionNode } from './SectionNode';&#10;&#10;export const editorNodes = [&#10;  PageNode,&#10;  PageHeaderNode,&#10;  PageContentNode,&#10;  SectionNode,&#10;  PageFooterNode,&#10;  SectionNode,&#10;];&#10;" />
-              <option name="updatedContent" value="import { LexicalComposer } from '@lexical/react/LexicalComposer';&#10;import { PageNode } from './PageNode';&#10;import { PageHeaderNode } from './PageHeaderNode';&#10;import { PageContentNode } from './PageContentNode';&#10;import { PageFooterNode } from './PageFooterNode';&#10;&#10;export const editorNodes = [&#10;  PageNode,&#10;  PageHeaderNode,&#10;  PageContentNode,&#10;  PageFooterNode,&#10;];" />
-            </PendingDiffInfo>
-          </value>
-        </entry>
         <entry key="$PROJECT_DIR$/src/components/editor/plugins/SectionToolbarPlugin.tsx">
           <value>
             <PendingDiffInfo>

@@ -1,20 +1,24 @@
-import { DecoratorNode, type SerializedElementNode, type EditorConfig, type Spread, $getNodeByKey, type NodeKey, type LexicalEditor } from 'lexical';
+import {
+  DecoratorNode,
+  type SerializedElementNode,
+  type EditorConfig,
+  type Spread,
+  $getNodeByKey,
+  type NodeKey,
+  type LexicalEditor
+} from 'lexical';
 import * as React from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useEditModeContext } from '../EditModeContext';
 
 export type SerializedPageFooterNode = Spread<
-  {
-    type: 'page-footer';
-    version: 1;
-    text: string;
-    visible: boolean;
-  },
+  { type: 'page-footer'; version: 1; text: string; visible: boolean },
   SerializedElementNode
 >;
 
 export class PageFooterNode extends DecoratorNode<JSX.Element> {
   __text: string;
+
   __visible: boolean;
 
   static getType(): string {
@@ -35,7 +39,8 @@ export class PageFooterNode extends DecoratorNode<JSX.Element> {
     const writable = this.getWritable();
     writable.__visible = visible;
   }
-  isVisible() {
+
+  isVisible(): boolean {
     return this.__visible;
   }
 
@@ -59,59 +64,66 @@ export class PageFooterNode extends DecoratorNode<JSX.Element> {
   }
 
   exportJSON(): SerializedPageFooterNode {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const json = {
       ...super.exportJSON(),
       type: 'page-footer',
       version: 1,
       text: this.__text,
-      visible: this.__visible,
+      visible: this.__visible
     } as SerializedPageFooterNode;
     return json;
   }
 
   decorate(_editor: LexicalEditor, _config: EditorConfig): JSX.Element {
-    return this.__visible ? (
-      <FooterEditable text={this.__text} nodeKey={this.getKey()} />
-    ) : (
-      <></>
-    );
+    return this.__visible ? <FooterEditable text={this.__text} nodeKey={this.getKey()} /> : <></>;
   }
-
 }
 
-function FooterEditable({ text, nodeKey }: { text: string; nodeKey: NodeKey }) {
+function FooterEditable({ text, nodeKey }: { text: string; nodeKey: NodeKey }): JSX.Element {
   const [editor] = useLexicalComposerContext();
   const { headerFooterEditMode } = useEditModeContext();
   const divRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
-    if (divRef.current && divRef.current.innerText !== text) {
-      divRef.current.innerText = text;
+    const el = divRef.current;
+    if (el !== null && el.innerText !== text) {
+      el.innerText = text;
     }
   }, [text]);
 
-  const commit = React.useCallback((newText: string) => {
-    editor.update(() => {
-      const node = $getNodeByKey(nodeKey) as PageFooterNode | null;
-      if (node) node.setText(newText);
-    });
-  }, [editor, nodeKey]);
+  const commit = React.useCallback(
+    (newText: string) => {
+      editor.update(() => {
+        const node = $getNodeByKey(nodeKey);
+        if (node instanceof PageFooterNode) {
+          node.setText(newText);
+        }
+      });
+    },
+    [editor, nodeKey]
+  );
 
-  const handleInput = React.useCallback((e: React.FormEvent<HTMLDivElement>) => {
-    const newText = (e.target as HTMLDivElement).innerText;
-    commit(newText);
-  }, [commit]);
+  const handleInput = React.useCallback(
+    (e: React.FormEvent<HTMLDivElement>) => {
+      const newText = (e.target as HTMLDivElement).innerText;
+      commit(newText);
+    },
+    [commit]
+  );
 
   const handleKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.ctrlKey && (e.key === 'a' || e.key === 'A')) {
       e.preventDefault();
       const el = divRef.current;
-      if (el) {
+      if (el !== null) {
         const range = document.createRange();
         range.selectNodeContents(el);
         const sel = window.getSelection();
-        sel?.removeAllRanges();
-        sel?.addRange(range);
+        if (sel !== null) {
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
       }
     }
   }, []);

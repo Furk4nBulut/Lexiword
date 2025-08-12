@@ -3,7 +3,7 @@ import { $getRoot } from 'lexical';
 import { useEffect } from 'react';
 import { PageNode } from '../nodes/PageNode';
 
-export function PageInitializerPlugin() {
+export function PageInitializerPlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {

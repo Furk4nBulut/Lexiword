@@ -9,11 +9,11 @@ import {
   StrikethroughIcon,
   FontBoldIcon,
   FontItalicIcon,
-  UnderlineIcon,
+  UnderlineIcon
 } from '@radix-ui/react-icons';
 import { OrderedListIcon, UnorderedListIcon } from './icons';
 import './Toolbar.css';
-import { PageNode } from '../editor/nodes/PageNode';
+import type { PageNode } from '../editor/nodes/PageNode';
 
 interface ToolbarPluginProps {
   headerFooterEditMode: boolean;
@@ -185,27 +185,35 @@ function ListToolbarPlugin(): JSX.Element {
 // Tek bir plugin: PageSectionPlugin (adlandırma güncellendi)
 function PageSectionPlugin({
   headerFooterEditMode,
-  setHeaderFooterEditMode,
+  setHeaderFooterEditMode
 }: ToolbarPluginProps): JSX.Element {
   const [editor] = useLexicalComposerContext();
 
-  const handleHeader = () => {
+  const handleHeader = (): void => {
     editor.update(() => {
       const root = $getRoot();
-      const pageNode = root.getChildren().find((n) => n.getType && n.getType() === 'page') as PageNode | undefined;
-      if (!pageNode) return;
+      const pageNode = root
+        .getChildren()
+        .find(
+          (n) => typeof (n as any).getType === 'function' && (n as any).getType() === 'page'
+        ) as PageNode | undefined;
+      if (pageNode == null) return;
       const headerNode = pageNode.getHeaderNode();
-      if (!headerNode) return;
+      if (headerNode == null) return;
       headerNode.setVisible(!headerNode.isVisible());
     });
   };
-  const handleFooter = () => {
+  const handleFooter = (): void => {
     editor.update(() => {
       const root = $getRoot();
-      const pageNode = root.getChildren().find((n) => n.getType && n.getType() === 'page') as PageNode | undefined;
-      if (!pageNode) return;
+      const pageNode = root
+        .getChildren()
+        .find(
+          (n) => typeof (n as any).getType === 'function' && (n as any).getType() === 'page'
+        ) as PageNode | undefined;
+      if (pageNode == null) return;
       const footerNode = pageNode.getFooterNode();
-      if (!footerNode) return;
+      if (footerNode == null) return;
       footerNode.setVisible(!footerNode.isVisible());
     });
   };
@@ -222,16 +230,10 @@ function PageSectionPlugin({
       </ToolbarButton>
       {headerFooterEditMode && (
         <>
-          <ToolbarButton
-            onClick={handleHeader}
-            title="Header Ekle/Kaldır"
-          >
+          <ToolbarButton onClick={handleHeader} title="Header Ekle/Kaldır">
             Header Ekle/Kaldır
           </ToolbarButton>
-          <ToolbarButton
-            onClick={handleFooter}
-            title="Footer Ekle/Kaldır"
-          >
+          <ToolbarButton onClick={handleFooter} title="Footer Ekle/Kaldır">
             Footer Ekle/Kaldır
           </ToolbarButton>
         </>
@@ -242,11 +244,10 @@ function PageSectionPlugin({
 
 export function ToolbarPlugin({
   headerFooterEditMode,
-  setHeaderFooterEditMode,
+  setHeaderFooterEditMode
 }: ToolbarPluginProps): JSX.Element {
   return (
     <Toolbar.Root className="toolbarRoot">
-
       <TextFormatToolbarPlugin />
       <HeadingToolbarPlugin />
       <ListToolbarPlugin />

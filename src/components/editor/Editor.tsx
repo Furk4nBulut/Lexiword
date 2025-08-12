@@ -27,11 +27,7 @@ function initialEditorState(): void {
   // Initial state handled by PageInitializerPlugin
 }
 
-export interface EditorProps {
-}
-
-export default function Editor({
-}: EditorProps) {
+export default function Editor(): JSX.Element {
   const [headerFooterEditMode, setHeaderFooterEditMode] = React.useState(false);
   const initialConfig = {
     namespace: 'SimpleEditor',
@@ -45,9 +41,12 @@ export default function Editor({
     <div className="editor-a4-wrapper">
       <LexicalComposer initialConfig={initialConfig}>
         <EditModeProvider value={{ headerFooterEditMode }}>
-          <ToolbarPlugin headerFooterEditMode={headerFooterEditMode} setHeaderFooterEditMode={setHeaderFooterEditMode} />
+          <ToolbarPlugin
+            headerFooterEditMode={headerFooterEditMode}
+            setHeaderFooterEditMode={setHeaderFooterEditMode}
+          />
           <RichTextPlugin
-            contentEditable={<ContentEditable/>}
+            contentEditable={<ContentEditable />}
             placeholder={<div className="editor-placeholder">Start typing...</div>}
             ErrorBoundary={LexicalErrorBoundary}
           />
