@@ -14,6 +14,10 @@ export class PageContentNode extends ElementNode {
     return new PageContentNode(node.__key);
   }
 
+  constructor(key?: string) {
+    super(key);
+  }
+
   // Section'ın asla silinememesi için remove ve removeChild'ı override et
   remove(): void {
     // Hiçbir şey yapma, silinemez

@@ -31,8 +31,7 @@ export class PageFooterNode extends DecoratorNode<JSX.Element> {
     this.__visible = visible;
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  setVisible(visible: boolean) {
+  setVisible(visible: boolean): void {
     const writable = this.getWritable();
     writable.__visible = visible;
   }
