@@ -31,9 +31,6 @@
   max-height: none;
   padding: 16px 24px;
   font-size: 16px;
-  color: #222;
-  background: none;
-  box-sizing: border-box;
   overflow: auto; /* Taşma olursa scroll çıksın */
 }
 

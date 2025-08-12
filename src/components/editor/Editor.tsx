@@ -28,22 +28,11 @@ function initialEditorState(): void {
 }
 
 export interface EditorProps {
-  showHeader: boolean;
-  setShowHeader: (v: boolean) => void;
-  showFooter: boolean;
-  setShowFooter: (v: boolean) => void;
-  editMode: boolean;
-  setEditMode: (v: boolean) => void;
 }
 
 export default function Editor({
-  showHeader,
-  setShowHeader,
-  showFooter,
-  setShowFooter,
-  editMode,
-  setEditMode,
 }: EditorProps) {
+  const [headerFooterEditMode, setHeaderFooterEditMode] = React.useState(false);
   const initialConfig = {
     namespace: 'SimpleEditor',
     theme,
@@ -54,15 +43,7 @@ export default function Editor({
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      <ToolbarPlugin
-        editMode={editMode}
-        setEditMode={setEditMode}
-        showHeader={showHeader}
-        setShowHeader={setShowHeader}
-        showFooter={showFooter}
-        setShowFooter={setShowFooter}
-      />
-          {/* Header/Footer statik gösterimi kaldırıldı, Lexical node'lar üzerinden render edilecek */}
+      <ToolbarPlugin headerFooterEditMode={headerFooterEditMode} setHeaderFooterEditMode={setHeaderFooterEditMode} />
           <RichTextPlugin
             contentEditable={<ContentEditable/>}
             placeholder={<div className="editor-placeholder">Start typing...</div>}

@@ -1,12 +1,12 @@
-import { ElementNode, SerializedElementNode, LexicalNode, Spread } from 'lexical';
+import { ElementNode, SerializedElementNode } from 'lexical';
 import { PageHeaderNode } from './PageHeaderNode';
 import { PageFooterNode } from './PageFooterNode';
 import { PageContentNode } from './PageContentNode';
 
-export type SerializedPageNode = Spread<{
+export type SerializedPageNode = {
   type: 'page';
   version: 1;
-}, SerializedElementNode>;
+} & SerializedElementNode;
 
 export class PageNode extends ElementNode {
   static getType(): string {
@@ -54,14 +54,14 @@ export class PageNode extends ElementNode {
 
   // Always ensure header, content, footer exist as children
   appendInitialChildren() {
-    // Sıralama: header -> content -> footer
+    // Sıralama: header -> content -> footer (section her zaman ortada)
     let header = this.getChildren().find(child => child.getType() === 'page-header');
     let content = this.getChildren().find(child => child.getType() === 'page-content');
     let footer = this.getChildren().find(child => child.getType() === 'page-footer');
     if (!header) header = new PageHeaderNode('', undefined, false);
     if (!content) content = new PageContentNode();
     if (!footer) footer = new PageFooterNode('', undefined, false);
-    // Remove all children and re-append in correct order
+    // Tüm çocukları kaldır ve doğru sırayla ekle
     this.getChildren().forEach(child => child.remove());
     this.append(header);
     this.append(content);
@@ -92,12 +92,20 @@ export class PageNode extends ElementNode {
     if (footer) footer.setVisible(false);
   }
 
-  static createSection(editor: any) {
-    editor.update(() => {
-      const root = editor.getRootElement();
-      const page = new PageNode();
-      page.appendInitialChildren();
-      root.append(page);
+  // Section (content) asla silinemez: removeChild ve removeChildren tamamen engelleniyor
+  removeChild(child: ElementNode): void {
+    if (child.getType() === 'page-content') {
+      // Section silinemez, hiçbir şey yapma
+      return;
+    }
+    super.removeChild(child);
+  }
+
+  removeChildren(predicate?: (child: ElementNode) => boolean): void {
+    // Section'ı asla silme
+    super.removeChildren(child => {
+      if (child.getType() === 'page-content') return false;
+      return predicate ? predicate(child) : true;
     });
   }
 }

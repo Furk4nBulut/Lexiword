@@ -15,6 +15,11 @@ import { OrderedListIcon, UnorderedListIcon } from './icons';
 import './Toolbar.css';
 import { PageNode } from '../editor/nodes/PageNode';
 
+interface ToolbarPluginProps {
+  headerFooterEditMode: boolean;
+  setHeaderFooterEditMode: (v: boolean) => void;
+}
+
 interface ToolbarButtonProps {
   className?: string;
   onClick?: () => void;
@@ -177,13 +182,10 @@ function ListToolbarPlugin(): JSX.Element {
   );
 }
 
-function SectionToolbarGroup({
-  editMode,
-  setEditMode,
-  showHeader,
-  setShowHeader,
-  showFooter,
-  setShowFooter,
+// Tek bir plugin: PageSectionPlugin (adlandırma güncellendi)
+function PageSectionPlugin({
+  headerFooterEditMode,
+  setHeaderFooterEditMode,
 }: ToolbarPluginProps): JSX.Element {
   const [editor] = useLexicalComposerContext();
 
@@ -211,63 +213,49 @@ function SectionToolbarGroup({
   return (
     <div className="toolbarGroup">
       <ToolbarButton
-        onClick={() => setEditMode(!editMode)}
-        className={editMode ? 'active' : ''}
-        title={editMode ? 'Düzenleme Modunu Kapat' : 'Header/Footer Düzenle'}
+        onClick={() => {
+          setHeaderFooterEditMode(!headerFooterEditMode);
+          if (typeof window !== 'undefined') {
+            (window as any).__headerFooterEditMode = !headerFooterEditMode;
+          }
+        }}
+        title="Header/Footer Düzenle"
       >
-        {editMode ? 'Düzenleme Modunu Kapat' : 'Header/Footer Düzenle'}
+        {headerFooterEditMode ? 'Düzenleme Modunu Kapat' : 'Header/Footer Düzenle'}
       </ToolbarButton>
-      <ToolbarButton
-        onClick={handleHeader}
-        title="Header Ekle/Kaldır"
-      >
-        Header Ekle/Kaldır
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={handleFooter}
-        title="Footer Ekle/Kaldır"
-      >
-        Footer Ekle/Kaldır
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => PageNode.createSection(editor)}
-        title="Section Ekle"
-      >
-        Section Ekle
-      </ToolbarButton>
+      {headerFooterEditMode && (
+        <>
+          <ToolbarButton
+            onClick={handleHeader}
+            title="Header Ekle/Kaldır"
+          >
+            Header Ekle/Kaldır
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={handleFooter}
+            title="Footer Ekle/Kaldır"
+          >
+            Footer Ekle/Kaldır
+          </ToolbarButton>
+        </>
+      )}
     </div>
   );
 }
 
-interface ToolbarPluginProps {
-  editMode: boolean;
-  setEditMode: (v: boolean) => void;
-  showHeader: boolean;
-  setShowHeader: (v: boolean) => void;
-  showFooter: boolean;
-  setShowFooter: (v: boolean) => void;
-}
-
 export function ToolbarPlugin({
-  editMode,
-  setEditMode,
-  showHeader,
-  setShowHeader,
-  showFooter,
-  setShowFooter,
+  headerFooterEditMode,
+  setHeaderFooterEditMode,
 }: ToolbarPluginProps): JSX.Element {
   return (
     <Toolbar.Root className="toolbarRoot">
+
       <TextFormatToolbarPlugin />
       <HeadingToolbarPlugin />
       <ListToolbarPlugin />
-      <SectionToolbarGroup
-        editMode={editMode}
-        setEditMode={setEditMode}
-        showHeader={showHeader}
-        setShowHeader={setShowHeader}
-        showFooter={showFooter}
-        setShowFooter={setShowFooter}
+      <PageSectionPlugin
+        headerFooterEditMode={headerFooterEditMode}
+        setHeaderFooterEditMode={setHeaderFooterEditMode}
       />
     </Toolbar.Root>
   );

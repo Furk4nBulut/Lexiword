@@ -14,6 +14,16 @@ export class PageContentNode extends ElementNode {
     return new PageContentNode(node.__key);
   }
 
+  // Section'ın asla silinememesi için remove ve removeChild'ı override et
+  remove(): void {
+    // Hiçbir şey yapma, silinemez
+    return;
+  }
+  removeChild(): void {
+    // Hiçbir şey yapma, silinemez
+    return;
+  }
+
   createDOM(): HTMLElement {
     const dom = document.createElement('div');
     dom.className = 'a4-content';

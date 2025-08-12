@@ -74,20 +74,66 @@ export class PageHeaderNode extends ElementNode {
 
   decorate(): JSX.Element | null {
     if (!this.__visible) return null;
-    return <HeaderEditable text={this.__text} nodeKey={this.getKey()} />;
+    const editMode = typeof window !== 'undefined' ? (window as any).__headerEditMode : false;
+    return (
+      <HeaderEditable
+        text={this.__text}
+        nodeKey={this.getKey()}
+        readOnly={!editMode}
+      />
+    );
+  }
+
+  isSelected(): boolean {
+    // Lexical'ın selection API'si ile bu node seçili mi kontrolü
+    if (typeof window === 'undefined') return false;
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return false;
+    const anchorNode = selection.anchorNode as HTMLElement | null;
+    if (!anchorNode) return false;
+    // En yakın a4-header class'ı var mı?
+    return !!anchorNode.closest('.a4-header');
+  }
+
+  // Header'ın asla silinememesi için remove ve removeChild'ı override et
+  remove(): void {
+    // Sadece düzenleme modunda silinebilir
+    if (typeof window !== 'undefined' && ((window as any).__headerFooterEditMode || (window as any).__headerEditMode)) {
+      super.remove();
+    }
+    // Mod kapalıysa hiçbir şey yapma
+  }
+  removeChild(): void {
+    if (typeof window !== 'undefined' && ((window as any).__headerFooterEditMode || (window as any).__headerEditMode)) {
+      super.removeChild();
+    }
   }
 }
 
-function HeaderEditable({ text, nodeKey }: { text: string; nodeKey: string }) {
+function HeaderEditable({ text, nodeKey, readOnly }: { text: string; nodeKey: string, readOnly: boolean }) {
   const [value, setValue] = React.useState(text);
+  // Lexical update tetikleyici
+  const forceUpdate = React.useReducer(x => x + 1, 0)[1];
   return (
     <div
       className="a4-header"
-      contentEditable
+      contentEditable={!readOnly}
       suppressContentEditableWarning
       onInput={e => setValue((e.target as HTMLElement).innerText)}
+      onDoubleClick={() => {
+        if (typeof window !== 'undefined') {
+          (window as any).__headerEditMode = true;
+          forceUpdate();
+        }
+      }}
+      onBlur={() => {
+        if (typeof window !== 'undefined') {
+          (window as any).__headerEditMode = false;
+          forceUpdate();
+        }
+      }}
       data-node-key={nodeKey}
-      style={{ minHeight: '32px' }}
+      style={{ minHeight: '32px', outline: readOnly ? 'none' : '2px solid #1976d2' }}
     >
       {value}
     </div>
