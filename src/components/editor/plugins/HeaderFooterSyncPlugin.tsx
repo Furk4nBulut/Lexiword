@@ -67,6 +67,12 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
           const header = changedHeader; // TS için non-null
           editor.update(() => {
             updateAllHeaders(header.text, header.visible);
+            // Header değişikliği olduğunda header/footer varlığını garanti et
+            pageNodes.forEach((page) => {
+              if (typeof page.ensureHeaderFooterContentChildren === 'function') {
+                page.ensureHeaderFooterContentChildren();
+              }
+            });
           });
           lastHeader.current = header;
         }
@@ -75,15 +81,15 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
           const footer = changedFooter; // TS için non-null
           editor.update(() => {
             updateAllFooters(footer.text, footer.visible);
+            // Footer değişikliği olduğunda header/footer varlığını garanti et
+            pageNodes.forEach((page) => {
+              if (typeof page.ensureHeaderFooterContentChildren === 'function') {
+                page.ensureHeaderFooterContentChildren();
+              }
+            });
           });
           lastFooter.current = footer;
         }
-        // Her güncellemede tüm PageNode'larda header/footer'ın varlığını garanti et
-        pageNodes.forEach((page) => {
-          if (typeof page.ensureHeaderFooterContentChildren === 'function') {
-            page.ensureHeaderFooterContentChildren();
-          }
-        });
       });
     });
   }, [editor]);
