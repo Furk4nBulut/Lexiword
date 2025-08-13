@@ -51,17 +51,18 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
         }
         // Değişiklik yapılan header'ı tüm sayfalara uygula
         if (changedHeader != null) {
+          const header = changedHeader; // TS için non-null
           editor.update(() => {
-            updateAllHeaders(changedHeader!.text, changedHeader!.visible);
+            updateAllHeaders(header.text, header.visible);
           });
-          lastHeader.current = changedHeader;
+          lastHeader.current = header;
         }
-        // Değişiklik yapılan footer'ı tüm sayfalara uygula
         if (changedFooter != null) {
+          const footer = changedFooter; // TS için non-null
           editor.update(() => {
-            updateAllFooters(changedFooter!.text, changedFooter!.visible);
+            updateAllFooters(footer.text, footer.visible);
           });
-          lastFooter.current = changedFooter;
+          lastFooter.current = footer;
         }
       });
     });
