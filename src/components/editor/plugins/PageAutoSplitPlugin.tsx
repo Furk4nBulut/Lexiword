@@ -119,37 +119,59 @@ export function PageAutoSplitPlugin({
       return blocks.length > 0 ? blocks[blocks.length - 1] : null;
     }
 
+    function moveOverflowBlocksToNextPage(pageNode: PageNode, capacity: number, usedScroll: number) {
+      const contentSection = pageNode.getChildren().find((c: any): c is PageContentNode => isContentNode(c));
+      if (!contentSection) return;
+      const blocks = contentSection.getChildren();
+      if (blocks.length === 0) return;
+      const el = editor.getElementByKey(contentSection.getKey());
+      if (!el) return;
+      if (el.scrollHeight <= capacity + 2) return;
+      // Fazla bloğu bul ve taşı
+      let nextPage = pageNode.getNextSibling();
+      if (!$isPageNode(nextPage)) {
+        nextPage = $createPageNode();
+        // Header/footer kopyala
+        const prevHeader = pageNode.getChildren().find((n) => isHeaderNode(n));
+        const prevFooter = pageNode.getChildren().find((n) => isFooterNode(n));
+        if (prevHeader && prevHeader.__visible !== false) {
+          nextPage.append(new PageHeaderNode(prevHeader.__text ?? '', undefined, prevHeader.__visible ?? false));
+        }
+        nextPage.append(new PageContentNode());
+        if (prevFooter && prevFooter.__visible !== false) {
+          nextPage.append(new PageFooterNode(prevFooter.__text ?? '', undefined, prevFooter.__visible ?? false));
+        }
+        pageNode.insertAfter(nextPage);
+      }
+      const nextContent = nextPage.getChildren().find((c: any): c is PageContentNode => isContentNode(c));
+      if (!nextContent) return;
+      // Son bloğu taşı
+      const lastBlock = blocks[blocks.length - 1];
+      nextContent.append(lastBlock);
+    }
+
     function reflowPass(): boolean {
       let didMoveAny = false;
-
       editor.update(() => {
         const root = $getRoot();
         if (root.getChildrenSize() === 0) {
           root.append($createPageNode());
           return;
         }
-
         const children = root.getChildren();
         const hasNonPage = children.some((n) => !$isPageNode(n));
         if (hasNonPage) {
           const page = $createPageNode();
           children.forEach((n) => {
             if (!$isPageNode(n)) {
-              // Move foreign nodes into first page's content section
-              const contentSection = page
-                .getChildren()
-                .find((c: any): c is PageContentNode => isContentNode(c));
+              const contentSection = page.getChildren().find((c: any): c is PageContentNode => isContentNode(c));
               if (contentSection != null) contentSection.append(n);
             }
           });
           root.append(page);
         }
-
+        // Tüm sayfalar için flow kontrolü
         let page = root.getFirstChild();
-        let lastPageNode: PageNode | null = null;
-        let lastPageEl: HTMLElement | null = null;
-        let lastCapacity = 0;
-        let lastUsedScroll = 0;
         while ($isPageNode(page)) {
           const pageNode = page;
           const pageEl = getPageEl(pageNode);
@@ -157,171 +179,16 @@ export function PageAutoSplitPlugin({
             page = pageNode.getNextSibling();
             continue;
           }
-          if (pageEl.clientHeight === 0 || pageEl.scrollHeight === 0) {
-            page = pageNode.getNextSibling();
-            continue;
-          }
-
-          const {
-            el: contentDomEl,
-            height: capacity,
-            top: contentTop,
-            paddingTop,
-            paddingBottom
-          } = getContentMetrics(pageEl);
-          // Resolve content section node
-          const contentSection = pageNode
-            .getChildren()
-            .find((c: any): c is PageContentNode => isContentNode(c));
-          const blocks = contentSection?.getChildren() ?? [];
-
-          // Deepest child bottom and sum of heights
-          let deepestBottom = contentTop;
-          let sumHeights = 0;
-          for (let i = 0; i < blocks.length; i++) {
-            const el = editor.getElementByKey(blocks[i].getKey());
-            if (el == null) continue;
-            const r = el.getBoundingClientRect();
-            if (r.bottom > deepestBottom) deepestBottom = r.bottom;
-            sumHeights += el.offsetHeight;
-          }
-          const usedDeepest = Math.max(0, deepestBottom - contentTop);
-          const usedSum = sumHeights;
+          const { el: contentDomEl, height: capacity, paddingTop, paddingBottom } = getContentMetrics(pageEl);
           const targetForScroll = contentDomEl ?? pageEl;
           const usedScroll = getContentScrollHeight(targetForScroll, paddingTop, paddingBottom);
-
-          // Overflow if both metrics exceed, OR scroll-based says content exceeds capacity
-          const tolDeepest = 1;
-          const tolSum = 6;
-          const scrollTol = 2;
-          const overflow =
-            (usedDeepest > capacity - tolDeepest && usedSum > capacity - tolSum) ||
-            usedScroll > capacity + scrollTol;
-
-          if (overflow) {
-            const elementBlocks = blocks.filter(
-              (b): b is LexicalElementNode =>
-                typeof (b as LexicalElementNode).getChildren === 'function'
-            );
-            const candidate = pickMovableBlock(elementBlocks);
-            if (candidate != null) {
-              if (blocks.length === 1) {
-                const el = editor.getElementByKey(candidate.getKey());
-                const currentH = el?.offsetHeight ?? usedDeepest;
-                const key = candidate.getKey();
-                if (!unbreakableTooTallKeysRef.current.has(key)) {
-                  const ok = proportionalSplitParagraphByHeight(candidate, currentH, capacity);
-                  if (!ok) {
-                    unbreakableTooTallKeysRef.current.add(key);
-                    let nextPage = pageNode.getNextSibling();
-                    if (!$isPageNode(nextPage)) {
-                      nextPage = $createPageNode();
-                      pageNode.insertAfter(nextPage);
-                    }
-                    const nextContent = nextPage
-                      .getChildren()
-                      .find((c: any): c is PageContentNode => isContentNode(c));
-                    if (nextContent != null) nextContent.append(candidate);
-                  }
-                }
-              } else {
-                let nextPage = pageNode.getNextSibling();
-                if (!$isPageNode(nextPage)) {
-                  nextPage = $createPageNode();
-                  pageNode.insertAfter(nextPage);
-                }
-                const nextContent = nextPage
-                  .getChildren()
-                  .find((c: any): c is PageContentNode => isContentNode(c));
-                if (nextContent != null) nextContent.append(candidate);
-              }
-
-              // Cursor otomatik yeni sayfaya taşınsın
-              const selection = $getSelection();
-              if ($isRangeSelection(selection)) {
-                const next = pageNode.getNextSibling();
-                if ($isPageNode(next)) {
-                  const nextContent = next
-                    .getChildren()
-                    .find((c: any): c is PageContentNode => isContentNode(c));
-                  const firstChild = nextContent?.getFirstChild() ?? null;
-                  if (firstChild != null) {
-                    firstChild.selectStart();
-                    // Cursor yeni sayfaya taşındıysa scroll et
-                    setTimeout(() => {
-                      const el = editor.getElementByKey(firstChild.getKey());
-                      if (el !== null) {
-                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      }
-                    }, 0);
-                  }
-                }
-              }
-
-              didMoveAny = true;
-            }
+          if (usedScroll > capacity + 2) {
+            moveOverflowBlocksToNextPage(pageNode, capacity, usedScroll);
+            didMoveAny = true;
           }
-
-          // Son sayfa ve doluysa yeni bir boş sayfa ekle
-          lastPageNode = pageNode;
-          lastPageEl = pageEl;
-          lastCapacity = capacity;
-          lastUsedScroll = usedScroll;
-
           page = pageNode.getNextSibling();
         }
-
-        // Son sayfa doluysa yeni bir boş sayfa ekle
-        if (
-          lastPageNode !== null &&
-          lastPageEl !== null &&
-          lastUsedScroll > lastCapacity - 2 &&
-          lastPageNode.getNextSibling() === null
-        ) {
-          const newPage = $createPageNode();
-          // Header ve footer kopyala (sadece görünürse ekle)
-          const prevHeader = lastPageNode.getChildren().find((n) => isHeaderNode(n));
-          const prevFooter = lastPageNode.getChildren().find((n) => isFooterNode(n));
-          let headerNode = null;
-          let footerNode = null;
-          if (prevHeader !== null && prevHeader !== undefined && prevHeader.__visible !== false) {
-            headerNode = new PageHeaderNode(
-              prevHeader.__text ?? '',
-              undefined,
-              prevHeader.__visible ?? false
-            );
-            newPage.append(headerNode);
-          }
-          // Her zaman yeni bir content node ekle
-          const contentNode = new PageContentNode();
-          newPage.append(contentNode);
-          if (prevFooter !== null && prevFooter !== undefined && prevFooter.__visible !== false) {
-            footerNode = new PageFooterNode(
-              prevFooter.__text ?? '',
-              undefined,
-              prevFooter.__visible ?? false
-            );
-            newPage.append(footerNode);
-          }
-          lastPageNode.insertAfter(newPage);
-          // Cursor yeni content'e taşınsın ve scroll yapılsın
-          setTimeout(() => {
-            const el = editor.getElementByKey(newPage.getKey());
-            if (el !== null) {
-              el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-            // Cursor yeni content'e
-            const contentEl = editor.getElementByKey(contentNode.getKey());
-            if (contentEl !== null) {
-              contentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            editor.update(() => {
-              contentNode.selectStart();
-            });
-          }, 0);
-        }
       });
-
       return didMoveAny;
     }
 
