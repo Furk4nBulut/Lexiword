@@ -66,7 +66,19 @@ export function PageAutoSplitPlugin({
       if (blocks.length === 0) return;
       const el = editor.getElementByKey(contentSection.getKey());
       if (el == null) return;
-      if (!(el.scrollHeight > capacity + 2)) return;
+      // Footer yüksekliğini ve en az bir satır boşluğu hesaba kat
+      const pageFooter = pageNode.getChildren().find((n) => isFooterNode(n));
+      let footerHeight = 0;
+      if (pageFooter != null) {
+        const footerEl = editor.getElementByKey(pageFooter.getKey());
+        if (footerEl != null) {
+          footerHeight = footerEl.offsetHeight;
+        }
+      }
+      // En az bir satır boşluk (ör: 24px) bırakmak için
+      const minLineGap = 24;
+      const adjustedCapacity = capacity - footerHeight - minLineGap;
+      if (!(el.scrollHeight > adjustedCapacity + 2)) return;
       // Fazla bloğu bul ve taşı
       let nextPage = pageNode.getNextSibling();
       if (!$isPageNode(nextPage)) {
