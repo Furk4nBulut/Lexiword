@@ -1,3 +1,19 @@
+/**
+ * PageAutoSplitPlugin
+ *
+ * Bu plugin, sayfa içeriği taşma (overflow) yaptığında fazla blokları otomatik olarak yeni bir sayfaya taşır.
+ * Sayfa yüksekliği, üst ve alt marjlar gibi parametrelerle çalışır ve overflow durumunda yeni sayfa ekler.
+ *
+ * Kullanım Senaryosu:
+ * - Kullanıcı içerik ekledikçe, sayfa dolduğunda fazla bloklar otomatik olarak yeni bir sayfaya aktarılır.
+ * - Header/footer kopyalanır, içerik bölünür ve sayfa yapısı bozulmaz.
+ *
+ * Notlar:
+ * - moveOverflowBlocksToNextPage fonksiyonu, taşan blokları bir sonraki sayfaya taşır.
+ * - reflowPass fonksiyonu, tüm sayfaları kontrol eder ve overflow varsa taşımayı tetikler.
+ * - schedule fonksiyonu, animasyon frame ve setTimeout ile reflow işlemini optimize eder.
+ */
+
 import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot } from 'lexical';
@@ -57,7 +73,18 @@ export function PageAutoSplitPlugin({
       return targetEl.scrollHeight - paddingTop - paddingBottom;
     }
 
+    /**
+     * moveOverflowBlocksToNextPage
+     *
+     * Bu fonksiyon, taşan içerik bloklarını bir sonraki sayfaya taşır.
+     * Sayfa altındaki footer yüksekliği ve minimum boşluk göz önünde bulundurularak
+     * taşınacak içerik miktarı ayarlanır.
+     *
+     * @param pageNode - Taşınacak blokların bulunduğu sayfa düğümü
+     * @param capacity - Sayfanın içeriği barındırma kapasitesi
+     */
     function moveOverflowBlocksToNextPage(pageNode: PageNode, capacity: number): void {
+      // İçerik bölümünü bul
       const contentSection = pageNode
         .getChildren()
         .find((c: unknown): c is PageContentNode => isContentNode(c));
@@ -107,19 +134,30 @@ export function PageAutoSplitPlugin({
       const lastBlock = blocks[blocks.length - 1];
       // Sadece null kontrolü ve getKey fonksiyonu kontrolü yeterli
       if (lastBlock != null && typeof (lastBlock as { getKey?: unknown }).getKey === 'function') {
+        // Fazla bloğu bir sonraki sayfanın content'ine ekle
         nextContent.append(lastBlock as any); // LexicalNode olarak cast
       }
     }
 
+    /**
+     * reflowPass
+     *
+     * Bu fonksiyon, sayfa taşma kontrolü yapar ve gerekirse taşma olan sayfalardaki
+     * fazla blokları bir sonraki sayfaya taşır.
+     *
+     * @returns boolean - Herhangi bir bloğun taşınıp taşınmadığını belirtir
+     */
     function reflowPass(): boolean {
       let didMoveAny = false;
       editor.update(() => {
+        // Root node'u al
         const root = $getRoot();
         if (root.getChildrenSize() === 0) {
           root.append($createPageNode());
           return;
         }
         const children = root.getChildren();
+        // Eğer root altında PageNode olmayan bir node varsa, onu yeni bir sayfaya taşı
         const hasNonPage = children.some((n) => !$isPageNode(n));
         if (hasNonPage) {
           const page = $createPageNode();
@@ -143,6 +181,7 @@ export function PageAutoSplitPlugin({
             page = pageNode.getNextSibling();
             continue;
           }
+          // Sayfa içeriğinin kapasitesini ve kullanılan alanı hesapla
           const {
             el: contentDomEl,
             height: capacity,
@@ -152,6 +191,7 @@ export function PageAutoSplitPlugin({
           const targetForScroll = contentDomEl !== null ? contentDomEl : pageEl;
           const usedScroll = getContentScrollHeight(targetForScroll, paddingTop, paddingBottom);
           if (usedScroll > capacity + 2) {
+            // Taşma varsa, fazla bloğu bir sonraki sayfaya taşı
             moveOverflowBlocksToNextPage(pageNode, capacity);
             didMoveAny = true;
           }

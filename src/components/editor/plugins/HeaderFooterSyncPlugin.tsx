@@ -5,8 +5,17 @@ import { updateAllHeaders, updateAllFooters } from './HeaderFooterSyncUtils';
 import { $isPageNode } from '../nodes/PageNode';
 
 /**
+ * HeaderFooterSyncPlugin
+ *
  * Bu plugin, header/footer edit modundayken bir header/footer değişikliği olduğunda
-tüm sayfalardaki header/footer'ı otomatik olarak günceller.
+ * tüm sayfalardaki header/footer'ı otomatik olarak günceller.
+ *
+ * Kullanım Senaryosu:
+ * - Kullanıcı bir sayfanın header veya footer'ını değiştirdiğinde, tüm sayfalarda aynı değişikliğin yansımasını sağlar.
+ *
+ * Notlar:
+ * - updateAllHeaders ve updateAllFooters yardımcı fonksiyonlarını kullanır.
+ * - Her güncellemede PageNode'larda header/footer'ın varlığını da garanti eder.
  */
 export function HeaderFooterSyncPlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
@@ -14,6 +23,8 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
   const lastFooter = useRef<{ text: string; visible: boolean } | null>(null);
 
   useEffect(() => {
+    // Lexical editörün state'i güncellendiğinde çalışır.
+    // Header veya footer'da değişiklik olup olmadığını tespit eder.
     return editor.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
         const root = $getRoot();
@@ -25,6 +36,7 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
         for (const page of pageNodes) {
           const header = page.getHeaderNode();
           if (header != null) {
+            // Son header ile mevcut header karşılaştırılır
             if (
               lastHeader.current == null ||
               lastHeader.current.text !== header.__text ||
@@ -39,6 +51,7 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
         for (const page of pageNodes) {
           const footer = page.getFooterNode();
           if (footer != null) {
+            // Son footer ile mevcut footer karşılaştırılır
             if (
               lastFooter.current == null ||
               lastFooter.current.text !== footer.__text ||
@@ -57,6 +70,7 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
           });
           lastHeader.current = header;
         }
+        // Değişiklik yapılan footer'ı tüm sayfalara uygula
         if (changedFooter != null) {
           const footer = changedFooter; // TS için non-null
           editor.update(() => {
