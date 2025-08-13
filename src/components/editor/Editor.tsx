@@ -45,12 +45,6 @@ export default function Editor(): JSX.Element {
     [headerFooterEditMode]
   );
 
-  // Edit mode'da iken contentEditable'ı false yap, tıklanınca edit mode'u kapat
-  const { headerFooterEditMode: isEditMode, setHeaderFooterEditMode: setEditMode } = editModeContextValue;
-  const handleContentClick = React.useCallback(() => {
-    if (isEditMode && setEditMode) setEditMode(false);
-  }, [isEditMode, setEditMode]);
-
   return (
     <div className="editor-a4-wrapper">
       <LexicalComposer initialConfig={initialConfig}>

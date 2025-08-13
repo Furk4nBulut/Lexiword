@@ -18,7 +18,6 @@ export type SerializedPageFooterNode = Spread<
 
 export class PageFooterNode extends DecoratorNode<JSX.Element> {
   __text: string;
-
   __visible: boolean;
 
   static getType(): string {
