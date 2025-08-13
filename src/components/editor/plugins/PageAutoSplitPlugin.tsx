@@ -279,12 +279,12 @@ export function PageAutoSplitPlugin({
           lastPageNode.getNextSibling() === null
         ) {
           const newPage = $createPageNode();
-          // Header ve footer kopyala
+          // Header ve footer kopyala (sadece görünürse ekle)
           const prevHeader = lastPageNode.getChildren().find((n) => isHeaderNode(n));
           const prevFooter = lastPageNode.getChildren().find((n) => isFooterNode(n));
           let headerNode = null;
           let footerNode = null;
-          if (prevHeader !== null && prevHeader !== undefined) {
+          if (prevHeader !== null && prevHeader !== undefined && prevHeader.__visible !== false) {
             headerNode = new PageHeaderNode(
               prevHeader.__text ?? '',
               undefined,
@@ -295,7 +295,7 @@ export function PageAutoSplitPlugin({
           // Her zaman yeni bir content node ekle
           const contentNode = new PageContentNode();
           newPage.append(contentNode);
-          if (prevFooter !== null && prevFooter !== undefined) {
+          if (prevFooter !== null && prevFooter !== undefined && prevFooter.__visible !== false) {
             footerNode = new PageFooterNode(
               prevFooter.__text ?? '',
               undefined,
