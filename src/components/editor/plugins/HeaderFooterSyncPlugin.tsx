@@ -1,7 +1,7 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useEffect, useRef } from 'react';
 import { $getRoot } from 'lexical';
-import { updateAllHeaders, updateAllFooters } from './HeaderFooterSyncUtils';
+import { updateAllHeaders, updateAllFooters } from '../utils/HeaderFooterSyncUtils';
 import { $isPageNode } from '../nodes/PageNode';
 
 /**

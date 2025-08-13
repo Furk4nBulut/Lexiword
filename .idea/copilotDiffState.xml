@@ -30,6 +30,15 @@
             </PendingDiffInfo>
           </value>
         </entry>
+        <entry key="$PROJECT_DIR$/src/components/editor/context/EditModeContext.tsx">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/src/components/editor/context/EditModeContext.tsx" />
+              <option name="originalContent" value="import React, { createContext, useContext, useMemo } from 'react';&#10;&#10;export interface EditModeContextValue {&#10;  headerFooterEditMode: boolean;&#10;  setHeaderFooterEditMode?: (value: boolean) =&gt; void;&#10;}&#10;&#10;const EditModeContext = createContext&lt;EditModeContextValue&gt;({ headerFooterEditMode: false });&#10;&#10;export function useEditModeContext(): EditModeContextValue {&#10;  return useContext(EditModeContext);&#10;}&#10;&#10;export function EditModeProvider({&#10;  value,&#10;  children&#10;}: {&#10;  value: EditModeContextValue;&#10;  children: React.ReactNode;&#10;}): JSX.Element {&#10;  const memo = useMemo(() =&gt; value, [value.headerFooterEditMode, value.setHeaderFooterEditMode]);&#10;  return &lt;EditModeContext.Provider value={memo}&gt;{children}&lt;/EditModeContext.Provider&gt;;&#10;}&#10;" />
+              <option name="updatedContent" value="/**&#10; * EditModeContext&#10; *&#10; * Bu context, editörde header/footer düzenleme modunun (headerFooterEditMode) yönetilmesini sağlar.&#10; *&#10; * Sağlanan değerler:&#10; * - headerFooterEditMode: Header/footer düzenleme modu açık mı?&#10; * - setHeaderFooterEditMode: Modu değiştiren fonksiyon (opsiyonel, zorunlu değil)&#10; *&#10; * Kullanım Senaryosu:&#10; * - Kullanıcı header/footer alanlarını düzenlemek istediğinde, bu mod aktif edilir.&#10; * - EditModeProvider ile context sağlanır, useEditModeContext ile erişilir.&#10; *&#10; * Notlar:&#10; * - Provider'a verilen value nesnesi memoize edilir, böylece gereksiz render'lar önlenir.&#10; */&#10;&#10;import React, { createContext, useContext, useMemo } from 'react';&#10;&#10;export interface EditModeContextValue {&#10;  headerFooterEditMode: boolean;&#10;  setHeaderFooterEditMode?: (value: boolean) =&gt; void;&#10;}&#10;&#10;const EditModeContext = createContext&lt;EditModeContextValue&gt;({ headerFooterEditMode: false });&#10;&#10;export function useEditModeContext(): EditModeContextValue {&#10;  return useContext(EditModeContext);&#10;}&#10;&#10;export function EditModeProvider({&#10;  value,&#10;  children&#10;}: {&#10;  value: EditModeContextValue;&#10;  children: React.ReactNode;&#10;}): JSX.Element {&#10;  const memo = useMemo(() =&gt; value, [value.headerFooterEditMode, value.setHeaderFooterEditMode]);&#10;  return &lt;EditModeContext.Provider value={memo}&gt;{children}&lt;/EditModeContext.Provider&gt;;&#10;}" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
         <entry key="$PROJECT_DIR$/src/components/editor/nodes/PageContentNode.tsx">
           <value>
             <PendingDiffInfo>
