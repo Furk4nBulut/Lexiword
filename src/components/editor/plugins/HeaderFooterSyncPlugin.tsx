@@ -17,42 +17,51 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
     return editor.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
         const root = $getRoot();
-        let headerText = '';
-        let headerVisible = false;
-        let footerText = '';
-        let footerVisible = false;
-        // İlk sayfanın header/footer'ını referans al
-        const firstPage = root.getChildren().find((node) => $isPageNode(node));
-        if (firstPage != null) {
-          const header = firstPage.getHeaderNode();
+        // Tüm sayfalardaki header/footer'ları topla
+        const pageNodes = root.getChildren().filter($isPageNode);
+        let changedHeader: { text: string; visible: boolean } | null = null;
+        let changedFooter: { text: string; visible: boolean } | null = null;
+        // Header değişikliği tespiti
+        for (const page of pageNodes) {
+          const header = page.getHeaderNode();
           if (header != null) {
-            headerText = header.__text;
-            headerVisible = header.__visible;
+            if (
+              lastHeader.current == null ||
+              lastHeader.current.text !== header.__text ||
+              lastHeader.current.visible !== header.__visible
+            ) {
+              changedHeader = { text: header.__text, visible: header.__visible };
+              break;
+            }
           }
-          const footer = firstPage.getFooterNode();
+        }
+        // Footer değişikliği tespiti
+        for (const page of pageNodes) {
+          const footer = page.getFooterNode();
           if (footer != null) {
-            footerText = footer.__text;
-            footerVisible = footer.__visible;
+            if (
+              lastFooter.current == null ||
+              lastFooter.current.text !== footer.__text ||
+              lastFooter.current.visible !== footer.__visible
+            ) {
+              changedFooter = { text: footer.__text, visible: footer.__visible };
+              break;
+            }
           }
         }
-        // Sadece değişiklik varsa güncelle
-        if (
-          lastHeader.current?.text !== headerText ||
-          lastHeader.current?.visible !== headerVisible
-        ) {
+        // Değişiklik yapılan header'ı tüm sayfalara uygula
+        if (changedHeader != null) {
           editor.update(() => {
-            updateAllHeaders(headerText, headerVisible);
+            updateAllHeaders(changedHeader!.text, changedHeader!.visible);
           });
-          lastHeader.current = { text: headerText, visible: headerVisible };
+          lastHeader.current = changedHeader;
         }
-        if (
-          lastFooter.current?.text !== footerText ||
-          lastFooter.current?.visible !== footerVisible
-        ) {
+        // Değişiklik yapılan footer'ı tüm sayfalara uygula
+        if (changedFooter != null) {
           editor.update(() => {
-            updateAllFooters(footerText, footerVisible);
+            updateAllFooters(changedFooter!.text, changedFooter!.visible);
           });
-          lastFooter.current = { text: footerText, visible: footerVisible };
+          lastFooter.current = changedFooter;
         }
       });
     });
