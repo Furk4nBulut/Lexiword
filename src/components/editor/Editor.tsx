@@ -7,7 +7,7 @@ import { ToolbarPlugin } from '../toolbar/Toolbar';
 import './styles.css';
 import { editorNodes } from './nodes';
 import { PageInitializerPlugin } from './plugins/PageInitializerPlugin';
-import { EditModeProvider } from './EditModeContext';
+import { EditModeProvider } from './context/EditModeContext';
 import { ContentSelectAllPlugin } from './plugins/ContentSelectAllPlugin';
 import { PageAutoSplitPlugin } from './plugins/PageAutoSplitPlugin';
 import PageContentFlowPlugin from './plugins/PageContentFlowPlugin';

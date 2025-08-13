@@ -1,6 +1,6 @@
 import React from 'react';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
-import { useEditModeContext } from './EditModeContext';
+import { useEditModeContext } from './context/EditModeContext';
 import './styles.css';
 
 /**

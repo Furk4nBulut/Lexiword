@@ -9,7 +9,7 @@ import {
 } from 'lexical';
 import * as React from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { useEditModeContext } from '../EditModeContext';
+import { useEditModeContext } from '../context/EditModeContext';
 
 export type SerializedPageHeaderNode = Spread<
   { type: 'page-header'; version: 1; text: string; visible: boolean },

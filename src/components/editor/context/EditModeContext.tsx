@@ -1,3 +1,20 @@
+/**
+ * EditModeContext
+ *
+ * Bu context, editörde header/footer düzenleme modunun (headerFooterEditMode) yönetilmesini sağlar.
+ *
+ * Sağlanan değerler:
+ * - headerFooterEditMode: Header/footer düzenleme modu açık mı?
+ * - setHeaderFooterEditMode: Modu değiştiren fonksiyon (opsiyonel, zorunlu değil)
+ *
+ * Kullanım Senaryosu:
+ * - Kullanıcı header/footer alanlarını düzenlemek istediğinde, bu mod aktif edilir.
+ * - EditModeProvider ile context sağlanır, useEditModeContext ile erişilir.
+ *
+ * Notlar:
+ * - Provider'a verilen value nesnesi memoize edilir, böylece gereksiz render'lar önlenir.
+ */
+
 import React, { createContext, useContext, useMemo } from 'react';
 
 export interface EditModeContextValue {
