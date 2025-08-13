@@ -1,3 +1,21 @@
+/**
+ * Editor
+ *
+ * Uygulamanın ana editör bileşeni. Lexical editörünü, tema ve eklentilerle birlikte başlatır.
+ *
+ * Sağladığı Özellikler:
+ * - Lexical editör konfigürasyonu (tema, hata yönetimi, node tanımları)
+ * - EditModeContext ile header/footer düzenleme modunun yönetimi
+ * - Toolbar, RichText, PageInitializer, History, SelectAll, AutoSplit, HeaderFooterSync gibi eklentiler
+ *
+ * Kullanım Senaryosu:
+ * - Sayfa düzenleme, header/footer yönetimi, içerik bölme ve toplu seçim gibi gelişmiş editör işlevleri
+ *
+ * Notlar:
+ * - initialEditorState fonksiyonu PageInitializerPlugin ile yönetilir.
+ * - EditModeProvider ile context sağlanır, Toolbar ve diğer pluginler context üzerinden çalışır.
+ */
+
 import * as React from 'react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
