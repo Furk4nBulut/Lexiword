@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
-import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
@@ -12,6 +11,7 @@ import { EditModeProvider } from './EditModeContext';
 import { ContentSelectAllPlugin } from './plugins/ContentSelectAllPlugin';
 import { PageAutoSplitPlugin } from './plugins/PageAutoSplitPlugin';
 import PageContentFlowPlugin from './plugins/PageContentFlowPlugin';
+import PageContentEditable from './PageContentEditable';
 
 const theme = {
   text: {
@@ -39,16 +39,28 @@ export default function Editor(): JSX.Element {
     nodes: editorNodes
   } as const;
 
+  // EditModeContext'i hem değer hem setter ile sağlayalım
+  const editModeContextValue = React.useMemo(
+    () => ({ headerFooterEditMode, setHeaderFooterEditMode }),
+    [headerFooterEditMode]
+  );
+
+  // Edit mode'da iken contentEditable'ı false yap, tıklanınca edit mode'u kapat
+  const { headerFooterEditMode: isEditMode, setHeaderFooterEditMode: setEditMode } = editModeContextValue;
+  const handleContentClick = React.useCallback(() => {
+    if (isEditMode && setEditMode) setEditMode(false);
+  }, [isEditMode, setEditMode]);
+
   return (
     <div className="editor-a4-wrapper">
       <LexicalComposer initialConfig={initialConfig}>
-        <EditModeProvider value={{ headerFooterEditMode }}>
+        <EditModeProvider value={editModeContextValue}>
           <ToolbarPlugin
             headerFooterEditMode={headerFooterEditMode}
             setHeaderFooterEditMode={setHeaderFooterEditMode}
           />
           <RichTextPlugin
-            contentEditable={<ContentEditable />}
+            contentEditable={<PageContentEditable />}
             placeholder={<div className="editor-placeholder">Start typing...</div>}
             ErrorBoundary={LexicalErrorBoundary}
           />
