@@ -192,29 +192,41 @@ function PageSectionPlugin({
   const handleHeader = (): void => {
     editor.update(() => {
       const root = $getRoot();
-      const pageNode = root
+      // Tüm sayfalardaki PageNode'ları bul
+      const pageNodes = root
         .getChildren()
-        .find(
+        .filter(
           (n) => typeof (n as any).getType === 'function' && (n as any).getType() === 'page'
-        ) as PageNode | undefined;
-      if (pageNode == null) return;
-      const headerNode = pageNode.getHeaderNode();
-      if (headerNode == null) return;
-      headerNode.setVisible(!headerNode.isVisible());
+        ) as PageNode[];
+      pageNodes.forEach((pageNode) => {
+        // Header yoksa ekle
+        if (typeof pageNode.ensureHeaderFooterContentChildren === 'function') {
+          pageNode.ensureHeaderFooterContentChildren();
+        }
+        const headerNode = pageNode.getHeaderNode();
+        if (headerNode == null) return;
+        headerNode.setVisible(!headerNode.isVisible());
+      });
     });
   };
   const handleFooter = (): void => {
     editor.update(() => {
       const root = $getRoot();
-      const pageNode = root
+      // Tüm sayfalardaki PageNode'ları bul
+      const pageNodes = root
         .getChildren()
-        .find(
+        .filter(
           (n) => typeof (n as any).getType === 'function' && (n as any).getType() === 'page'
-        ) as PageNode | undefined;
-      if (pageNode == null) return;
-      const footerNode = pageNode.getFooterNode();
-      if (footerNode == null) return;
-      footerNode.setVisible(!footerNode.isVisible());
+        ) as PageNode[];
+      pageNodes.forEach((pageNode) => {
+        // Footer yoksa ekle
+        if (typeof pageNode.ensureHeaderFooterContentChildren === 'function') {
+          pageNode.ensureHeaderFooterContentChildren();
+        }
+        const footerNode = pageNode.getFooterNode();
+        if (footerNode == null) return;
+        footerNode.setVisible(!footerNode.isVisible());
+      });
     });
   };
 

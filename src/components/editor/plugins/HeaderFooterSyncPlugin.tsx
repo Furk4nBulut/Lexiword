@@ -64,6 +64,12 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
           });
           lastFooter.current = footer;
         }
+        // Her güncellemede tüm PageNode'larda header/footer'ın varlığını garanti et
+        pageNodes.forEach((page) => {
+          if (typeof page.ensureHeaderFooterContentChildren === 'function') {
+            page.ensureHeaderFooterContentChildren();
+          }
+        });
       });
     });
   }, [editor]);
