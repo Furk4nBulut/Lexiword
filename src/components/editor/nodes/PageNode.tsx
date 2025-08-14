@@ -161,25 +161,51 @@ export class PageNode extends ElementNode {
     footerParam?: PageFooterNode
   ): void {
     // Sıralama: header? -> content -> footer? (section her zaman ortada)
-    const header =
-      headerParam ?? this.getChildren().find((child) => child.getType() === 'page-header');
+  let header: PageHeaderNode | undefined;
+  let footer: PageFooterNode | undefined;
     let content = this.getChildren().find((child) => child.getType() === 'page-content');
-    const footer =
-      footerParam ?? this.getChildren().find((child) => child.getType() === 'page-footer');
-    if (typeof window !== 'undefined') {
-      // debug log kaldırıldı
+
+    // Header parametresi varsa ve doğru tipteyse onu kullan, yoksa mevcut children'dan bul
+    if (
+      headerParam !== undefined &&
+      headerParam !== null &&
+      typeof (headerParam as any).getType === 'function' &&
+      (headerParam as any).getType() === 'page-header'
+    ) {
+      header = headerParam;
+    } else {
+      header = this.getChildren().find((child) => child.getType() === 'page-header') as PageHeaderNode;
+      if (headerParam !== undefined && (header === undefined || header === null)) {
+        if (typeof window !== 'undefined') {
+          console.warn('[DEBUG] Header parametresi yanlış tipte veya undefined:', headerParam);
+        }
+      }
     }
-    // Header/footer parametre veya mevcutta yoksa yeni oluşturma!
+
+    // Footer parametresi varsa ve doğru tipteyse onu kullan, yoksa mevcut children'dan bul
+    if (
+      footerParam !== undefined &&
+      footerParam !== null &&
+      typeof (footerParam as any).getType === 'function' &&
+      (footerParam as any).getType() === 'page-footer'
+    ) {
+      footer = footerParam;
+    } else {
+      footer = this.getChildren().find((child) => child.getType() === 'page-footer') as PageFooterNode;
+    }
+
+    // Content node'u yoksa oluştur
     if (content == null) content = new PageContentNode();
+
+    // Tüm mevcut çocukları kaldır
     this.getChildren().forEach((child) => {
       child.remove();
     });
+
+    // Sadece header varsa ve doğru tipteyse ekle
     if (header != null) this.safeAppendHeader(header);
     this.append(content);
     if (footer != null) this.safeAppendFooter(footer);
-    if (typeof window !== 'undefined') {
-      // debug log kaldırıldı
-    }
   }
 
   /**

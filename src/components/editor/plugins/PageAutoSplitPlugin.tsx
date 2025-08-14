@@ -134,7 +134,6 @@ export function PageAutoSplitPlugin({
      * @param capacity - Sayfanın içeriği barındırma kapasitesi (px)
      */
     function moveOverflowBlocksToNextPage(pageNode: PageNode, capacity: number): void {
-      // DEBUG logları kaldırıldı
       // İçerik bölümünü bul
       const contentSection = pageNode.getChildren().find(isContentNode);
       if (contentSection == null) return;
@@ -157,9 +156,29 @@ export function PageAutoSplitPlugin({
       const adjustedCapacity = capacity - footerHeight - minLineGap;
       // Eğer içerik taşmıyorsa çık
       if (!(el.scrollHeight > adjustedCapacity + 2)) return;
-      // Fazla bloğu bul ve taşı
-      let nextPage = pageNode.getNextSibling();
+
+      // Fazla blokları bul ve taşı (en baştan kapasiteyi aşan tüm blokları taşı)
+
+      let totalHeight = 0;
+      let splitIndex = -1;
+      const fallbackBlockHeight = 24; // px
+      for (let i = 0; i < blocks.length; i++) {
+        const block = blocks[i];
+        const blockEl = editor.getElementByKey(block.getKey());
+        if (blockEl == null) {
+          totalHeight += fallbackBlockHeight;
+        } else {
+          totalHeight += blockEl.offsetHeight;
+        }
+        if (totalHeight > adjustedCapacity) {
+          splitIndex = i;
+          break;
+        }
+      }
+      if (splitIndex === -1 || splitIndex >= blocks.length) return; // Taşacak blok yok veya yanlış index
+
       // Sonraki sayfa yoksa yeni bir sayfa oluştur
+      let nextPage = pageNode.getNextSibling();
       if (!$isPageNode(nextPage)) {
         const root = $getRoot();
         const allPages = root.getChildren().filter($isPageNode);
@@ -171,70 +190,32 @@ export function PageAutoSplitPlugin({
           const origHeader = firstPage.getHeaderNode();
           const origFooter = firstPage.getFooterNode();
           const origContent = firstPage.getChildren().find(isContentNode);
-          // Header: yeni bir node oluştur, tüm çocukları JSON ile kopyala (importJSON ile)
           if (origHeader != null) {
             headerToCopy = PageHeaderNode.clone(origHeader);
-            if (headerToCopy !== undefined && headerToCopy !== null) {
-              // Çocukları temizle (sonsuz döngü engellenir)
-              const oldChildren = headerToCopy.getChildren();
-              for (const child of oldChildren) {
-                child.remove();
-              }
-              // Eğer orijinal header'ın çocukları paragraph ise klonla ve header'a ekle
-              // Değilse yeni bir paragraph oluşturup text/linebreak node'larını ona ekle
-              let onlyTextOrLinebreak = true;
+            if (headerToCopy) {
+              // Tüm çocukları temizle
+              headerToCopy.getChildren().forEach((child) => child.remove());
+              // Sadece orijinal header'ın doğrudan çocuklarını (ve bir kez) kopyala
               origHeader.getChildren().forEach((child) => {
-                if (typeof child.getType === 'function' && child.getType() === 'paragraph') {
-                  onlyTextOrLinebreak = false;
+                if (typeof child.clone === 'function') {
+                  headerToCopy.append(child.clone());
                 }
               });
-              if (!onlyTextOrLinebreak) {
-                // Tüm paragraph node'larını klonla ve header'a ekle
-                origHeader.getChildren().forEach((child) => {
-                  if (
-                    typeof child.clone === 'function' &&
-                    child.getType() === 'paragraph' &&
-                    headerToCopy != null
-                  ) {
-                    headerToCopy.append(child.clone());
-                  }
-                });
-              } else {
-                // Tüm text/linebreak node'larını yeni bir paragraph'a ekle
-                const para = new ParagraphNode();
-                origHeader.getChildren().forEach((child) => {
-                  if (typeof child.getType === 'function') {
-                    const type = child.getType();
-                    if (type === 'text' && typeof child.getTextContent === 'function') {
-                      const textNode = new TextNode(child.getTextContent());
-                      para.append(textNode);
-                    } else if (type === 'linebreak') {
-                      const brNode = new LineBreakNode();
-                      para.append(brNode);
-                    }
-                  }
-                });
-                if (headerToCopy !== undefined && headerToCopy !== null) headerToCopy.append(para);
-              }
             }
           }
-          // Footer: yeni bir node oluştur, tüm çocukları JSON ile kopyala (importJSON ile)
           if (origFooter != null) {
             footerToCopy = PageFooterNode.clone(origFooter);
-            for (const child of origFooter.getChildren()) {
-              if (
-                typeof child.exportJSON === 'function' &&
-                typeof (child.constructor as any).importJSON === 'function'
-              ) {
-                const json = child.exportJSON();
-                const imported = (child.constructor as any).importJSON(json);
-                if (imported != null) footerToCopy.append(imported);
-              } else if (typeof child.clone === 'function') {
-                footerToCopy.append(child.clone());
-              }
+            if (footerToCopy) {
+              // Tüm çocukları temizle
+              footerToCopy.getChildren().forEach((child) => child.remove());
+              // Sadece orijinal footer'ın doğrudan çocuklarını (ve bir kez) kopyala
+              origFooter.getChildren().forEach((child) => {
+                if (typeof child.clone === 'function') {
+                  footerToCopy.append(child.clone());
+                }
+              });
             }
           }
-          // Content: tüm çocukları kopyala
           if (origContent != null) {
             contentChildrenToCopy = origContent
               .getChildren()
@@ -243,10 +224,8 @@ export function PageAutoSplitPlugin({
           }
         }
         nextPage = $createPageNode();
-        // Header ve footer parametre olarak yeni sayfaya aktarılır (klonlanmış)
         if (typeof nextPage.ensureHeaderFooterContentChildren === 'function') {
           nextPage.ensureHeaderFooterContentChildren(headerToCopy, footerToCopy);
-          // İçeriği de kopyala
           const nextContent = nextPage.getChildren().find(isContentNode);
           if (nextContent != null && contentChildrenToCopy.length > 0) {
             for (const child of contentChildrenToCopy) {
@@ -255,17 +234,15 @@ export function PageAutoSplitPlugin({
           }
         }
         pageNode.insertAfter(nextPage);
-        // DEBUG loglar kaldırıldı
       }
       // Sonraki sayfanın içerik bölümünü bul
       const nextContent = nextPage.getChildren().find(isContentNode);
       if (nextContent == null) return;
-      // Son bloğu taşı (en son eklenen blok taşınır)
-      const lastBlock = blocks[blocks.length - 1];
-      // Sadece null kontrolü ve getKey fonksiyonu kontrolü yeterli
-      if (lastBlock != null && typeof (lastBlock as { getKey?: unknown }).getKey === 'function') {
-        // Fazla bloğu bir sonraki sayfanın content'ine ekle
-        nextContent.append(lastBlock as any); // LexicalNode olarak cast
+      // Kapasiteyi aşan tüm blokları bir sonraki sayfaya taşı
+      const toMove = blocks.slice(splitIndex);
+      if (toMove.length === 0) return; // Taşınacak blok yoksa döngü kırılır
+      for (const block of toMove) {
+        nextContent.append(block);
       }
     }
 

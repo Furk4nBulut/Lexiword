@@ -211,7 +211,9 @@ function PageSectionPlugin({
           const content = pageNode.getChildren().find((c) => c.getType() === 'page-content');
           const footer = pageNode.getFooterNode();
           // Tüm çocukları kaldır
-          pageNode.getChildren().forEach((child) => { child.remove(); });
+          pageNode.getChildren().forEach((child) => {
+            child.remove();
+          });
           pageNode.append(new PageHeaderNode());
           if (content != null) pageNode.append(content);
           if (footer != null) pageNode.append(footer);
@@ -238,7 +240,9 @@ function PageSectionPlugin({
           const header = pageNode.getHeaderNode();
           const content = pageNode.getChildren().find((c) => c.getType() === 'page-content');
           // Tüm çocukları kaldır
-          pageNode.getChildren().forEach((child) => { child.remove(); });
+          pageNode.getChildren().forEach((child) => {
+            child.remove();
+          });
           if (header != null) pageNode.append(header);
           if (content != null) pageNode.append(content);
           pageNode.append(new PageFooterNode());
