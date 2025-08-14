@@ -2,6 +2,7 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { useEffect } from 'react';
 import { $getRoot } from 'lexical';
 import { $isPageNode } from '../nodes/PageNode';
+import { ParagraphNode, TextNode, LineBreakNode } from 'lexical';
 
 /**
  * HeaderFooterSyncPlugin
@@ -26,7 +27,7 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
     // Lexical editörün state'i güncellendiğinde çalışır.
     // İlk sayfadaki header/footer değiştiyse, diğer tüm sayfalara uygula.
     return editor.registerUpdateListener(({ editorState }) => {
-      editor.update(() => {
+      editorState.read(() => {
         const root = $getRoot();
         const pageNodes = root.getChildren().filter($isPageNode);
         if (typeof window !== 'undefined') {
@@ -47,28 +48,68 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
             // debug log kaldırıldı
           }
           if (header != null && firstHeader != null) {
-            // Tüm çocukları kaldır
             header.getChildren().forEach((child) => { child.remove(); });
-            // İlk header'ın çocuklarını kopyala (sadece .clone fonksiyonu olanları)
+            // Header çocuklarını paragraph/text/linebreak olarak kopyala
+            let onlyTextOrLinebreak = true;
             firstHeader.getChildren().forEach((child) => {
-              if (typeof child.clone === 'function') {
-                header.append(child.clone());
-              } else {
-                // Debug için logla
-                // console.warn('HeaderFooterSyncPlugin: child.clone is not a function', child);
+              if (typeof child.getType === 'function' && child.getType() === 'paragraph') {
+                onlyTextOrLinebreak = false;
               }
             });
+            if (!onlyTextOrLinebreak) {
+              firstHeader.getChildren().forEach((child) => {
+                if (typeof child.clone === 'function' && child.getType() === 'paragraph') {
+                  header.append(child.clone());
+                }
+              });
+            } else {
+              const para = new ParagraphNode();
+              firstHeader.getChildren().forEach((child) => {
+                if (typeof child.getType === 'function') {
+                  const type = child.getType();
+                  if (type === 'text' && typeof child.getTextContent === 'function') {
+                    const textNode = new TextNode(child.getTextContent());
+                    para.append(textNode);
+                  } else if (type === 'linebreak') {
+                    const brNode = new LineBreakNode();
+                    para.append(brNode);
+                  }
+                }
+              });
+              header.append(para);
+            }
           }
           if (footer != null && firstFooter != null) {
             footer.getChildren().forEach((child) => { child.remove(); });
+            // Footer çocuklarını paragraph/text/linebreak olarak kopyala
+            let onlyTextOrLinebreak = true;
             firstFooter.getChildren().forEach((child) => {
-              if (typeof child.clone === 'function') {
-                footer.append(child.clone());
-              } else {
-                // Debug için logla
-                // console.warn('HeaderFooterSyncPlugin: child.clone is not a function', child);
+              if (typeof child.getType === 'function' && child.getType() === 'paragraph') {
+                onlyTextOrLinebreak = false;
               }
             });
+            if (!onlyTextOrLinebreak) {
+              firstFooter.getChildren().forEach((child) => {
+                if (typeof child.clone === 'function' && child.getType() === 'paragraph') {
+                  footer.append(child.clone());
+                }
+              });
+            } else {
+              const para = new ParagraphNode();
+              firstFooter.getChildren().forEach((child) => {
+                if (typeof child.getType === 'function') {
+                  const type = child.getType();
+                  if (type === 'text' && typeof child.getTextContent === 'function') {
+                    const textNode = new TextNode(child.getTextContent());
+                    para.append(textNode);
+                  } else if (type === 'linebreak') {
+                    const brNode = new LineBreakNode();
+                    para.append(brNode);
+                  }
+                }
+              });
+              footer.append(para);
+            }
           }
         }
       });

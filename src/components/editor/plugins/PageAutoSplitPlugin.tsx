@@ -18,6 +18,9 @@ import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot } from 'lexical';
 import type { LexicalNode } from 'lexical';
+import { ParagraphNode } from 'lexical';
+import { TextNode, LineBreakNode } from 'lexical';
+
 import { $createPageNode, $isPageNode, type PageNode } from '../nodes/PageNode';
 import { isContentNode, isFooterNode, isHeaderNode } from '../nodes/sectionTypeGuards';
 import { PageHeaderNode } from '../nodes/PageHeaderNode';
@@ -176,14 +179,64 @@ export function PageAutoSplitPlugin({
           // Header: yeni bir node oluştur, tüm çocukları JSON ile kopyala (importJSON ile)
           if (origHeader != null) {
             headerToCopy = PageHeaderNode.clone(origHeader);
-            for (const child of origHeader.getChildren()) {
-              if (typeof child.exportJSON === 'function' && typeof (child.constructor as any).importJSON === 'function') {
-                const json = child.exportJSON();
-                const imported = (child.constructor as any).importJSON(json);
-                if (imported != null) headerToCopy.append(imported);
-              } else if (typeof child.clone === 'function') {
-                headerToCopy.append(child.clone());
+            if (typeof window !== 'undefined') {
+              console.log('[HEADER COPY] Orijinal çocuk sayısı:', origHeader.getChildren().length);
+            }
+            // Eğer orijinal header'ın çocukları paragraph ise klonla ve header'a ekle
+            // Değilse yeni bir paragraph oluşturup text/linebreak node'larını ona ekle
+            let onlyTextOrLinebreak = true;
+            origHeader.getChildren().forEach((child) => {
+              if (typeof child.getType === 'function' && child.getType() === 'paragraph') {
+                onlyTextOrLinebreak = false;
               }
+            });
+            if (!onlyTextOrLinebreak) {
+              // Tüm paragraph node'larını klonla ve header'a ekle
+              origHeader.getChildren().forEach((child, idx) => {
+                let info = `[${idx}] type: ${typeof child.getType === 'function' ? child.getType() : typeof child}`;
+                if (typeof child.getTextContent === 'function') {
+                  info += `, text: "${child.getTextContent()}"`;
+                }
+                if (typeof window !== 'undefined') {
+                  console.log('[HEADER COPY] Çocuk:', info);
+                }
+                if (typeof child.clone === 'function' && child.getType() === 'paragraph') {
+                  headerToCopy.append(child.clone());
+                }
+              });
+            } else {
+              // Tüm text/linebreak node'larını yeni bir paragraph'a ekle
+              const para = new ParagraphNode();
+              origHeader.getChildren().forEach((child, idx) => {
+                let info = `[${idx}] type: ${typeof child.getType === 'function' ? child.getType() : typeof child}`;
+                if (typeof child.getTextContent === 'function') {
+                  info += `, text: "${child.getTextContent()}"`;
+                }
+                if (typeof window !== 'undefined') {
+                  console.log('[HEADER COPY] Çocuk:', info);
+                }
+                if (typeof child.getType === 'function') {
+                  const type = child.getType();
+                  if (type === 'text' && typeof child.getTextContent === 'function') {
+                    const textNode = new TextNode(child.getTextContent());
+                    para.append(textNode);
+                  } else if (type === 'linebreak') {
+                    const brNode = new LineBreakNode();
+                    para.append(brNode);
+                  }
+                }
+              });
+              headerToCopy.append(para);
+            }
+            if (typeof window !== 'undefined') {
+              console.log('[HEADER COPY] Yeni header çocuk sayısı:', headerToCopy.getChildren().length);
+              headerToCopy.getChildren().forEach((c, i) => {
+                let pinfo = `[${i}] type: ${typeof c.getType === 'function' ? c.getType() : typeof c}`;
+                if (typeof c.getTextContent === 'function') {
+                  pinfo += `, text: "${c.getTextContent()}"`;
+                }
+                console.log('[HEADER COPY] Yeni header child:', pinfo);
+              });
             }
           }
           // Footer: yeni bir node oluştur, tüm çocukları JSON ile kopyala (importJSON ile)

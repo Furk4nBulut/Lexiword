@@ -26,7 +26,7 @@ export class PageHeaderNode extends ElementNode {
     return new PageHeaderNode();
   }
 
-  createDOM(_config: EditorConfig): HTMLElement {
+  createDOM(config: EditorConfig): HTMLElement {
     const dom = document.createElement('div');
     dom.className = 'a4-header';
     dom.setAttribute('data-lexical-node-key', this.getKey());
@@ -34,9 +34,6 @@ export class PageHeaderNode extends ElementNode {
     dom.contentEditable = CURRENT_HEADER_FOOTER_EDIT_MODE ? 'true' : 'false';
     dom.setAttribute('tabIndex', '0');
     dom.addEventListener('click', (e) => { e.stopPropagation(); });
-    if (typeof window !== 'undefined') {
-  // debug log kaldırıldı
-    }
     return dom;
   }
 
