@@ -1,7 +1,6 @@
 import { CURRENT_HEADER_FOOTER_EDIT_MODE } from '../plugins/HeaderFooterEditModePlugin';
-
+// ...existing code...
 import { ElementNode, type SerializedElementNode, type EditorConfig } from 'lexical';
-
 
 
 export type SerializedPageFooterNode = SerializedElementNode & {

@@ -40,15 +40,25 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
           if (header != null && firstHeader != null) {
             // Tüm çocukları kaldır
             header.getChildren().forEach((child) => { child.remove(); });
-            // İlk header'ın çocuklarını kopyala
+            // İlk header'ın çocuklarını kopyala (sadece .clone fonksiyonu olanları)
             firstHeader.getChildren().forEach((child) => {
-              header.append(child.clone());
+              if (typeof child.clone === 'function') {
+                header.append(child.clone());
+              } else {
+                // Debug için logla
+                // console.warn('HeaderFooterSyncPlugin: child.clone is not a function', child);
+              }
             });
           }
           if (footer != null && firstFooter != null) {
             footer.getChildren().forEach((child) => { child.remove(); });
             firstFooter.getChildren().forEach((child) => {
-              footer.append(child.clone());
+              if (typeof child.clone === 'function') {
+                footer.append(child.clone());
+              } else {
+                // Debug için logla
+                // console.warn('HeaderFooterSyncPlugin: child.clone is not a function', child);
+              }
             });
           }
         }
