@@ -27,36 +27,124 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
     // İlk sayfadaki header/footer değiştiyse, diğer tüm sayfalara uygula.
     return editor.registerUpdateListener(({ editorState }) => {
       // Sadece text ve linebreak içeriğini karşılaştıran yardımcı fonksiyon
-      function getTextAndLinebreakContent(children: any[]): string {
-        return JSON.stringify(
-          children.map((child: any) => {
-            if (typeof child.getType === 'function') {
-              const type = child.getType();
-              if (type === 'text' && typeof child.getTextContent === 'function') {
-                return { type: 'text', text: child.getTextContent() };
-              } else if (type === 'linebreak') {
-                return { type: 'linebreak' };
-              }
-            }
-            return null;
-          })
-        );
-      }
+  // kaldırıldı: kullanılmıyor
   let pageNodes: any[] = [];
-      let firstHeader: any = null;
-      let firstFooter: any = null;
+      let refHeaderJSON: any[] | null = null;
+      let refFooterJSON: any[] | null = null;
+      let activeHeaderIndex: number | null = null;
+      let activeFooterIndex: number | null = null;
       editorState.read(() => {
         const root = $getRoot();
         pageNodes = root.getChildren().filter($isPageNode);
         if (pageNodes.length < 2) return;
-        firstHeader = pageNodes[0].getHeaderNode();
-        firstFooter = pageNodes[0].getFooterNode();
+        // Aktif header/footer'ı bulmak için focus'lu DOM'u kontrol et
+        const activeElement = typeof document !== 'undefined' ? document.activeElement : null;
+        // Header
+        for (let i = 0; i < pageNodes.length; i++) {
+          const header = pageNodes[i].getHeaderNode();
+          if (header) {
+            const headerKey = header.getKey();
+            const headerDom = document.querySelector(`[data-lexical-node-key="${headerKey}"]`);
+            if (headerDom && activeElement === headerDom) {
+              activeHeaderIndex = i;
+              refHeaderJSON = header.getChildren().map((n: any) => typeof n.exportJSON === 'function' ? n.exportJSON() : null);
+              break;
+            }
+          }
+        }
+        // Eğer focus'lu header yoksa, ilk dolu header'ı referans al
+        if (refHeaderJSON == null) {
+          for (let i = 0; i < pageNodes.length; i++) {
+            const header = pageNodes[i].getHeaderNode();
+            if (header) {
+              const children = header.getChildren();
+              const isEmpty = !children || children.length === 0 || children.every((child: unknown) => {
+                if (typeof child === 'object' && child !== null && 'getType' in child && typeof (child as any).getType === 'function') {
+                  const type = (child as { getType: () => string }).getType();
+                  if (type === 'text' && 'getTextContent' in child && typeof (child as any).getTextContent === 'function') {
+                    return (child as { getTextContent: () => string }).getTextContent() === '';
+                  } else if (type === 'linebreak') {
+                    return true;
+                  } else if (type === 'paragraph' && 'getChildren' in child && typeof (child as any).getChildren === 'function') {
+                    const paraChildren = (child as { getChildren: () => any[] }).getChildren();
+                    return !paraChildren || paraChildren.length === 0 || paraChildren.every((c: unknown) => {
+                      if (typeof c === 'object' && c !== null && 'getType' in c && typeof (c as any).getType === 'function') {
+                        const t = (c as { getType: () => string }).getType();
+                        if (t === 'text' && 'getTextContent' in c && typeof (c as any).getTextContent === 'function') {
+                          return (c as { getTextContent: () => string }).getTextContent() === '';
+                        } else if (t === 'linebreak') {
+                          return true;
+                        }
+                      }
+                      return false;
+                    });
+                  }
+                }
+                return false;
+              });
+              if (!isEmpty) {
+                refHeaderJSON = header.getChildren().map((n: any) => typeof n.exportJSON === 'function' ? n.exportJSON() : null);
+                break;
+              }
+            }
+          }
+        }
+        // Footer
+        for (let i = 0; i < pageNodes.length; i++) {
+          const footer = pageNodes[i].getFooterNode();
+          if (footer) {
+            const footerKey = footer.getKey();
+            const footerDom = document.querySelector(`[data-lexical-node-key="${footerKey}"]`);
+            if (footerDom && activeElement === footerDom) {
+              activeFooterIndex = i;
+              refFooterJSON = footer.getChildren().map((n: any) => typeof n.exportJSON === 'function' ? n.exportJSON() : null);
+              break;
+            }
+          }
+        }
+        // Eğer focus'lu footer yoksa, ilk dolu footer'ı referans al
+        if (refFooterJSON == null) {
+          for (let i = 0; i < pageNodes.length; i++) {
+            const footer = pageNodes[i].getFooterNode();
+            if (footer) {
+              const children = footer.getChildren();
+              const isEmpty = !children || children.length === 0 || children.every((child: unknown) => {
+                if (typeof child === 'object' && child !== null && 'getType' in child && typeof (child as any).getType === 'function') {
+                  const type = (child as { getType: () => string }).getType();
+                  if (type === 'text' && 'getTextContent' in child && typeof (child as any).getTextContent === 'function') {
+                    return (child as { getTextContent: () => string }).getTextContent() === '';
+                  } else if (type === 'linebreak') {
+                    return true;
+                  } else if (type === 'paragraph' && 'getChildren' in child && typeof (child as any).getChildren === 'function') {
+                    const paraChildren = (child as { getChildren: () => any[] }).getChildren();
+                    return !paraChildren || paraChildren.length === 0 || paraChildren.every((c: unknown) => {
+                      if (typeof c === 'object' && c !== null && 'getType' in c && typeof (c as any).getType === 'function') {
+                        const t = (c as { getType: () => string }).getType();
+                        if (t === 'text' && 'getTextContent' in c && typeof (c as any).getTextContent === 'function') {
+                          return (c as { getTextContent: () => string }).getTextContent() === '';
+                        } else if (t === 'linebreak') {
+                          return true;
+                        }
+                      }
+                      return false;
+                    });
+                  }
+                }
+                return false;
+              });
+              if (!isEmpty) {
+                refFooterJSON = footer.getChildren().map((n: any) => typeof n.exportJSON === 'function' ? n.exportJSON() : null);
+                break;
+              }
+            }
+          }
+        }
       });
       if (pageNodes.length < 2) return;
       editor.update(() => {
         // Header güncellemesi
-        if (firstHeader != null) {
-          for (let i = 1; i < pageNodes.length; i++) {
+        if (refHeaderJSON != null) {
+          for (let i = 0; i < pageNodes.length; i++) {
             const page = pageNodes[i];
             const header = page.getHeaderNode();
             if (header != null) {
@@ -64,67 +152,45 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
                 const node = n as { exportJSON?: () => any };
                 return typeof node.exportJSON === 'function' ? node.exportJSON() : null;
               }));
-              const firstHeaderContent = JSON.stringify(firstHeader.getChildren().map((n: unknown) => {
-                const node = n as { exportJSON?: () => any };
-                return typeof node.exportJSON === 'function' ? node.exportJSON() : null;
-              }));
-              if (headerContent !== firstHeaderContent) {
-                const children = firstHeader.getChildren();
-                const onlyTextOrLinebreak = children.every((child: any) => {
-                  if (typeof child.getType === 'function') {
-                    const type = child.getType();
-                    return type === 'text' || type === 'linebreak';
-                  }
-                  return false;
-                });
-                if (Boolean(onlyTextOrLinebreak)) {
-                  const headerChildren = header.getChildren();
-                  let oldParaContent = '';
-                  if (
-                    headerChildren.length === 1 &&
-                    typeof headerChildren[0].getType === 'function' &&
-                    headerChildren[0].getType() === 'paragraph'
-                  ) {
-                    const paraNode = headerChildren[0];
-                    oldParaContent = getTextAndLinebreakContent(paraNode.getChildren());
-                  }
-                  const newParaContent = getTextAndLinebreakContent(children);
-                  // Eğer eski ve yeni içerik aynıysa veya ikisi de boşsa hiçbir şey yapma
-                  if (!(oldParaContent === newParaContent || (!oldParaContent && !newParaContent))) {
-                    header.getChildren().forEach((child: any) => { child.remove(); });
-                    if (children.length > 0) {
+              const refHeaderContent = JSON.stringify(refHeaderJSON);
+              if (headerContent !== refHeaderContent) {
+                // header'ı temizle
+                header.getChildren().forEach((child: any) => { child.remove(); });
+                // refHeaderJSON'dan yeni node'lar oluşturup ekle
+                (refHeaderJSON as Array<any>).forEach((childJSON) => {
+                  if (typeof childJSON === 'object' && childJSON !== null && 'type' in childJSON) {
+                    if (childJSON.type === 'paragraph') {
                       const para = new ParagraphNode();
-                      children.forEach((child: any) => {
-                        if (typeof child.getType === 'function') {
-                          const type = child.getType();
-                          if (type === 'text' && typeof child.getTextContent === 'function') {
-                            const textNode = new TextNode(child.getTextContent());
-                            para.append(textNode);
-                          } else if (type === 'linebreak') {
-                            const brNode = new LineBreakNode();
-                            para.append(brNode);
+                      if (Array.isArray(childJSON.children)) {
+                        (childJSON.children as Array<any>).forEach((grandChild) => {
+                          if (typeof grandChild === 'object' && grandChild !== null && 'type' in grandChild) {
+                            if (grandChild.type === 'text') {
+                              const textNode = new TextNode(grandChild.text || '');
+                              para.append(textNode);
+                            } else if (grandChild.type === 'linebreak') {
+                              const brNode = new LineBreakNode();
+                              para.append(brNode);
+                            }
                           }
-                        }
-                      });
+                        });
+                      }
                       header.append(para);
+                    } else if (childJSON.type === 'text') {
+                      const textNode = new TextNode(childJSON.text || '');
+                      header.append(textNode);
+                    } else if (childJSON.type === 'linebreak') {
+                      const brNode = new LineBreakNode();
+                      header.append(brNode);
                     }
                   }
-                } else {
-                  // Paragraph veya başka node var, doğrudan clone ile kopyalanıyor.
-                  header.getChildren().forEach((child: any) => { child.remove(); });
-                  children.forEach((child: any) => {
-                    if (typeof child.clone === 'function' && child !== header && child.getParent() !== header) {
-                      header.append(child.clone());
-                    }
-                  });
-                }
+                });
               }
             }
           }
         }
         // Footer güncellemesi
-        if (firstFooter != null) {
-          for (let i = 1; i < pageNodes.length; i++) {
+        if (refFooterJSON != null) {
+          for (let i = 0; i < pageNodes.length; i++) {
             const page = pageNodes[i];
             const footer = page.getFooterNode();
             if (footer != null) {
@@ -132,60 +198,38 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
                 const node = n as { exportJSON?: () => any };
                 return typeof node.exportJSON === 'function' ? node.exportJSON() : null;
               }));
-              const firstFooterContent = JSON.stringify(firstFooter.getChildren().map((n: unknown) => {
-                const node = n as { exportJSON?: () => any };
-                return typeof node.exportJSON === 'function' ? node.exportJSON() : null;
-              }));
-              if (footerContent !== firstFooterContent) {
-                const children = firstFooter.getChildren();
-                const onlyTextOrLinebreak = children.every((child: any) => {
-                  if (typeof child.getType === 'function') {
-                    const type = child.getType();
-                    return type === 'text' || type === 'linebreak';
-                  }
-                  return false;
-                });
-                if (onlyTextOrLinebreak) {
-                  const footerChildren = footer.getChildren();
-                  let oldParaContent = '';
-                  if (
-                    footerChildren.length === 1 &&
-                    typeof footerChildren[0].getType === 'function' &&
-                    footerChildren[0].getType() === 'paragraph'
-                  ) {
-                    const paraNode = footerChildren[0];
-                    oldParaContent = getTextAndLinebreakContent(paraNode.getChildren());
-                  }
-                  const newParaContent = getTextAndLinebreakContent(children);
-                  // Eğer eski ve yeni içerik aynıysa veya ikisi de boşsa hiçbir şey yapma
-                  if (!(oldParaContent === newParaContent || (oldParaContent === '' && newParaContent === ''))) {
-                    footer.getChildren().forEach((child: any) => { child.remove(); });
-                    if (children.length > 0) {
+              const refFooterContent = JSON.stringify(refFooterJSON);
+              if (footerContent !== refFooterContent) {
+                // footer'ı temizle
+                footer.getChildren().forEach((child: any) => { child.remove(); });
+                // refFooterJSON'dan yeni node'lar oluşturup ekle
+                (refFooterJSON as Array<any>).forEach((childJSON) => {
+                  if (typeof childJSON === 'object' && childJSON !== null && 'type' in childJSON) {
+                    if (childJSON.type === 'paragraph') {
                       const para = new ParagraphNode();
-                      children.forEach((child: any) => {
-                        if (typeof child.getType === 'function') {
-                          const type = child.getType();
-                          if (type === 'text' && typeof child.getTextContent === 'function') {
-                            const textNode = new TextNode(child.getTextContent());
-                            para.append(textNode);
-                          } else if (type === 'linebreak') {
-                            const brNode = new LineBreakNode();
-                            para.append(brNode);
+                      if (Array.isArray(childJSON.children)) {
+                        (childJSON.children as Array<any>).forEach((grandChild) => {
+                          if (typeof grandChild === 'object' && grandChild !== null && 'type' in grandChild) {
+                            if (grandChild.type === 'text') {
+                              const textNode = new TextNode(grandChild.text || '');
+                              para.append(textNode);
+                            } else if (grandChild.type === 'linebreak') {
+                              const brNode = new LineBreakNode();
+                              para.append(brNode);
+                            }
                           }
-                        }
-                      });
+                        });
+                      }
                       footer.append(para);
+                    } else if (childJSON.type === 'text') {
+                      const textNode = new TextNode(childJSON.text || '');
+                      footer.append(textNode);
+                    } else if (childJSON.type === 'linebreak') {
+                      const brNode = new LineBreakNode();
+                      footer.append(brNode);
                     }
                   }
-                } else {
-                  // Paragraph veya başka node var, doğrudan clone ile kopyalanıyor.
-                  footer.getChildren().forEach((child: any) => { child.remove(); });
-                  children.forEach((child: any) => {
-                    if (typeof child.clone === 'function' && child !== footer && child.getParent() !== footer) {
-                      footer.append(child.clone());
-                    }
-                  });
-                }
+                });
               }
             }
           }
