@@ -17,6 +17,7 @@
 import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot } from 'lexical';
+import type { LexicalNode } from 'lexical';
 import { $createPageNode, $isPageNode, type PageNode } from '../nodes/PageNode';
 import { isContentNode, isFooterNode, isHeaderNode } from '../nodes/sectionTypeGuards';
 import { PageHeaderNode } from '../nodes/PageHeaderNode';
@@ -52,9 +53,7 @@ export function PageAutoSplitPlugin({
 }: PageFlowSettings): null {
   // Lexical editor context'i alınır
   const [editor] = useLexicalComposerContext();
-  if (typeof window !== 'undefined') {
-    console.log('[DEBUG] PageAutoSplitPlugin loaded', { pageHeightMm, marginTopMm, marginBottomMm });
-  }
+  // DEBUG logları kaldırıldı
   // Reflow işlemi için animation frame referansı
   const rafRef = useRef<number | null>(null);
   // Reflow işleminin devam edip etmediğini takip eder
@@ -135,9 +134,7 @@ export function PageAutoSplitPlugin({
      * @param capacity - Sayfanın içeriği barındırma kapasitesi (px)
      */
     function moveOverflowBlocksToNextPage(pageNode: PageNode, capacity: number): void {
-      if (typeof window !== 'undefined') {
-        console.log('[DEBUG] moveOverflowBlocksToNextPage', { pageNode, capacity });
-      }
+  // DEBUG logları kaldırıldı
       // İçerik bölümünü bul
       const contentSection = pageNode
         .getChildren()
@@ -166,51 +163,63 @@ export function PageAutoSplitPlugin({
       let nextPage = pageNode.getNextSibling();
       // Sonraki sayfa yoksa yeni bir sayfa oluştur
       if (!$isPageNode(nextPage)) {
-        // İlk sayfadaki header/footer'ı yeni sayfaya geçir
         const root = $getRoot();
-        const allPages = root.getChildren().filter($isPageNode) as PageNode[];
-        let headerToCopy = undefined;
-        let footerToCopy = undefined;
+        const allPages = root.getChildren().filter($isPageNode);
+        let headerToCopy: PageHeaderNode | undefined;
+        let footerToCopy: PageFooterNode | undefined;
+        let contentChildrenToCopy: LexicalNode[] = [];
         if (allPages.length > 0) {
           const firstPage = allPages[0];
           const origHeader = firstPage.getHeaderNode();
           const origFooter = firstPage.getFooterNode();
-          // Klonla, varsa çocuklarını da kopyala (static fonksiyon ile)
-          if (origHeader) {
+          const origContent = firstPage.getChildren().find(isContentNode);
+          // Header: yeni bir node oluştur, tüm çocukları JSON ile kopyala (importJSON ile)
+          if (origHeader != null) {
             headerToCopy = PageHeaderNode.clone(origHeader);
-            origHeader.getChildren().forEach((child: any) => {
-              if (typeof child.clone === 'function') headerToCopy.append(child.clone());
-            });
+            for (const child of origHeader.getChildren()) {
+              if (typeof child.exportJSON === 'function' && typeof (child.constructor as any).importJSON === 'function') {
+                const json = child.exportJSON();
+                const imported = (child.constructor as any).importJSON(json);
+                if (imported != null) headerToCopy.append(imported);
+              } else if (typeof child.clone === 'function') {
+                headerToCopy.append(child.clone());
+              }
+            }
           }
-          if (origFooter) {
+          // Footer: yeni bir node oluştur, tüm çocukları JSON ile kopyala (importJSON ile)
+          if (origFooter != null) {
             footerToCopy = PageFooterNode.clone(origFooter);
-            origFooter.getChildren().forEach((child: any) => {
-              if (typeof child.clone === 'function') footerToCopy.append(child.clone());
-            });
+            for (const child of origFooter.getChildren()) {
+              if (typeof child.exportJSON === 'function' && typeof (child.constructor as any).importJSON === 'function') {
+                const json = child.exportJSON();
+                const imported = (child.constructor as any).importJSON(json);
+                if (imported != null) footerToCopy.append(imported);
+              } else if (typeof child.clone === 'function') {
+                footerToCopy.append(child.clone());
+              }
+            }
+          }
+          // Content: tüm çocukları kopyala
+          if (origContent != null) {
+            contentChildrenToCopy = origContent.getChildren().map((child) =>
+              typeof child.clone === 'function' ? child.clone() : null
+            ).filter((c): c is LexicalNode => c !== null);
           }
         }
         nextPage = $createPageNode();
         // Header ve footer parametre olarak yeni sayfaya aktarılır (klonlanmış)
         if (typeof nextPage.ensureHeaderFooterContentChildren === 'function') {
           nextPage.ensureHeaderFooterContentChildren(headerToCopy, footerToCopy);
-          if (typeof window !== 'undefined') {
-            console.log('[DEBUG] nextPage children after ensureHeaderFooterContentChildren:', nextPage.getChildren().map((n: any) => n.getType()));
+          // İçeriği de kopyala
+          const nextContent = nextPage.getChildren().find(isContentNode);
+          if (nextContent != null && contentChildrenToCopy.length > 0) {
+            for (const child of contentChildrenToCopy) {
+              nextContent.append(child);
+            }
           }
         }
         pageNode.insertAfter(nextPage);
-        // Lexical update sonrası children'ı tekrar kontrol et (asenkron)
-        if (typeof window !== 'undefined') {
-          setTimeout(() => {
-            editor.update(() => {
-              console.log('[DEBUG] nextPage children after insertAfter + tick:', nextPage.getChildren().map((n: any) => n.getType()));
-              // Ayrıca header/footer node'larının kendisini de logla
-              const header = nextPage.getHeaderNode();
-              const footer = nextPage.getFooterNode();
-              console.log('[DEBUG] nextPage.getHeaderNode():', header);
-              console.log('[DEBUG] nextPage.getFooterNode():', footer);
-            });
-          }, 0);
-        }
+  // DEBUG loglar kaldırıldı
       }
       // Sonraki sayfanın içerik bölümünü bul
       const nextContent = nextPage
@@ -244,9 +253,7 @@ export function PageAutoSplitPlugin({
      * @returns boolean - Herhangi bir bloğun taşınıp taşınmadığını belirtir
      */
     function reflowPass(): boolean {
-      if (typeof window !== 'undefined') {
-        console.log('[DEBUG] reflowPass called');
-      }
+  // DEBUG logları kaldırıldı
       let didMoveAny = false;
       editor.update(() => {
         // Root node'u al
@@ -308,9 +315,7 @@ export function PageAutoSplitPlugin({
      * Aynı anda birden fazla reflow işlemi başlatılmasını engeller.
      */
     const schedule = (): void => {
-      if (typeof window !== 'undefined') {
-        console.log('[DEBUG] schedule reflow');
-      }
+  // DEBUG logları kaldırıldı
       if (isReflowingRef.current) return;
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(() => {

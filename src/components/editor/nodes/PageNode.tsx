@@ -38,7 +38,7 @@ export class PageNode extends ElementNode {
     if (header && typeof header.getType === 'function' && header.getType() === 'page-header') {
       this.append(header);
       if (typeof window !== 'undefined') {
-        console.log('[DEBUG] Header appended:', header);
+  // debug log kaldırıldı
       }
     } else {
       if (typeof window !== 'undefined') {
@@ -54,7 +54,7 @@ export class PageNode extends ElementNode {
     if (footer && typeof footer.getType === 'function' && footer.getType() === 'page-footer') {
       this.append(footer);
       if (typeof window !== 'undefined') {
-        console.log('[DEBUG] Footer appended:', footer);
+  // debug log kaldırıldı
       }
     } else {
       if (typeof window !== 'undefined') {
@@ -66,7 +66,7 @@ export class PageNode extends ElementNode {
   constructor({ key }: { key?: string }) {
     super(key);
     if (typeof window !== 'undefined') {
-      console.log('[DEBUG] PageNode constructed', { key });
+  // debug log kaldırıldı
     }
   }
 
@@ -160,7 +160,7 @@ export class PageNode extends ElementNode {
     let content = this.getChildren().find((child) => child.getType() === 'page-content');
     let footer = footerParam ?? this.getChildren().find((child) => child.getType() === 'page-footer');
     if (typeof window !== 'undefined') {
-      console.log('[DEBUG] ensureHeaderFooterContentChildren', { header, content, footer, children: this.getChildren() });
+  // debug log kaldırıldı
     }
     // Header/footer parametre veya mevcutta yoksa yeni oluşturma!
     if (content == null) content = new PageContentNode();
@@ -171,7 +171,7 @@ export class PageNode extends ElementNode {
     this.append(content);
     if (footer) this.safeAppendFooter(footer);
     if (typeof window !== 'undefined') {
-      console.log('[DEBUG] Çocuklar (append sonrası):', this.getChildren());
+  // debug log kaldırıldı
     }
   }
 
@@ -180,7 +180,7 @@ export class PageNode extends ElementNode {
    */
   appendInitialChildren(): void {
     if (typeof window !== 'undefined') {
-      console.log('[DEBUG] appendInitialChildren called');
+  // debug log kaldırıldı
     }
     this.ensureHeaderFooterContentChildren();
   }

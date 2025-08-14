@@ -16,7 +16,7 @@ export class PageFooterNode extends ElementNode {
   constructor(key?: string) {
     super(key);
     if (typeof window !== 'undefined') {
-      console.log('[DEBUG] PageFooterNode constructed', { key });
+  // debug log kaldırıldı
     }
   }
 
@@ -38,7 +38,7 @@ export class PageFooterNode extends ElementNode {
     dom.setAttribute('tabIndex', '0');
     dom.addEventListener('click', (e) => { e.stopPropagation(); });
     if (typeof window !== 'undefined') {
-      console.log('[DEBUG] PageFooterNode createDOM', { key: this.getKey() });
+  // debug log kaldırıldı
     }
     return dom;
   }

@@ -7,7 +7,7 @@
 // PageContentFlowPlugin'i devre dışı bırakıyoruz. Artık içerik taşımayı ve yeni sayfa eklemeyi sadece PageAutoSplitPlugin yönetecek.
 const PageContentFlowPlugin: React.FC = () => {
   if (typeof window !== 'undefined') {
-    console.log('[DEBUG] PageContentFlowPlugin loaded');
+  // debug log kaldırıldı
   }
   return null;
 };

@@ -13,7 +13,7 @@ export class PageHeaderNode extends ElementNode {
   constructor(key?: string) {
     super(key);
     if (typeof window !== 'undefined') {
-      console.log('[DEBUG] PageHeaderNode constructed', { key });
+  // debug log kaldırıldı
     }
   }
 
@@ -35,7 +35,7 @@ export class PageHeaderNode extends ElementNode {
     dom.setAttribute('tabIndex', '0');
     dom.addEventListener('click', (e) => { e.stopPropagation(); });
     if (typeof window !== 'undefined') {
-      console.log('[DEBUG] PageHeaderNode createDOM', { key: this.getKey() });
+  // debug log kaldırıldı
     }
     return dom;
   }

@@ -19,7 +19,7 @@ import { $isPageNode } from '../nodes/PageNode';
 export function HeaderFooterSyncPlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
   if (typeof window !== 'undefined') {
-    console.log('[DEBUG] HeaderFooterSyncPlugin loaded');
+  // debug log kaldırıldı
   }
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
         const root = $getRoot();
         const pageNodes = root.getChildren().filter($isPageNode);
         if (typeof window !== 'undefined') {
-          console.log('[DEBUG] HeaderFooterSyncPlugin update', { pageNodes });
+          // debug log kaldırıldı
         }
         if (pageNodes.length < 2) return; // Tek sayfa varsa sync gerekmez
 
@@ -44,7 +44,7 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
           const header = page.getHeaderNode();
           const footer = page.getFooterNode();
           if (typeof window !== 'undefined') {
-            console.log('[DEBUG] Syncing header/footer', { page, header, footer, firstHeader, firstFooter });
+            // debug log kaldırıldı
           }
           if (header != null && firstHeader != null) {
             // Tüm çocukları kaldır
