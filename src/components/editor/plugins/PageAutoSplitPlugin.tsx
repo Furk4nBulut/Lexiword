@@ -18,7 +18,7 @@ import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot } from 'lexical';
 import { $createPageNode, $isPageNode, type PageNode } from '../nodes/PageNode';
-import { isContentNode, isHeaderNode, isFooterNode } from '../nodes/sectionTypeGuards';
+import { isContentNode, isFooterNode } from '../nodes/sectionTypeGuards';
 import { PageHeaderNode } from '../nodes/PageHeaderNode';
 import { PageFooterNode } from '../nodes/PageFooterNode';
 import { PageContentNode } from '../nodes/PageContentNode';
@@ -135,7 +135,7 @@ export function PageAutoSplitPlugin({
       // İçerik bölümünü bul
       const contentSection = pageNode
         .getChildren()
-        .find((c: unknown): c is PageContentNode => isContentNode(c));
+        .find(isContentNode);
       if (contentSection == null) return;
       const blocks = contentSection.getChildren();
       if (blocks.length === 0) return;
@@ -161,26 +161,16 @@ export function PageAutoSplitPlugin({
       // Sonraki sayfa yoksa yeni bir sayfa oluştur
       if (!$isPageNode(nextPage)) {
         nextPage = $createPageNode();
-        // Header/footer kopyala
-        const prevHeader = pageNode.getChildren().find((n) => isHeaderNode(n));
-        const prevFooter = pageNode.getChildren().find((n) => isFooterNode(n));
-        if (prevHeader != null && prevHeader.__visible !== false) {
-          nextPage.append(
-            new PageHeaderNode(prevHeader.__text ?? '', undefined, prevHeader.__visible ?? false)
-          );
-        }
+        // Yeni header/footer ekle (property kopyalama yok)
+        nextPage.append(new PageHeaderNode());
         nextPage.append(new PageContentNode());
-        if (prevFooter != null && prevFooter.__visible !== false) {
-          nextPage.append(
-            new PageFooterNode(prevFooter.__text ?? '', undefined, prevFooter.__visible ?? false)
-          );
-        }
+        nextPage.append(new PageFooterNode());
         pageNode.insertAfter(nextPage);
       }
       // Sonraki sayfanın içerik bölümünü bul
       const nextContent = nextPage
         .getChildren()
-        .find((c: unknown): c is PageContentNode => isContentNode(c));
+        .find(isContentNode);
       if (nextContent == null) return;
       // Son bloğu taşı (en son eklenen blok taşınır)
       const lastBlock = blocks[blocks.length - 1];
@@ -228,7 +218,7 @@ export function PageAutoSplitPlugin({
             if (!$isPageNode(n) && typeof n === 'object' && n !== null && 'getKey' in n) {
               const contentSection = page
                 .getChildren()
-                .find((c: unknown): c is PageContentNode => isContentNode(c));
+                .find(isContentNode);
               if (contentSection != null) contentSection.append(n as any); // LexicalNode olarak cast
             }
           });
