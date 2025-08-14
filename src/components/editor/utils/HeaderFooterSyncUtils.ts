@@ -1,5 +1,3 @@
-import { $getRoot } from 'lexical';
-import { $isPageNode } from '../nodes/PageNode';
 
 /**
  * HeaderFooterSyncUtils

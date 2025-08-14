@@ -1,13 +1,12 @@
-
+// ...existing code...
 import { ElementNode, type SerializedElementNode, type EditorConfig } from 'lexical';
-
-
+// ...existing code...
 export type SerializedPageHeaderNode = SerializedElementNode & {
   type: 'page-header';
   version: 1;
 };
-
-
+// ...existing code...
+// ...existing code...
 // PageHeaderNode: Sayfa başlığını (header) temsil eden Lexical ElementNode sınıfı.
 // Header'ın içeriği bir paragraf node olarak tutulur.
 export class PageHeaderNode extends ElementNode {
@@ -19,9 +18,7 @@ export class PageHeaderNode extends ElementNode {
     return new PageHeaderNode(node.__key);
   }
 
-  constructor(key?: string) {
-    super(key);
-  }
+
 
   createDOM(_config: EditorConfig): HTMLElement {
     const dom = document.createElement('div');

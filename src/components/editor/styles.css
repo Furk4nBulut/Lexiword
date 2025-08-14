@@ -29,7 +29,6 @@
   font-size: 20px;
   color: #333;
   box-sizing: border-box;
-  overflow: hidden; /* Taşmayı engelle */
 }
 
 .a4-content {
@@ -74,7 +73,6 @@
   font-size: 16px;
   color: #333;
   box-sizing: border-box;
-  overflow: hidden; /* Taşmayı engelle */
   align-items: center; /* tek satırı dikey hizala */
   line-height: 1.2; /* satır kutusunu daralt */
   margin-top: auto; /* Footer'ı her zaman en alta it */

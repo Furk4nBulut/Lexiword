@@ -24,10 +24,10 @@ export function PageInitializerPlugin(): JSX.Element | null {
     editor.update(() => {
       const root = $getRoot();
       if (root.getChildrenSize() === 0) {
-  const page = new PageNode({});
-  // Sadece content node'u ekle, header/footer eklenmesin
-  page.append(new PageContentNode());
-  root.append(page);
+        const page = new PageNode({});
+        // Sadece content node'u ekle, header/footer eklenmesin
+        page.append(new PageContentNode());
+        root.append(page);
       }
     });
   }, [editor]);

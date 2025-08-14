@@ -96,10 +96,10 @@ export class PageNode extends ElementNode {
    * Not: Tüm mevcut çocuklar önce kaldırılır, sonra doğru sırayla tekrar eklenir.
    */
   ensureHeaderFooterContentChildren(): void {
-    // Sıralama: header -> content -> footer (section her zaman ortada)
-    let header = this.getChildren().find((child) => child.getType() === 'page-header');
-    let content = this.getChildren().find((child) => child.getType() === 'page-content');
-    let footer = this.getChildren().find((child) => child.getType() === 'page-footer');
+  // Sıralama: header -> content -> footer (section her zaman ortada)
+  let header = this.getChildren().find((child) => child.getType() === 'page-header');
+  let content = this.getChildren().find((child) => child.getType() === 'page-content');
+  let footer = this.getChildren().find((child) => child.getType() === 'page-footer');
   if (header == null) header = new PageHeaderNode();
   if (content == null) content = new PageContentNode();
   if (footer == null) footer = new PageFooterNode();

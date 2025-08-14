@@ -207,13 +207,13 @@ function PageSectionPlugin({
           header.remove();
         } else if (typeof pageNode.ensureHeaderFooterContentChildren === 'function') {
           // Sadece header eksikse ekle
-          let content = pageNode.getChildren().find((c) => c.getType() === 'page-content');
-          let footer = pageNode.getFooterNode();
+          const content = pageNode.getChildren().find((c) => c.getType() === 'page-content');
+          const footer = pageNode.getFooterNode();
           // Tüm çocukları kaldır
-          pageNode.getChildren().forEach((child) => child.remove());
+          pageNode.getChildren().forEach((child) => { child.remove(); });
           pageNode.append(new PageHeaderNode());
-          if (content) pageNode.append(content);
-          if (footer) pageNode.append(footer);
+          if (content != null) pageNode.append(content);
+          if (footer != null) pageNode.append(footer);
         }
       });
     });
@@ -234,12 +234,12 @@ function PageSectionPlugin({
           footer.remove();
         } else if (typeof pageNode.ensureHeaderFooterContentChildren === 'function') {
           // Sadece footer eksikse ekle
-          let header = pageNode.getHeaderNode();
-          let content = pageNode.getChildren().find((c) => c.getType() === 'page-content');
+          const header = pageNode.getHeaderNode();
+          const content = pageNode.getChildren().find((c) => c.getType() === 'page-content');
           // Tüm çocukları kaldır
-          pageNode.getChildren().forEach((child) => child.remove());
-          if (header) pageNode.append(header);
-          if (content) pageNode.append(content);
+          pageNode.getChildren().forEach((child) => { child.remove(); });
+          if (header != null) pageNode.append(header);
+          if (content != null) pageNode.append(content);
           pageNode.append(new PageFooterNode());
         }
       });
