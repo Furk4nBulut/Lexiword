@@ -18,9 +18,9 @@ import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot } from 'lexical';
 import { $createPageNode, $isPageNode, type PageNode } from '../nodes/PageNode';
-import { isContentNode, isFooterNode } from '../nodes/sectionTypeGuards';
-import { PageHeaderNode } from '../nodes/PageHeaderNode';
-import { PageFooterNode } from '../nodes/PageFooterNode';
+import { isContentNode, isFooterNode, isHeaderNode } from '../nodes/sectionTypeGuards';
+// import { PageHeaderNode } from '../nodes/PageHeaderNode';
+// import { PageFooterNode } from '../nodes/PageFooterNode';
 import { PageContentNode } from '../nodes/PageContentNode';
 
 /**
@@ -161,10 +161,31 @@ export function PageAutoSplitPlugin({
       // Sonraki sayfa yoksa yeni bir sayfa oluştur
       if (!$isPageNode(nextPage)) {
         nextPage = $createPageNode();
-        // Yeni header/footer ekle (property kopyalama yok)
-        nextPage.append(new PageHeaderNode());
+        // Önceki sayfada header/footer varsa kopyala, yoksa ekleme
+        const prevHeader = pageNode.getHeaderNode();
+        const prevFooter = pageNode.getFooterNode();
+        // Header kopyalama: varsa ve header'ın çocukları da kopyalanmalı
+        if (isHeaderNode(prevHeader) && typeof prevHeader.clone === 'function') {
+          const newHeader = prevHeader.clone();
+          // Çocukları da kopyala
+          prevHeader.getChildren().forEach((child) => {
+            if (typeof child.clone === 'function') {
+              newHeader.append(child.clone());
+            }
+          });
+          nextPage.append(newHeader);
+        }
         nextPage.append(new PageContentNode());
-        nextPage.append(new PageFooterNode());
+        // Footer kopyalama: varsa ve footer'ın çocukları da kopyalanmalı
+        if (isFooterNode(prevFooter) && typeof prevFooter.clone === 'function') {
+          const newFooter = prevFooter.clone();
+          prevFooter.getChildren().forEach((child) => {
+            if (typeof child.clone === 'function') {
+              newFooter.append(child.clone());
+            }
+          });
+          nextPage.append(newFooter);
+        }
         pageNode.insertAfter(nextPage);
       }
       // Sonraki sayfanın içerik bölümünü bul

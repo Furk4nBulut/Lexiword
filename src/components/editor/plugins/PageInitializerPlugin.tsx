@@ -25,8 +25,34 @@ export function PageInitializerPlugin(): JSX.Element | null {
       const root = $getRoot();
       if (root.getChildrenSize() === 0) {
         const page = new PageNode({});
-        // Sadece content node'u ekle, header/footer eklenmesin
+        // Eğer root'ta başka PageNode varsa ve onların header/footer'ı varsa, yeni sayfaya da ekle
+  let headerToCopy: any;
+  let footerToCopy: any;
+        // root.getChildren() boş ama yine de güvenli olsun diye kontrol
+        // (ileride root'a başka node eklenirse)
+        const otherPages = root.getChildren().filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
+        if (otherPages.length > 0) {
+          const firstPage = otherPages[0];
+          if (typeof firstPage.getHeaderNode === 'function') headerToCopy = firstPage.getHeaderNode();
+          if (typeof firstPage.getFooterNode === 'function') footerToCopy = firstPage.getFooterNode();
+        }
+        // Eğer header varsa kopyala
+        if (typeof headerToCopy !== 'undefined' && headerToCopy !== null) {
+          const headerClone = headerToCopy.clone();
+          headerToCopy.getChildren().forEach((child: any) => {
+            if (typeof child.clone === 'function') headerClone.append(child.clone());
+          });
+          page.append(headerClone);
+        }
         page.append(new PageContentNode());
+        // Eğer footer varsa kopyala
+        if (typeof footerToCopy !== 'undefined' && footerToCopy !== null) {
+          const footerClone = footerToCopy.clone();
+          footerToCopy.getChildren().forEach((child: any) => {
+            if (typeof child.clone === 'function') footerClone.append(child.clone());
+          });
+          page.append(footerClone);
+        }
         root.append(page);
       }
     });

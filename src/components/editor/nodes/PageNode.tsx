@@ -1,6 +1,6 @@
 import { ElementNode, type SerializedElementNode, type LexicalNode } from 'lexical';
-import { PageHeaderNode } from './PageHeaderNode';
-import { PageFooterNode } from './PageFooterNode';
+import type { PageHeaderNode } from './PageHeaderNode';
+import type { PageFooterNode } from './PageFooterNode';
 import { PageContentNode } from './PageContentNode';
 
 export function $createPageNode(): PageNode {
@@ -95,23 +95,28 @@ export class PageNode extends ElementNode {
    *
    * Not: Tüm mevcut çocuklar önce kaldırılır, sonra doğru sırayla tekrar eklenir.
    */
+  /**
+   * ensureHeaderFooterContentChildren
+   *
+   * Bu fonksiyon, bir sayfa node'unun çocukları arasında mutlaka bir content node'u olmasını sağlar.
+   * Header/footer ise sadece mevcutsa eklenir, yoksa eklenmez.
+   *
+   * Artık yeni sayfa eklenirken header/footer zorunlu olarak eklenmez.
+   */
   ensureHeaderFooterContentChildren(): void {
-  // Sıralama: header -> content -> footer (section her zaman ortada)
-  let header = this.getChildren().find((child) => child.getType() === 'page-header');
-  let content = this.getChildren().find((child) => child.getType() === 'page-content');
-  let footer = this.getChildren().find((child) => child.getType() === 'page-footer');
-  if (header == null) header = new PageHeaderNode();
-  if (content == null) content = new PageContentNode();
-  if (footer == null) footer = new PageFooterNode();
+    // Sıralama: header? -> content -> footer? (section her zaman ortada)
+    const header = this.getChildren().find((child) => child.getType() === 'page-header');
+    let content = this.getChildren().find((child) => child.getType() === 'page-content');
+    const footer = this.getChildren().find((child) => child.getType() === 'page-footer');
+    // Sadece content zorunlu, header/footer varsa eklenir
+    if (content == null) content = new PageContentNode();
     // Tüm çocukları kaldır ve doğru sırayla ekle
     this.getChildren().forEach((child) => {
-      // Her bir mevcut çocuğu kaldırıyoruz, böylece sıralama bozulmaz.
       child.remove();
     });
-    // Doğru sırayla header, content ve footer ekleniyor.
-    this.append(header);
+    if (header != null) this.append(header);
     this.append(content);
-    this.append(footer);
+    if (footer != null) this.append(footer);
   }
 
   /**
