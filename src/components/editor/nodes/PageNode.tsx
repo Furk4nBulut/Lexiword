@@ -161,8 +161,8 @@ export class PageNode extends ElementNode {
     footerParam?: PageFooterNode
   ): void {
     // Sıralama: header? -> content -> footer? (section her zaman ortada)
-  let header: PageHeaderNode | undefined;
-  let footer: PageFooterNode | undefined;
+    let header: PageHeaderNode | undefined;
+    let footer: PageFooterNode | undefined;
     let content = this.getChildren().find((child) => child.getType() === 'page-content');
 
     // Header parametresi varsa ve doğru tipteyse onu kullan, yoksa mevcut children'dan bul
@@ -174,7 +174,9 @@ export class PageNode extends ElementNode {
     ) {
       header = headerParam;
     } else {
-      header = this.getChildren().find((child) => child.getType() === 'page-header') as PageHeaderNode;
+      header = this.getChildren().find(
+        (child) => child.getType() === 'page-header'
+      ) as PageHeaderNode;
       if (headerParam !== undefined && (header === undefined || header === null)) {
         if (typeof window !== 'undefined') {
           console.warn('[DEBUG] Header parametresi yanlış tipte veya undefined:', headerParam);
@@ -191,7 +193,9 @@ export class PageNode extends ElementNode {
     ) {
       footer = footerParam;
     } else {
-      footer = this.getChildren().find((child) => child.getType() === 'page-footer') as PageFooterNode;
+      footer = this.getChildren().find(
+        (child) => child.getType() === 'page-footer'
+      ) as PageFooterNode;
     }
 
     // Content node'u yoksa oluştur

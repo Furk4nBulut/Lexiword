@@ -35,10 +35,12 @@ export function PageInitializerPlugin(): JSX.Element | null {
           .filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
         if (otherPages.length > 0) {
           const firstPage = otherPages[0];
-          if (typeof firstPage.getHeaderNode === 'function')
+          if (typeof firstPage.getHeaderNode === 'function') {
             headerToCopy = firstPage.getHeaderNode();
-          if (typeof firstPage.getFooterNode === 'function')
+          }
+          if (typeof firstPage.getFooterNode === 'function') {
             footerToCopy = firstPage.getFooterNode();
+          }
         }
         // Eğer header varsa kopyala
         if (typeof headerToCopy !== 'undefined' && headerToCopy !== null) {
