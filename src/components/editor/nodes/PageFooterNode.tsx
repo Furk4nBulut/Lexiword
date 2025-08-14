@@ -1,17 +1,15 @@
+import { CURRENT_HEADER_FOOTER_EDIT_MODE } from '../plugins/HeaderFooterEditModePlugin';
+import { ElementNode, type SerializedElementNode, type EditorConfig } from 'lexical';
+
 export function $createPageFooterNode(): PageFooterNode {
   return new PageFooterNode();
 }
-import { CURRENT_HEADER_FOOTER_EDIT_MODE } from '../plugins/HeaderFooterEditModePlugin';
-// ...existing code...
-import { ElementNode, type SerializedElementNode, type EditorConfig } from 'lexical';
 
 
 export type SerializedPageFooterNode = SerializedElementNode & {
   type: 'page-footer';
   version: 1;
 };
-// ...existing code...
-// ...existing code...
 // PageFooterNode: Sayfa alt bilgisini (footer) temsil eden Lexical ElementNode sınıfı.
 // Footer'ın içeriği bir paragraf node olarak tutulur.
 export class PageFooterNode extends ElementNode {
@@ -27,7 +25,8 @@ export class PageFooterNode extends ElementNode {
   }
 
   static clone(node: PageFooterNode): PageFooterNode {
-    return new PageFooterNode(node.__key);
+    // Yeni bir key ile klonla, böylece Lexical node çakışması olmaz
+    return new PageFooterNode();
   }
 
   createDOM(_config: EditorConfig): HTMLElement {

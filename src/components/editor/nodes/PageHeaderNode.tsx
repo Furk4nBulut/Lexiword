@@ -22,7 +22,8 @@ export class PageHeaderNode extends ElementNode {
   }
 
   static clone(node: PageHeaderNode): PageHeaderNode {
-    return new PageHeaderNode(node.__key);
+    // Yeni bir key ile klonla, böylece Lexical node çakışması olmaz
+    return new PageHeaderNode();
   }
 
   createDOM(_config: EditorConfig): HTMLElement {

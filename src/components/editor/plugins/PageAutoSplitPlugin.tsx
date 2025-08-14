@@ -19,8 +19,8 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { $getRoot } from 'lexical';
 import { $createPageNode, $isPageNode, type PageNode } from '../nodes/PageNode';
 import { isContentNode, isFooterNode, isHeaderNode } from '../nodes/sectionTypeGuards';
-// import { PageHeaderNode } from '../nodes/PageHeaderNode';
-// import { PageFooterNode } from '../nodes/PageFooterNode';
+import { PageHeaderNode } from '../nodes/PageHeaderNode';
+import { PageFooterNode } from '../nodes/PageFooterNode';
 import { PageContentNode } from '../nodes/PageContentNode';
 
 /**
@@ -173,11 +173,24 @@ export function PageAutoSplitPlugin({
         let footerToCopy = undefined;
         if (allPages.length > 0) {
           const firstPage = allPages[0];
-          headerToCopy = firstPage.getHeaderNode();
-          footerToCopy = firstPage.getFooterNode();
+          const origHeader = firstPage.getHeaderNode();
+          const origFooter = firstPage.getFooterNode();
+          // Klonla, varsa çocuklarını da kopyala (static fonksiyon ile)
+          if (origHeader) {
+            headerToCopy = PageHeaderNode.clone(origHeader);
+            origHeader.getChildren().forEach((child: any) => {
+              if (typeof child.clone === 'function') headerToCopy.append(child.clone());
+            });
+          }
+          if (origFooter) {
+            footerToCopy = PageFooterNode.clone(origFooter);
+            origFooter.getChildren().forEach((child: any) => {
+              if (typeof child.clone === 'function') footerToCopy.append(child.clone());
+            });
+          }
         }
         nextPage = $createPageNode();
-        // Header ve footer parametre olarak yeni sayfaya aktarılır
+        // Header ve footer parametre olarak yeni sayfaya aktarılır (klonlanmış)
         if (typeof nextPage.ensureHeaderFooterContentChildren === 'function') {
           nextPage.ensureHeaderFooterContentChildren(headerToCopy, footerToCopy);
           if (typeof window !== 'undefined') {
