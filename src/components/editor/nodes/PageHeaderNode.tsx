@@ -1,5 +1,11 @@
-// ...existing code...
+
 import { ElementNode, type SerializedElementNode, type EditorConfig } from 'lexical';
+
+// Edit mode kontrolü için global değişken (plugin tarafından set edilecek)
+let globalHeaderFooterEditMode = false;
+export function setHeaderFooterEditModeForNodes(val: boolean): void {
+  globalHeaderFooterEditMode = val;
+}
 // ...existing code...
 export type SerializedPageHeaderNode = SerializedElementNode & {
   type: 'page-header';
@@ -17,18 +23,23 @@ export class PageHeaderNode extends ElementNode {
   static clone(node: PageHeaderNode): PageHeaderNode {
     return new PageHeaderNode(node.__key);
   }
-
-
+// ...existing code...
 
   createDOM(_config: EditorConfig): HTMLElement {
     const dom = document.createElement('div');
     dom.className = 'a4-header';
     dom.setAttribute('data-lexical-node-key', this.getKey());
+    // Sadece edit modunda düzenlenebilir
+    dom.contentEditable = globalHeaderFooterEditMode ? 'true' : 'false';
+    dom.setAttribute('tabIndex', '0');
+    // Tıklama event'inin bubbling ile yukarı çıkmasını engelle
+    dom.addEventListener('click', (e) => { e.stopPropagation(); });
     return dom;
   }
 
   updateDOM(): boolean {
-    return false;
+    // Edit mode değiştiyse contentEditable güncellenmeli
+    return true;
   }
 
   static importJSON(serializedNode: SerializedPageHeaderNode): PageHeaderNode {
