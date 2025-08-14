@@ -162,30 +162,17 @@ export class PageNode extends ElementNode {
     if (typeof window !== 'undefined') {
       console.log('[DEBUG] ensureHeaderFooterContentChildren', { header, content, footer, children: this.getChildren() });
     }
-    if (header == null) {
-      console.log('[DEBUG] Header yok, yeni header ekleniyor');
-      header = $createPageHeaderNode();
-      if (header !== undefined && header !== null) {
-        this.append(header);
-      }
+    // Header/footer parametre veya mevcutta yoksa yeni oluşturma!
+    if (content == null) content = new PageContentNode();
+    this.getChildren().forEach((child) => {
+      child.remove();
+    });
+    if (header) this.safeAppendHeader(header);
+    this.append(content);
+    if (footer) this.safeAppendFooter(footer);
+    if (typeof window !== 'undefined') {
+      console.log('[DEBUG] Çocuklar (append sonrası):', this.getChildren());
     }
-    if (footer == null) {
-      console.log('[DEBUG] Footer yok, yeni footer ekleniyor');
-      footer = $createPageFooterNode();
-      if (footer !== undefined && footer !== null) {
-        this.append(footer);
-      }
-    }
-      if (content == null) content = new PageContentNode();
-      this.getChildren().forEach((child) => {
-        child.remove();
-      });
-      this.safeAppendHeader(header);
-      this.append(content);
-      this.safeAppendFooter(footer);
-      if (typeof window !== 'undefined') {
-        console.log('[DEBUG] Çocuklar (append sonrası):', this.getChildren());
-      }
   }
 
   /**

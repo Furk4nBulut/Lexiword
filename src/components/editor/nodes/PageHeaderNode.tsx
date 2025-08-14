@@ -1,15 +1,12 @@
+import { CURRENT_HEADER_FOOTER_EDIT_MODE } from '../plugins/HeaderFooterEditModePlugin';
+import { ElementNode, type SerializedElementNode, type EditorConfig } from 'lexical';
 export function $createPageHeaderNode(): PageHeaderNode {
   return new PageHeaderNode();
 }
-import { CURRENT_HEADER_FOOTER_EDIT_MODE } from '../plugins/HeaderFooterEditModePlugin';
-import { ElementNode, type SerializedElementNode, type EditorConfig } from 'lexical';
-
 export type SerializedPageHeaderNode = SerializedElementNode & {
   type: 'page-header';
   version: 1;
 };
-// ...existing code...
-// ...existing code...
 // PageHeaderNode: Sayfa başlığını (header) temsil eden Lexical ElementNode sınıfı.
 // Header'ın içeriği bir paragraf node olarak tutulur.
 export class PageHeaderNode extends ElementNode {

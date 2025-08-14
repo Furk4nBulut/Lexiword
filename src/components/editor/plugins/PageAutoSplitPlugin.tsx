@@ -166,7 +166,7 @@ export function PageAutoSplitPlugin({
       let nextPage = pageNode.getNextSibling();
       // Sonraki sayfa yoksa yeni bir sayfa oluştur
       if (!$isPageNode(nextPage)) {
-        // --- YENİ: Tüm sayfalarda aynı header/footer olması için ilk sayfanın header/footer'ını kopyala ---
+        // İlk sayfadaki header/footer'ı yeni sayfaya geçir
         const root = $getRoot();
         const allPages = root.getChildren().filter($isPageNode) as PageNode[];
         let headerToCopy = undefined;
@@ -177,24 +177,9 @@ export function PageAutoSplitPlugin({
           footerToCopy = firstPage.getFooterNode();
         }
         nextPage = $createPageNode();
-        // Header ve footer clone'larını hazırla
-        let headerClone = undefined;
-        let footerClone = undefined;
-        if (headerToCopy && typeof headerToCopy.clone === 'function') {
-          headerClone = headerToCopy.clone();
-          headerToCopy.getChildren().forEach((child: any) => {
-            if (typeof child.clone === 'function') headerClone.append(child.clone());
-          });
-        }
-        if (footerToCopy && typeof footerToCopy.clone === 'function') {
-          footerClone = footerToCopy.clone();
-          footerToCopy.getChildren().forEach((child: any) => {
-            if (typeof child.clone === 'function') footerClone.append(child.clone());
-          });
-        }
-        // Sadece content ekleme değil, header/footer parametreli olarak sıralı ekle
+        // Header ve footer parametre olarak yeni sayfaya aktarılır
         if (typeof nextPage.ensureHeaderFooterContentChildren === 'function') {
-          nextPage.ensureHeaderFooterContentChildren(headerClone, footerClone);
+          nextPage.ensureHeaderFooterContentChildren(headerToCopy, footerToCopy);
           if (typeof window !== 'undefined') {
             console.log('[DEBUG] nextPage children after ensureHeaderFooterContentChildren:', nextPage.getChildren().map((n: any) => n.getType()));
           }
@@ -203,12 +188,14 @@ export function PageAutoSplitPlugin({
         // Lexical update sonrası children'ı tekrar kontrol et (asenkron)
         if (typeof window !== 'undefined') {
           setTimeout(() => {
-            console.log('[DEBUG] nextPage children after insertAfter + tick:', nextPage.getChildren().map((n: any) => n.getType()));
-            // Ayrıca header/footer node'larının kendisini de logla
-            const header = nextPage.getHeaderNode();
-            const footer = nextPage.getFooterNode();
-            console.log('[DEBUG] nextPage.getHeaderNode():', header);
-            console.log('[DEBUG] nextPage.getFooterNode():', footer);
+            editor.update(() => {
+              console.log('[DEBUG] nextPage children after insertAfter + tick:', nextPage.getChildren().map((n: any) => n.getType()));
+              // Ayrıca header/footer node'larının kendisini de logla
+              const header = nextPage.getHeaderNode();
+              const footer = nextPage.getFooterNode();
+              console.log('[DEBUG] nextPage.getHeaderNode():', header);
+              console.log('[DEBUG] nextPage.getFooterNode():', footer);
+            });
           }, 0);
         }
       }
