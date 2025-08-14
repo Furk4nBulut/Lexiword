@@ -18,6 +18,9 @@ import { $isPageNode } from '../nodes/PageNode';
  */
 export function HeaderFooterSyncPlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
+  if (typeof window !== 'undefined') {
+    console.log('[DEBUG] HeaderFooterSyncPlugin loaded');
+  }
 
   useEffect(() => {
     // Lexical editörün state'i güncellendiğinde çalışır.
@@ -26,6 +29,9 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
       editor.update(() => {
         const root = $getRoot();
         const pageNodes = root.getChildren().filter($isPageNode);
+        if (typeof window !== 'undefined') {
+          console.log('[DEBUG] HeaderFooterSyncPlugin update', { pageNodes });
+        }
         if (pageNodes.length < 2) return; // Tek sayfa varsa sync gerekmez
 
         // İlk sayfanın header/footer'ı referans alınır
@@ -37,6 +43,9 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
           const page = pageNodes[i];
           const header = page.getHeaderNode();
           const footer = page.getFooterNode();
+          if (typeof window !== 'undefined') {
+            console.log('[DEBUG] Syncing header/footer', { page, header, footer, firstHeader, firstFooter });
+          }
           if (header != null && firstHeader != null) {
             // Tüm çocukları kaldır
             header.getChildren().forEach((child) => { child.remove(); });

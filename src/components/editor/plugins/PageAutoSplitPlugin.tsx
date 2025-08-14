@@ -52,6 +52,9 @@ export function PageAutoSplitPlugin({
 }: PageFlowSettings): null {
   // Lexical editor context'i alınır
   const [editor] = useLexicalComposerContext();
+  if (typeof window !== 'undefined') {
+    console.log('[DEBUG] PageAutoSplitPlugin loaded', { pageHeightMm, marginTopMm, marginBottomMm });
+  }
   // Reflow işlemi için animation frame referansı
   const rafRef = useRef<number | null>(null);
   // Reflow işleminin devam edip etmediğini takip eder
@@ -132,6 +135,9 @@ export function PageAutoSplitPlugin({
      * @param capacity - Sayfanın içeriği barındırma kapasitesi (px)
      */
     function moveOverflowBlocksToNextPage(pageNode: PageNode, capacity: number): void {
+      if (typeof window !== 'undefined') {
+        console.log('[DEBUG] moveOverflowBlocksToNextPage', { pageNode, capacity });
+      }
       // İçerik bölümünü bul
       const contentSection = pageNode
         .getChildren()
@@ -160,33 +166,51 @@ export function PageAutoSplitPlugin({
       let nextPage = pageNode.getNextSibling();
       // Sonraki sayfa yoksa yeni bir sayfa oluştur
       if (!$isPageNode(nextPage)) {
-        nextPage = $createPageNode();
-        // Önceki sayfada header/footer varsa kopyala, yoksa ekleme
-        const prevHeader = pageNode.getHeaderNode();
-        const prevFooter = pageNode.getFooterNode();
-        // Header kopyalama: varsa ve header'ın çocukları da kopyalanmalı
-        if (isHeaderNode(prevHeader) && typeof prevHeader.clone === 'function') {
-          const newHeader = prevHeader.clone();
-          // Çocukları da kopyala
-          prevHeader.getChildren().forEach((child) => {
-            if (typeof child.clone === 'function') {
-              newHeader.append(child.clone());
-            }
-          });
-          nextPage.append(newHeader);
+        // --- YENİ: Tüm sayfalarda aynı header/footer olması için ilk sayfanın header/footer'ını kopyala ---
+        const root = $getRoot();
+        const allPages = root.getChildren().filter($isPageNode) as PageNode[];
+        let headerToCopy = undefined;
+        let footerToCopy = undefined;
+        if (allPages.length > 0) {
+          const firstPage = allPages[0];
+          headerToCopy = firstPage.getHeaderNode();
+          footerToCopy = firstPage.getFooterNode();
         }
-        nextPage.append(new PageContentNode());
-        // Footer kopyalama: varsa ve footer'ın çocukları da kopyalanmalı
-        if (isFooterNode(prevFooter) && typeof prevFooter.clone === 'function') {
-          const newFooter = prevFooter.clone();
-          prevFooter.getChildren().forEach((child) => {
-            if (typeof child.clone === 'function') {
-              newFooter.append(child.clone());
-            }
+        nextPage = $createPageNode();
+        // Header ve footer clone'larını hazırla
+        let headerClone = undefined;
+        let footerClone = undefined;
+        if (headerToCopy && typeof headerToCopy.clone === 'function') {
+          headerClone = headerToCopy.clone();
+          headerToCopy.getChildren().forEach((child: any) => {
+            if (typeof child.clone === 'function') headerClone.append(child.clone());
           });
-          nextPage.append(newFooter);
+        }
+        if (footerToCopy && typeof footerToCopy.clone === 'function') {
+          footerClone = footerToCopy.clone();
+          footerToCopy.getChildren().forEach((child: any) => {
+            if (typeof child.clone === 'function') footerClone.append(child.clone());
+          });
+        }
+        // Sadece content ekleme değil, header/footer parametreli olarak sıralı ekle
+        if (typeof nextPage.ensureHeaderFooterContentChildren === 'function') {
+          nextPage.ensureHeaderFooterContentChildren(headerClone, footerClone);
+          if (typeof window !== 'undefined') {
+            console.log('[DEBUG] nextPage children after ensureHeaderFooterContentChildren:', nextPage.getChildren().map((n: any) => n.getType()));
+          }
         }
         pageNode.insertAfter(nextPage);
+        // Lexical update sonrası children'ı tekrar kontrol et (asenkron)
+        if (typeof window !== 'undefined') {
+          setTimeout(() => {
+            console.log('[DEBUG] nextPage children after insertAfter + tick:', nextPage.getChildren().map((n: any) => n.getType()));
+            // Ayrıca header/footer node'larının kendisini de logla
+            const header = nextPage.getHeaderNode();
+            const footer = nextPage.getFooterNode();
+            console.log('[DEBUG] nextPage.getHeaderNode():', header);
+            console.log('[DEBUG] nextPage.getFooterNode():', footer);
+          }, 0);
+        }
       }
       // Sonraki sayfanın içerik bölümünü bul
       const nextContent = nextPage
@@ -220,6 +244,9 @@ export function PageAutoSplitPlugin({
      * @returns boolean - Herhangi bir bloğun taşınıp taşınmadığını belirtir
      */
     function reflowPass(): boolean {
+      if (typeof window !== 'undefined') {
+        console.log('[DEBUG] reflowPass called');
+      }
       let didMoveAny = false;
       editor.update(() => {
         // Root node'u al
@@ -281,6 +308,9 @@ export function PageAutoSplitPlugin({
      * Aynı anda birden fazla reflow işlemi başlatılmasını engeller.
      */
     const schedule = (): void => {
+      if (typeof window !== 'undefined') {
+        console.log('[DEBUG] schedule reflow');
+      }
       if (isReflowingRef.current) return;
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(() => {

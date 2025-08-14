@@ -1,3 +1,6 @@
+export function $createPageFooterNode(): PageFooterNode {
+  return new PageFooterNode();
+}
 import { CURRENT_HEADER_FOOTER_EDIT_MODE } from '../plugins/HeaderFooterEditModePlugin';
 // ...existing code...
 import { ElementNode, type SerializedElementNode, type EditorConfig } from 'lexical';
@@ -12,6 +15,13 @@ export type SerializedPageFooterNode = SerializedElementNode & {
 // PageFooterNode: Sayfa alt bilgisini (footer) temsil eden Lexical ElementNode sınıfı.
 // Footer'ın içeriği bir paragraf node olarak tutulur.
 export class PageFooterNode extends ElementNode {
+  constructor(key?: string) {
+    super(key);
+    if (typeof window !== 'undefined') {
+      console.log('[DEBUG] PageFooterNode constructed', { key });
+    }
+  }
+
   static getType(): string {
     return 'page-footer';
   }
@@ -19,7 +29,6 @@ export class PageFooterNode extends ElementNode {
   static clone(node: PageFooterNode): PageFooterNode {
     return new PageFooterNode(node.__key);
   }
-// ...existing code...
 
   createDOM(_config: EditorConfig): HTMLElement {
     const dom = document.createElement('div');
@@ -29,6 +38,9 @@ export class PageFooterNode extends ElementNode {
     dom.contentEditable = CURRENT_HEADER_FOOTER_EDIT_MODE ? 'true' : 'false';
     dom.setAttribute('tabIndex', '0');
     dom.addEventListener('click', (e) => { e.stopPropagation(); });
+    if (typeof window !== 'undefined') {
+      console.log('[DEBUG] PageFooterNode createDOM', { key: this.getKey() });
+    }
     return dom;
   }
 

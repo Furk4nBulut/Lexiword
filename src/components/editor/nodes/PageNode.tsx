@@ -1,6 +1,11 @@
+  /**
+   * Lexical normalization için: Bu node'un children'ı olarak sadece header, content ve footer node'ları kabul edilir.
+   */
 import { ElementNode, type SerializedElementNode, type LexicalNode } from 'lexical';
 import type { PageHeaderNode } from './PageHeaderNode';
 import type { PageFooterNode } from './PageFooterNode';
+import { $createPageHeaderNode } from './PageHeaderNode';
+import { $createPageFooterNode } from './PageFooterNode';
 import { PageContentNode } from './PageContentNode';
 
 export function $createPageNode(): PageNode {
@@ -21,6 +26,51 @@ export type SerializedPageNode = {
 // ensureHeaderFooterContentChildren ile bu çocukların varlığı ve sırası garanti edilir.
 export class PageNode extends ElementNode {
   /**
+   * Lexical normalization için: Bu node'un children'ı olarak sadece header, content ve footer node'ları kabul edilir.
+   */
+  static getAllowedChildren(): string[] {
+    return ['page-header', 'page-content', 'page-footer'];
+  }
+  /**
+   * Güvenli şekilde header ekler. Yanlış tip veya undefined eklenmesini engeller.
+   */
+  safeAppendHeader(header: any) {
+    if (header && typeof header.getType === 'function' && header.getType() === 'page-header') {
+      this.append(header);
+      if (typeof window !== 'undefined') {
+        console.log('[DEBUG] Header appended:', header);
+      }
+    } else {
+      if (typeof window !== 'undefined') {
+        console.warn('[DEBUG] Header append SKIPPED, tip yanlış veya undefined:', header);
+      }
+    }
+  }
+
+  /**
+   * Güvenli şekilde footer ekler. Yanlış tip veya undefined eklenmesini engeller.
+   */
+  safeAppendFooter(footer: any) {
+    if (footer && typeof footer.getType === 'function' && footer.getType() === 'page-footer') {
+      this.append(footer);
+      if (typeof window !== 'undefined') {
+        console.log('[DEBUG] Footer appended:', footer);
+      }
+    } else {
+      if (typeof window !== 'undefined') {
+        console.warn('[DEBUG] Footer append SKIPPED, tip yanlış veya undefined:', footer);
+      }
+    }
+  }
+  // DEBUG: PageNode class loaded
+  constructor({ key }: { key?: string }) {
+    super(key);
+    if (typeof window !== 'undefined') {
+      console.log('[DEBUG] PageNode constructed', { key });
+    }
+  }
+
+  /**
    * Node tipini döndürür. ("page")
    */
   static getType(): string {
@@ -32,13 +82,6 @@ export class PageNode extends ElementNode {
    */
   static clone(node: PageNode): PageNode {
     return new PageNode({ key: node.__key });
-  }
-
-  /**
-   * Yeni bir PageNode oluşturur.
-   */
-  constructor({ key }: { key?: string }) {
-    super(key);
   }
 
   /**
@@ -103,26 +146,55 @@ export class PageNode extends ElementNode {
    *
    * Artık yeni sayfa eklenirken header/footer zorunlu olarak eklenmez.
    */
-  ensureHeaderFooterContentChildren(): void {
+  /**
+   * ensureHeaderFooterContentChildren
+   *
+   * Bu fonksiyon, bir sayfa node'unun çocukları arasında mutlaka bir content node'u olmasını sağlar.
+   * Header/footer ise parametre olarak verilirse zorunlu olarak eklenir, yoksa mevcut children'dan alınır.
+   *
+   * Artık yeni sayfa eklenirken header/footer parametre olarak verilebilir.
+   */
+  ensureHeaderFooterContentChildren(headerParam?: PageHeaderNode, footerParam?: PageFooterNode): void {
     // Sıralama: header? -> content -> footer? (section her zaman ortada)
-    const header = this.getChildren().find((child) => child.getType() === 'page-header');
+    let header = headerParam ?? this.getChildren().find((child) => child.getType() === 'page-header');
     let content = this.getChildren().find((child) => child.getType() === 'page-content');
-    const footer = this.getChildren().find((child) => child.getType() === 'page-footer');
-    // Sadece content zorunlu, header/footer varsa eklenir
-    if (content == null) content = new PageContentNode();
-    // Tüm çocukları kaldır ve doğru sırayla ekle
-    this.getChildren().forEach((child) => {
-      child.remove();
-    });
-    if (header != null) this.append(header);
-    this.append(content);
-    if (footer != null) this.append(footer);
+    let footer = footerParam ?? this.getChildren().find((child) => child.getType() === 'page-footer');
+    if (typeof window !== 'undefined') {
+      console.log('[DEBUG] ensureHeaderFooterContentChildren', { header, content, footer, children: this.getChildren() });
+    }
+    if (header == null) {
+      console.log('[DEBUG] Header yok, yeni header ekleniyor');
+      header = $createPageHeaderNode();
+      if (header !== undefined && header !== null) {
+        this.append(header);
+      }
+    }
+    if (footer == null) {
+      console.log('[DEBUG] Footer yok, yeni footer ekleniyor');
+      footer = $createPageFooterNode();
+      if (footer !== undefined && footer !== null) {
+        this.append(footer);
+      }
+    }
+      if (content == null) content = new PageContentNode();
+      this.getChildren().forEach((child) => {
+        child.remove();
+      });
+      this.safeAppendHeader(header);
+      this.append(content);
+      this.safeAppendFooter(footer);
+      if (typeof window !== 'undefined') {
+        console.log('[DEBUG] Çocuklar (append sonrası):', this.getChildren());
+      }
   }
 
   /**
    * Başlangıçta header, content ve footer ekler.
    */
   appendInitialChildren(): void {
+    if (typeof window !== 'undefined') {
+      console.log('[DEBUG] appendInitialChildren called');
+    }
     this.ensureHeaderFooterContentChildren();
   }
 
