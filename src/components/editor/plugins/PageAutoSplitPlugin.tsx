@@ -1,3 +1,4 @@
+import type { LexicalNode } from 'lexical';
 /**
  * PageAutoSplitPlugin
  *
@@ -16,64 +17,33 @@
 
 import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $getRoot, ParagraphNode, TextNode, LineBreakNode } from 'lexical';
-import type { LexicalNode } from 'lexical';
-
+import { $getRoot } from 'lexical';
 import { $createPageNode, $isPageNode, type PageNode } from '../nodes/PageNode';
-import { isContentNode, isFooterNode } from '../nodes/sectionTypeGuards';
+import { isContentNode, isHeaderNode, isFooterNode } from '../nodes/sectionTypeGuards';
 import { PageHeaderNode } from '../nodes/PageHeaderNode';
 import { PageFooterNode } from '../nodes/PageFooterNode';
+import { PageContentNode } from '../nodes/PageContentNode';
 
-/**
- * Sayfa akış ayarlarını tanımlar.
- * pageHeightMm: Sayfa yüksekliği (mm cinsinden)
- * marginTopMm: Üst marjin (mm cinsinden)
- * marginBottomMm: Alt marjin (mm cinsinden)
- */
 export interface PageFlowSettings {
   pageHeightMm: number;
   marginTopMm: number;
   marginBottomMm: number;
 }
 
-/**
- * PageAutoSplitPlugin
- *
- * Sayfa içeriği taşma yaptığında, fazla blokları otomatik olarak yeni bir sayfaya taşır.
- * Header/footer kopyalanır, içerik bölünür ve sayfa yapısı bozulmaz.
- *
- * @param pageHeightMm - Sayfa yüksekliği (mm)
- * @param marginTopMm - Üst marjin (mm)
- * @param marginBottomMm - Alt marjin (mm)
- */
 export function PageAutoSplitPlugin({
   pageHeightMm,
   marginTopMm,
   marginBottomMm
 }: PageFlowSettings): null {
-  // Lexical editor context'i alınır
   const [editor] = useLexicalComposerContext();
-  // DEBUG logları kaldırıldı
-  // Reflow işlemi için animation frame referansı
   const rafRef = useRef<number | null>(null);
-  // Reflow işleminin devam edip etmediğini takip eder
   const isReflowingRef = useRef(false);
 
   useEffect(() => {
-    /**
-     * Bir PageNode'un DOM elementini döndürür.
-     * @param page - PageNode
-     * @returns HTMLElement veya null
-     */
     function getPageEl(page: PageNode): HTMLElement | null {
       return editor.getElementByKey(page.getKey());
     }
 
-    /**
-     * İçerik bölümünün DOM ölçülerini ve padding değerlerini döndürür.
-     * @param pageEl - Sayfa elementi
-     * @returns İçerik DOM'u, üst/alt koordinatlar, yükseklik ve padding değerleri
-     */
     function getContentMetrics(pageEl: HTMLElement): {
       el: HTMLElement | null;
       top: number;
@@ -82,11 +52,9 @@ export function PageAutoSplitPlugin({
       paddingTop: number;
       paddingBottom: number;
     } {
-      // İçerik bölümünü bul
       const el = pageEl.querySelector('[data-lexical-page-section="content"]');
       const contentEl = el instanceof HTMLElement ? el : null;
       const target = contentEl ?? pageEl;
-      // DOM ölçülerini al
       const rect = target.getBoundingClientRect();
       const styles = window.getComputedStyle(target);
       let paddingTop = parseFloat(styles.paddingTop);
@@ -98,13 +66,6 @@ export function PageAutoSplitPlugin({
       return { el: contentEl, top, bottom, height: bottom - top, paddingTop, paddingBottom };
     }
 
-    /**
-     * İçerik bölümünün scrollHeight'ini (taşan yükseklik) döndürür.
-     * @param targetEl - Hedef DOM elementi
-     * @param paddingTop - Üst padding
-     * @param paddingBottom - Alt padding
-     * @returns Scroll yüksekliği (px)
-     */
     function getContentScrollHeight(
       targetEl: HTMLElement,
       paddingTop: number,
@@ -113,36 +74,15 @@ export function PageAutoSplitPlugin({
       return targetEl.scrollHeight - paddingTop - paddingBottom;
     }
 
-    /**
-     * moveOverflowBlocksToNextPage
-     *
-     * Bu fonksiyon, taşan içerik bloklarını bir sonraki sayfaya taşır.
-     * Sayfa altındaki footer yüksekliği ve minimum boşluk göz önünde bulundurularak
-     * taşınacak içerik miktarı ayarlanır.
-     *
-     * @param pageNode - Taşınacak blokların bulunduğu sayfa düğümü
-     * @param capacity - Sayfanın içeriği barındırma kapasitesi
-     */
-
-    /**
-     * moveOverflowBlocksToNextPage
-     *
-     * Taşan içerik bloklarını bir sonraki sayfaya taşır.
-     * Footer yüksekliği ve minimum boşluk hesaba katılır.
-     *
-     * @param pageNode - Taşınacak blokların bulunduğu sayfa düğümü
-     * @param capacity - Sayfanın içeriği barındırma kapasitesi (px)
-     */
     function moveOverflowBlocksToNextPage(pageNode: PageNode, capacity: number): void {
-      // İçerik bölümünü bul
-      const contentSection = pageNode.getChildren().find(isContentNode);
+      const contentSection = pageNode
+        .getChildren()
+        .find((c): c is PageContentNode => isContentNode(c));
       if (contentSection == null) return;
       const blocks = contentSection.getChildren();
       if (blocks.length === 0) return;
-      // İçerik DOM'unu al
       const el = editor.getElementByKey(contentSection.getKey());
       if (el == null) return;
-      // Footer yüksekliğini ve en az bir satır boşluğu hesaba kat
       const pageFooter = pageNode.getChildren().find((n) => isFooterNode(n));
       let footerHeight = 0;
       if (pageFooter != null) {
@@ -151,143 +91,59 @@ export function PageAutoSplitPlugin({
           footerHeight = footerEl.offsetHeight;
         }
       }
-      // En az bir satır boşluk (ör: 24px) bırakmak için
       const minLineGap = 24;
       const adjustedCapacity = capacity - footerHeight - minLineGap;
-      // Eğer içerik taşmıyorsa çık
       if (!(el.scrollHeight > adjustedCapacity + 2)) return;
-
-      // Fazla blokları bul ve taşı (en baştan kapasiteyi aşan tüm blokları taşı)
-
-      let totalHeight = 0;
-      let splitIndex = -1;
-      const fallbackBlockHeight = 24; // px
-      for (let i = 0; i < blocks.length; i++) {
-        const block = blocks[i];
-        const blockEl = editor.getElementByKey(block.getKey());
-        if (blockEl == null) {
-          totalHeight += fallbackBlockHeight;
-        } else {
-          totalHeight += blockEl.offsetHeight;
-        }
-        if (totalHeight > adjustedCapacity) {
-          splitIndex = i;
-          break;
-        }
-      }
-      if (splitIndex === -1 || splitIndex >= blocks.length) return; // Taşacak blok yok veya yanlış index
-
-      // Sonraki sayfa yoksa yeni bir sayfa oluştur
       let nextPage = pageNode.getNextSibling();
       if (!$isPageNode(nextPage)) {
-        const root = $getRoot();
-        const allPages = root.getChildren().filter($isPageNode);
-        let headerToCopy: PageHeaderNode | undefined;
-        let footerToCopy: PageFooterNode | undefined;
-        let contentChildrenToCopy: LexicalNode[] = [];
-        if (allPages.length > 0) {
-          const firstPage = allPages[0];
-          const origHeader = firstPage.getHeaderNode();
-          const origFooter = firstPage.getFooterNode();
-          const origContent = firstPage.getChildren().find(isContentNode);
-          if (origHeader != null) {
-            headerToCopy = PageHeaderNode.clone(origHeader);
-            if (headerToCopy) {
-              // Tüm çocukları temizle
-              headerToCopy.getChildren().forEach((child) => child.remove());
-              // Sadece orijinal header'ın doğrudan çocuklarını (ve bir kez) kopyala
-              origHeader.getChildren().forEach((child) => {
-                if (typeof child.clone === 'function') {
-                  headerToCopy.append(child.clone());
-                }
-              });
-            }
-          }
-          if (origFooter != null) {
-            footerToCopy = PageFooterNode.clone(origFooter);
-            if (footerToCopy) {
-              // Tüm çocukları temizle
-              footerToCopy.getChildren().forEach((child) => child.remove());
-              // Sadece orijinal footer'ın doğrudan çocuklarını (ve bir kez) kopyala
-              origFooter.getChildren().forEach((child) => {
-                if (typeof child.clone === 'function') {
-                  footerToCopy.append(child.clone());
-                }
-              });
-            }
-          }
-          if (origContent != null) {
-            contentChildrenToCopy = origContent
-              .getChildren()
-              .map((child) => (typeof child.clone === 'function' ? child.clone() : null))
-              .filter((c): c is LexicalNode => c !== null);
-          }
-        }
         nextPage = $createPageNode();
-        if (typeof nextPage.ensureHeaderFooterContentChildren === 'function') {
-          nextPage.ensureHeaderFooterContentChildren(headerToCopy, footerToCopy);
-          const nextContent = nextPage.getChildren().find(isContentNode);
-          if (nextContent != null && contentChildrenToCopy.length > 0) {
-            for (const child of contentChildrenToCopy) {
-              nextContent.append(child);
-            }
-          }
+        const prevHeader = pageNode.getChildren().find((n) => isHeaderNode(n));
+        const prevFooter = pageNode.getChildren().find((n) => isFooterNode(n));
+        if (prevHeader != null && prevHeader.__visible !== false) {
+          nextPage.append(
+            new PageHeaderNode()
+          );
+        }
+        nextPage.append(new PageContentNode());
+        if (prevFooter != null && prevFooter.__visible !== false) {
+          nextPage.append(
+            new PageFooterNode()
+          );
         }
         pageNode.insertAfter(nextPage);
       }
-      // Sonraki sayfanın içerik bölümünü bul
-      const nextContent = nextPage.getChildren().find(isContentNode);
+      const nextContent = nextPage
+        .getChildren()
+        .find((c: LexicalNode): c is PageContentNode => isContentNode(c));
       if (nextContent == null) return;
-      // Kapasiteyi aşan tüm blokları bir sonraki sayfaya taşı
-      const toMove = blocks.slice(splitIndex);
-      if (toMove.length === 0) return; // Taşınacak blok yoksa döngü kırılır
-      for (const block of toMove) {
-        nextContent.append(block);
+      const lastBlock = blocks[blocks.length - 1];
+      if (lastBlock != null && typeof (lastBlock as { getKey?: unknown }).getKey === 'function') {
+        nextContent.append(lastBlock as any);
       }
     }
 
-    /**
-     * reflowPass
-     *
-     * Bu fonksiyon, sayfa taşma kontrolü yapar ve gerekirse taşma olan sayfalardaki
-     * fazla blokları bir sonraki sayfaya taşır.
-     *
-     * @returns boolean - Herhangi bir bloğun taşınıp taşınmadığını belirtir
-     */
-
-    /**
-     * reflowPass
-     *
-     * Tüm sayfaları kontrol eder, taşma varsa fazla blokları bir sonraki sayfaya taşır.
-     * Gerekirse root'a yeni sayfa ekler veya root dışı node'ları yeni bir sayfaya taşır.
-     *
-     * @returns boolean - Herhangi bir bloğun taşınıp taşınmadığını belirtir
-     */
     function reflowPass(): boolean {
       let didMoveAny = false;
       editor.update(() => {
-        // Root node'u al
         const root = $getRoot();
-        // Eğer hiç sayfa yoksa, bir tane ekle
         if (root.getChildrenSize() === 0) {
           root.append($createPageNode());
           return;
         }
         const children = root.getChildren();
-        // Eğer root altında PageNode olmayan bir node varsa, onu yeni bir sayfaya taşı
         const hasNonPage = children.some((n) => !$isPageNode(n));
         if (hasNonPage) {
           const page = $createPageNode();
           children.forEach((n) => {
-            // Sadece LexicalNode tipindekileri ekle
             if (!$isPageNode(n) && typeof n === 'object' && n !== null && 'getKey' in n) {
-              const contentSection = page.getChildren().find(isContentNode);
-              if (contentSection != null) contentSection.append(n as any); // LexicalNode olarak cast
+              const contentSection = page
+                .getChildren()
+                .find((c): c is PageContentNode => isContentNode(c));
+              if (contentSection != null) contentSection.append(n as any);
             }
           });
           root.append(page);
         }
-        // Tüm sayfalar için taşma kontrolü
         let page = root.getFirstChild();
         while ($isPageNode(page)) {
           const pageNode = page;
@@ -296,7 +152,6 @@ export function PageAutoSplitPlugin({
             page = pageNode.getNextSibling();
             continue;
           }
-          // Sayfa içeriğinin kapasitesini ve kullanılan alanı hesapla
           const {
             el: contentDomEl,
             height: capacity,
@@ -305,7 +160,6 @@ export function PageAutoSplitPlugin({
           } = getContentMetrics(pageEl);
           const targetForScroll = contentDomEl !== null ? contentDomEl : pageEl;
           const usedScroll = getContentScrollHeight(targetForScroll, paddingTop, paddingBottom);
-          // Eğer içerik kapasiteyi aşıyorsa, fazla bloğu taşı
           if (usedScroll > capacity + 2) {
             moveOverflowBlocksToNextPage(pageNode, capacity);
             didMoveAny = true;
@@ -316,14 +170,7 @@ export function PageAutoSplitPlugin({
       return didMoveAny;
     }
 
-    /**
-     * schedule
-     *
-     * reflowPass fonksiyonunu animasyon frame ve setTimeout ile optimize şekilde tetikler.
-     * Aynı anda birden fazla reflow işlemi başlatılmasını engeller.
-     */
     const schedule = (): void => {
-      // DEBUG logları kaldırıldı
       if (isReflowingRef.current) return;
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(() => {
@@ -333,7 +180,6 @@ export function PageAutoSplitPlugin({
         const run = (): void => {
           const moved = reflowPass();
           passes++;
-          // Eğer taşınan blok varsa ve maksimum tekrar sayısı aşılmadıysa devam et
           if (moved && passes < maxPasses) {
             setTimeout(run, 0);
           } else {
@@ -344,15 +190,12 @@ export function PageAutoSplitPlugin({
       });
     };
 
-    // İlk render'da ve bağımlılıklar değiştiğinde reflow işlemini başlat
     schedule();
 
-    // Editor güncellendiğinde reflow işlemini tetikle
     const unregister = editor.registerUpdateListener((): void => {
       schedule();
     });
 
-    // Plugin unmount edildiğinde temizlik işlemleri
     return (): void => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       unregister();
@@ -360,6 +203,5 @@ export function PageAutoSplitPlugin({
     };
   }, [editor, pageHeightMm, marginTopMm, marginBottomMm]);
 
-  // Plugin herhangi bir DOM render etmez
   return null;
 }
