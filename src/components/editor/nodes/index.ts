@@ -1,3 +1,5 @@
+
+// PageHeaderNode ve PageFooterNode artık ElementNode'dur (önceden DecoratorNode idi)
 import { PageNode } from './PageNode';
 import { PageHeaderNode } from './PageHeaderNode';
 import { PageContentNode } from './PageContentNode';

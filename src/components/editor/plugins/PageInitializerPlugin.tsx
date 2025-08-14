@@ -24,7 +24,7 @@ export function PageInitializerPlugin(): JSX.Element | null {
       const root = $getRoot();
       if (root.getChildrenSize() === 0) {
         const page = new PageNode({});
-        page.appendInitialChildren(); // Always add header/footer/content (header/footer hidden by default)
+  page.appendInitialChildren(); // Always add header/footer/content (header/footer yeni ElementNode)
         root.append(page);
       }
     });

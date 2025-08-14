@@ -100,9 +100,9 @@ export class PageNode extends ElementNode {
     let header = this.getChildren().find((child) => child.getType() === 'page-header');
     let content = this.getChildren().find((child) => child.getType() === 'page-content');
     let footer = this.getChildren().find((child) => child.getType() === 'page-footer');
-    if (header == null) header = new PageHeaderNode('', undefined, false);
-    if (content == null) content = new PageContentNode();
-    if (footer == null) footer = new PageFooterNode('', undefined, false);
+  if (header == null) header = new PageHeaderNode();
+  if (content == null) content = new PageContentNode();
+  if (footer == null) footer = new PageFooterNode();
     // Tüm çocukları kaldır ve doğru sırayla ekle
     this.getChildren().forEach((child) => {
       // Her bir mevcut çocuğu kaldırıyoruz, böylece sıralama bozulmaz.

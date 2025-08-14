@@ -1,7 +1,6 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useEffect, useRef } from 'react';
 import { $getRoot } from 'lexical';
-import { updateAllHeaders, updateAllFooters } from '../utils/HeaderFooterSyncUtils';
 import { $isPageNode } from '../nodes/PageNode';
 
 /**
@@ -62,34 +61,7 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
             }
           }
         }
-        // Değişiklik yapılan header'ı tüm sayfalara uygula
-        if (changedHeader != null) {
-          const header = changedHeader; // TS için non-null
-          editor.update(() => {
-            updateAllHeaders(header.text, header.visible);
-            // Header değişikliği olduğunda header/footer varlığını garanti et
-            pageNodes.forEach((page) => {
-              if (typeof page.ensureHeaderFooterContentChildren === 'function') {
-                page.ensureHeaderFooterContentChildren();
-              }
-            });
-          });
-          lastHeader.current = header;
-        }
-        // Değişiklik yapılan footer'ı tüm sayfalara uygula
-        if (changedFooter != null) {
-          const footer = changedFooter; // TS için non-null
-          editor.update(() => {
-            updateAllFooters(footer.text, footer.visible);
-            // Footer değişikliği olduğunda header/footer varlığını garanti et
-            pageNodes.forEach((page) => {
-              if (typeof page.ensureHeaderFooterContentChildren === 'function') {
-                page.ensureHeaderFooterContentChildren();
-              }
-            });
-          });
-          lastFooter.current = footer;
-        }
+  // Artık header/footer toplu güncelleme yok. Sadece varlık kontrolü yapılabilir.
       });
     });
   }, [editor]);
