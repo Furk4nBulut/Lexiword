@@ -13,7 +13,10 @@ import {
 } from '@radix-ui/react-icons';
 import { OrderedListIcon, UnorderedListIcon } from './icons';
 import './Toolbar.css';
+
 import type { PageNode } from '../editor/nodes/PageNode';
+import { PageHeaderNode } from '../editor/nodes/PageHeaderNode';
+import { PageFooterNode } from '../editor/nodes/PageFooterNode';
 
 interface ToolbarPluginProps {
   headerFooterEditMode: boolean;
@@ -189,7 +192,7 @@ function PageSectionPlugin({
 }: ToolbarPluginProps): JSX.Element {
   const [editor] = useLexicalComposerContext();
 
-  // Artık header/footer görünürlüğü toggle edilmiyor. Sadece varlıkları garanti edilir.
+  // Header ekle/kaldır
   const handleHeader = (): void => {
     editor.update(() => {
       const root = $getRoot();
@@ -199,12 +202,24 @@ function PageSectionPlugin({
           (n) => typeof (n as any).getType === 'function' && (n as any).getType() === 'page'
         ) as PageNode[];
       pageNodes.forEach((pageNode) => {
-        if (typeof pageNode.ensureHeaderFooterContentChildren === 'function') {
-          pageNode.ensureHeaderFooterContentChildren();
+        const header = pageNode.getHeaderNode();
+        if (header != null) {
+          header.remove();
+        } else if (typeof pageNode.ensureHeaderFooterContentChildren === 'function') {
+          // Sadece header eksikse ekle
+          let content = pageNode.getChildren().find((c) => c.getType() === 'page-content');
+          let footer = pageNode.getFooterNode();
+          // Tüm çocukları kaldır
+          pageNode.getChildren().forEach((child) => child.remove());
+          pageNode.append(new PageHeaderNode());
+          if (content) pageNode.append(content);
+          if (footer) pageNode.append(footer);
         }
       });
     });
   };
+
+  // Footer ekle/kaldır
   const handleFooter = (): void => {
     editor.update(() => {
       const root = $getRoot();
@@ -214,8 +229,18 @@ function PageSectionPlugin({
           (n) => typeof (n as any).getType === 'function' && (n as any).getType() === 'page'
         ) as PageNode[];
       pageNodes.forEach((pageNode) => {
-        if (typeof pageNode.ensureHeaderFooterContentChildren === 'function') {
-          pageNode.ensureHeaderFooterContentChildren();
+        const footer = pageNode.getFooterNode();
+        if (footer != null) {
+          footer.remove();
+        } else if (typeof pageNode.ensureHeaderFooterContentChildren === 'function') {
+          // Sadece footer eksikse ekle
+          let header = pageNode.getHeaderNode();
+          let content = pageNode.getChildren().find((c) => c.getType() === 'page-content');
+          // Tüm çocukları kaldır
+          pageNode.getChildren().forEach((child) => child.remove());
+          if (header) pageNode.append(header);
+          if (content) pageNode.append(content);
+          pageNode.append(new PageFooterNode());
         }
       });
     });

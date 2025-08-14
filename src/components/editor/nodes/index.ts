@@ -4,5 +4,14 @@ import { PageNode } from './PageNode';
 import { PageHeaderNode } from './PageHeaderNode';
 import { PageContentNode } from './PageContentNode';
 import { PageFooterNode } from './PageFooterNode';
+import { ParagraphNode, TextNode } from 'lexical';
 
-export const editorNodes = [PageNode, PageHeaderNode, PageContentNode, PageFooterNode];
+// Lexical'ın kendi node'ları (özellikle ParagraphNode ve TextNode) mutlaka eklenmeli!
+export const editorNodes = [
+	PageNode,
+	PageHeaderNode,
+	PageContentNode,
+	PageFooterNode,
+	ParagraphNode,
+	TextNode
+];

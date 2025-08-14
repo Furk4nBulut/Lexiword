@@ -2,6 +2,7 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { $getRoot } from 'lexical';
 import { useEffect } from 'react';
 import { PageNode } from '../nodes/PageNode';
+import { PageContentNode } from '../nodes/PageContentNode';
 
 /**
  * PageInitializerPlugin
@@ -23,9 +24,10 @@ export function PageInitializerPlugin(): JSX.Element | null {
     editor.update(() => {
       const root = $getRoot();
       if (root.getChildrenSize() === 0) {
-        const page = new PageNode({});
-  page.appendInitialChildren(); // Always add header/footer/content (header/footer yeni ElementNode)
-        root.append(page);
+  const page = new PageNode({});
+  // Sadece content node'u ekle, header/footer eklenmesin
+  page.append(new PageContentNode());
+  root.append(page);
       }
     });
   }, [editor]);
