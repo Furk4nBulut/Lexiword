@@ -15,8 +15,9 @@ import { OrderedListIcon, UnorderedListIcon } from './icons';
 import './Toolbar.css';
 
 import type { PageNode } from '../editor/nodes/PageNode';
-import { PageHeaderNode, setHeaderFooterEditModeForNodes as setHeaderFooterEditModeForHeader } from '../editor/nodes/PageHeaderNode';
-import { PageFooterNode, setHeaderFooterEditModeForNodes as setHeaderFooterEditModeForFooter } from '../editor/nodes/PageFooterNode';
+import { PageHeaderNode } from '../editor/nodes/PageHeaderNode';
+import { PageFooterNode } from '../editor/nodes/PageFooterNode';
+import { SET_HEADER_FOOTER_EDIT_MODE_COMMAND } from '../editor/plugins/HeaderFooterEditModePlugin';
 
 interface ToolbarPluginProps {
   headerFooterEditMode: boolean;
@@ -274,10 +275,10 @@ export function ToolbarPlugin({
   headerFooterEditMode,
   setHeaderFooterEditMode
 }: ToolbarPluginProps): JSX.Element {
+  const [editor] = useLexicalComposerContext();
   React.useEffect(() => {
-    setHeaderFooterEditModeForHeader(headerFooterEditMode);
-    setHeaderFooterEditModeForFooter(headerFooterEditMode);
-  }, [headerFooterEditMode]);
+    editor.dispatchCommand(SET_HEADER_FOOTER_EDIT_MODE_COMMAND, headerFooterEditMode);
+  }, [headerFooterEditMode, editor]);
   return (
     <Toolbar.Root className="toolbarRoot">
       <TextFormatToolbarPlugin />

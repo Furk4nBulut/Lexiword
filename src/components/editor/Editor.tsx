@@ -31,6 +31,7 @@ import { PageAutoSplitPlugin } from './plugins/PageAutoSplitPlugin';
 import PageContentFlowPlugin from './plugins/PageContentFlowPlugin';
 import PageContentEditable from './PageContentEditable';
 import { HeaderFooterSyncPlugin } from './plugins/HeaderFooterSyncPlugin';
+import { HeaderFooterEditModePlugin } from './plugins/HeaderFooterEditModePlugin';
 
 const theme = {
   text: {
@@ -82,7 +83,8 @@ export default function Editor(): JSX.Element {
           <ContentSelectAllPlugin />
           <PageAutoSplitPlugin pageHeightMm={297} marginTopMm={20} marginBottomMm={20} />
           <PageContentFlowPlugin />
-          {/* Header/Footer senkronizasyonu için plugin ekleniyor */}
+          {/* Header/Footer edit mode attribute ve senkronizasyon pluginleri */}
+          <HeaderFooterEditModePlugin />
           <HeaderFooterSyncPlugin />
         </EditModeProvider>
       </LexicalComposer>

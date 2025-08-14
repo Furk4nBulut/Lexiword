@@ -1,12 +1,6 @@
-
+import { CURRENT_HEADER_FOOTER_EDIT_MODE } from '../plugins/HeaderFooterEditModePlugin';
 import { ElementNode, type SerializedElementNode, type EditorConfig } from 'lexical';
 
-// Edit mode kontrolü için global değişken (plugin tarafından set edilecek)
-let globalHeaderFooterEditMode = false;
-export function setHeaderFooterEditModeForNodes(val: boolean): void {
-  globalHeaderFooterEditMode = val;
-}
-// ...existing code...
 export type SerializedPageHeaderNode = SerializedElementNode & {
   type: 'page-header';
   version: 1;
@@ -29,17 +23,17 @@ export class PageHeaderNode extends ElementNode {
     const dom = document.createElement('div');
     dom.className = 'a4-header';
     dom.setAttribute('data-lexical-node-key', this.getKey());
-    // Sadece edit modunda düzenlenebilir
-    dom.contentEditable = globalHeaderFooterEditMode ? 'true' : 'false';
+    dom.setAttribute('data-edit-mode', CURRENT_HEADER_FOOTER_EDIT_MODE ? 'true' : 'false');
+    dom.contentEditable = CURRENT_HEADER_FOOTER_EDIT_MODE ? 'true' : 'false';
     dom.setAttribute('tabIndex', '0');
-    // Tıklama event'inin bubbling ile yukarı çıkmasını engelle
     dom.addEventListener('click', (e) => { e.stopPropagation(); });
     return dom;
   }
 
-  updateDOM(): boolean {
-    // Edit mode değiştiyse contentEditable güncellenmeli
-    return true;
+  updateDOM(prevNode: PageHeaderNode, dom: HTMLElement): boolean {
+    const editMode = dom.getAttribute('data-edit-mode') === 'true';
+    dom.contentEditable = editMode ? 'true' : 'false';
+    return false;
   }
 
   static importJSON(serializedNode: SerializedPageHeaderNode): PageHeaderNode {
