@@ -1,11 +1,13 @@
 // Global variable to track current edit mode for header/footer
-export let CURRENT_HEADER_FOOTER_EDIT_MODE = false;
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useEffect } from 'react';
 import { createCommand } from 'lexical';
+export let CURRENT_HEADER_FOOTER_EDIT_MODE = false;
 
 // Tek bir yerde tanımlanır ve export edilir
-export const SET_HEADER_FOOTER_EDIT_MODE_COMMAND = createCommand<boolean>('SET_HEADER_FOOTER_EDIT_MODE_COMMAND');
+export const SET_HEADER_FOOTER_EDIT_MODE_COMMAND = createCommand<boolean>(
+  'SET_HEADER_FOOTER_EDIT_MODE_COMMAND'
+);
 
 /**
  * HeaderFooterEditModePlugin

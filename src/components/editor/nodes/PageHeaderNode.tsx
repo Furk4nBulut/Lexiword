@@ -13,7 +13,7 @@ export class PageHeaderNode extends ElementNode {
   constructor(key?: string) {
     super(key);
     if (typeof window !== 'undefined') {
-  // debug log kaldırıldı
+      // debug log kaldırıldı
     }
   }
 
@@ -33,7 +33,9 @@ export class PageHeaderNode extends ElementNode {
     dom.setAttribute('data-edit-mode', CURRENT_HEADER_FOOTER_EDIT_MODE ? 'true' : 'false');
     dom.contentEditable = CURRENT_HEADER_FOOTER_EDIT_MODE ? 'true' : 'false';
     dom.setAttribute('tabIndex', '0');
-    dom.addEventListener('click', (e) => { e.stopPropagation(); });
+    dom.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
     return dom;
   }
 

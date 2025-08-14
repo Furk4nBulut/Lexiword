@@ -26,15 +26,19 @@ export function PageInitializerPlugin(): JSX.Element | null {
       if (root.getChildrenSize() === 0) {
         const page = new PageNode({});
         // Eğer root'ta başka PageNode varsa ve onların header/footer'ı varsa, yeni sayfaya da ekle
-  let headerToCopy: any;
-  let footerToCopy: any;
+        let headerToCopy: any;
+        let footerToCopy: any;
         // root.getChildren() boş ama yine de güvenli olsun diye kontrol
         // (ileride root'a başka node eklenirse)
-        const otherPages = root.getChildren().filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
+        const otherPages = root
+          .getChildren()
+          .filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
         if (otherPages.length > 0) {
           const firstPage = otherPages[0];
-          if (typeof firstPage.getHeaderNode === 'function') headerToCopy = firstPage.getHeaderNode();
-          if (typeof firstPage.getFooterNode === 'function') footerToCopy = firstPage.getFooterNode();
+          if (typeof firstPage.getHeaderNode === 'function')
+            headerToCopy = firstPage.getHeaderNode();
+          if (typeof firstPage.getFooterNode === 'function')
+            footerToCopy = firstPage.getFooterNode();
         }
         // Eğer header varsa kopyala
         if (typeof headerToCopy !== 'undefined' && headerToCopy !== null) {
