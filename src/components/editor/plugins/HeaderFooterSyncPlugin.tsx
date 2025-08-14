@@ -145,7 +145,7 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
                   }
                   return false;
                 });
-                if (Boolean(onlyTextOrLinebreak)) {
+                if (onlyTextOrLinebreak) {
                   const footerChildren = footer.getChildren();
                   let oldParaContent = '';
                   if (
@@ -157,7 +157,8 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
                     oldParaContent = getTextAndLinebreakContent(paraNode.getChildren());
                   }
                   const newParaContent = getTextAndLinebreakContent(children);
-                  if (!(oldParaContent === newParaContent || (!oldParaContent && !newParaContent))) {
+                  // Eğer eski ve yeni içerik aynıysa veya ikisi de boşsa hiçbir şey yapma
+                  if (!(oldParaContent === newParaContent || (oldParaContent === '' && newParaContent === ''))) {
                     footer.getChildren().forEach((child: any) => { child.remove(); });
                     if (children.length > 0) {
                       const para = new ParagraphNode();
