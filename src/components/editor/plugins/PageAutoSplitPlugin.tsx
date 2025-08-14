@@ -83,6 +83,15 @@ export function PageAutoSplitPlugin({
       if (blocks.length === 0) return;
       const el = editor.getElementByKey(contentSection.getKey());
       if (el == null) return;
+      // Header ve footer yüksekliğini capacity'den düş
+      const pageHeader = pageNode.getChildren().find((n) => isHeaderNode(n));
+      let headerHeight = 0;
+      if (pageHeader != null) {
+        const headerEl = editor.getElementByKey(pageHeader.getKey());
+        if (headerEl != null) {
+          headerHeight = headerEl.offsetHeight;
+        }
+      }
       const pageFooter = pageNode.getChildren().find((n) => isFooterNode(n));
       let footerHeight = 0;
       if (pageFooter != null) {
@@ -92,7 +101,7 @@ export function PageAutoSplitPlugin({
         }
       }
       const minLineGap = 24;
-      const adjustedCapacity = capacity - footerHeight - minLineGap;
+      const adjustedCapacity = capacity - headerHeight - footerHeight - minLineGap;
       if (!(el.scrollHeight > adjustedCapacity + 2)) return;
       let nextPage = pageNode.getNextSibling();
       if (!$isPageNode(nextPage)) {
