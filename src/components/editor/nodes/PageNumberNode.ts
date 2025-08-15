@@ -4,8 +4,6 @@ export function $createPageNumberNode(pageNumber: number): PageNumberNode {
   return new PageNumberNode(pageNumber);
 }
 
-
-
 export type SerializedPageNumberNode = SerializedElementNode & {
   type: 'page-number';
   version: 1;
@@ -59,7 +57,6 @@ export class PageNumberNode extends ElementNode {
       pageNumber: this.__pageNumber
     };
   }
-
 }
 
 export default PageNumberNode;

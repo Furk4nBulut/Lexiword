@@ -174,10 +174,12 @@ export function PageAutoSplitPlugin({
         // --- PageNumberNode kopyalama ---
         // Root'taki diğer sayfalarda PageNumberNode var mı kontrol et
         const root = pageNode.getParent();
-        if (root) {
-          const allPages = root.getChildren().filter($isPageNode) as PageNode[];
+        if (root !== null) {
+          const allPages = root.getChildren().filter($isPageNode);
           // En az bir sayfada PageNumberNode varsa yeni sayfaya da ekle
-          const hasPageNumber = allPages.some((p) => p.getChildren().some((c) => c instanceof PageNumberNode));
+          const hasPageNumber = allPages.some((p) =>
+            p.getChildren().some((c) => c instanceof PageNumberNode)
+          );
           if (hasPageNumber) {
             // Yeni sayfanın numarası, root'taki page sayısı kadardır (1-based)
             const pageNumber = allPages.length + 1;

@@ -7,13 +7,14 @@ import { PageContentNode } from './PageContentNode';
 import { PageHeaderNode } from './PageHeaderNode';
 import { PageFooterNode } from './PageFooterNode';
 import PageNumberNode from './PageNumberNode';
+
 /**
  * Verilen node'un PageNumberNode olup olmadığını kontrol eder.
  *
  * @param node - Kontrol edilecek LexicalNode nesnesi (null veya undefined olabilir)
  * @returns Eğer node bir PageNumberNode ise true, değilse false döner.
  */
-export function isPageNumberNode(node: LexicalNode | null | undefined): node is import('./PageNumberNode').PageNumberNode {
+export function isPageNumberNode(node: LexicalNode | null | undefined): node is PageNumberNode {
   return node instanceof PageNumberNode;
 }
 
