@@ -35,7 +35,6 @@ export class PageNumberNode extends ElementNode {
     dom.style.textAlign = 'center';
     dom.style.color = '#888';
     dom.style.fontSize = '12px';
-    dom.style.margin = '8px 0';
     dom.setAttribute('data-lexical-node-key', this.getKey());
     dom.setAttribute('contenteditable', 'false');
     return dom;

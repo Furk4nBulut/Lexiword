@@ -1,3 +1,15 @@
+/* PageNumberNode: Footer gibi görünsün */
+.a4-page-number {
+  background: #f8fafc;
+  /* border-top kaldırıldı, footer ile birleşik görünsün */
+  padding: 0 24px 8px 24px;
+  font-size: 16px;
+  color: #333;
+  box-sizing: border-box;
+  text-align: center;
+  line-height: 1.2;
+  margin-top: 0;
+}
 /* Çakışmasız ve taşma yapmayan A4 düzeni - DÜZELTİLDİ */
 .editor-a4-wrapper {
   display: flex;
@@ -68,8 +80,8 @@
   /* 20mm ≈ 76px at 96dpi */
   flex: 0 0 76px;
   background: #f8fafc;
-  border-top: 1px solid #e0e0e0;
-  padding: 8px 24px;
+  /* border-top kaldırıldı, page number ile birleşik görünsün */
+  padding: 8px 24px 0 24px;
   font-size: 16px;
   color: #333;
   box-sizing: border-box;
