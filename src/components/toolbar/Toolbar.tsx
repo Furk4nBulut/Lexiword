@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $setBlocksType_experimental } from '@lexical/selection';
-import { $isRangeSelection, $getSelection, type TextFormatType, $getRoot } from 'lexical';
+import { $isRangeSelection, $getSelection, type TextFormatType } from 'lexical';
 import { $createHeadingNode } from '@lexical/rich-text';
 import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND } from '@lexical/list';
 import * as Toolbar from '@radix-ui/react-toolbar';
@@ -14,10 +14,7 @@ import {
 import { OrderedListIcon, UnorderedListIcon } from './icons';
 import './Toolbar.css';
 
-import type { PageNode } from '../editor/nodes/PageNode';
-import { PageHeaderNode } from '../editor/nodes/PageHeaderNode';
-import { PageFooterNode } from '../editor/nodes/PageFooterNode';
-import { usePageNumberToggle } from '../editor/plugins/PageNumberTogglePlugin';
+// ...
 import { SET_HEADER_FOOTER_EDIT_MODE_COMMAND } from '../editor/plugins/HeaderFooterEditModePlugin';
 import { PageSectionPlugin } from '../editor/plugins/PageSectionPlugin';
 
@@ -187,7 +184,6 @@ function ListToolbarPlugin(): JSX.Element {
     </div>
   );
 }
-
 
 export function ToolbarPlugin({
   headerFooterEditMode,

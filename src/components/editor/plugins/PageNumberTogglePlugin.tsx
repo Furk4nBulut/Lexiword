@@ -8,11 +8,24 @@ import { useCallback } from 'react';
 /**
  * PageNumberTogglePlugin
  *
- * Toolbar veya başka bir yerden çağrılabilen, tüm sayfalara page number ekleyen veya kaldıran bir plugin.
+ * Bu dosya, Lexical editöründe sayfa numarası ekleme/kaldırma işlevselliğini sağlayan bir React hook'u ve opsiyonel bir buton bileşeni içerir.
  *
- * Kullanım:
+ * - usePageNumberToggle: Tüm sayfalara PageNumberNode ekler veya kaldırır. Toggle mantığı ile çalışır.
+ * - PageNumberToggleButton: Kullanıcıya hazır bir buton sunar, ister Toolbar'da ister başka bir yerde kullanılabilir.
+ *
+ * Kullanım örneği:
  *   const togglePageNumbers = usePageNumberToggle();
  *   <button onClick={togglePageNumbers}>Sayfa Numarası Ekle/Kaldır</button>
+ *
+ * @author Furkan Bulut
+ * @date 2025-08-15
+ */
+/**
+ * usePageNumberToggle
+ *
+ * Tüm sayfalara PageNumberNode ekler veya kaldırır. Eğer herhangi bir sayfada PageNumberNode varsa hepsini siler, yoksa ekler.
+ *
+ * @returns {() => void} - Toggle fonksiyonu
  */
 export function usePageNumberToggle(): () => void {
   const [editor] = useLexicalComposerContext();
@@ -66,6 +79,14 @@ export function usePageNumberToggle(): () => void {
  * PageNumberTogglePlugin (opsiyonel: otomatik buton render)
  *
  * Eğer otomatik bir buton da eklemek isterseniz aşağıdaki gibi bir React bileşeni olarak da kullanabilirsiniz.
+ */
+/**
+ * PageNumberToggleButton
+ *
+ * Hazır bir buton bileşeni. Tıklandığında sayfa numaralarını ekler/kaldırır.
+ *
+ * @param children - Butonun içeriği (varsayılan: 'Sayfa Numarası Ekle/Kaldır')
+ * @param props - Diğer button props'ları
  */
 export function PageNumberToggleButton({
   children = 'Sayfa Numarası Ekle/Kaldır',

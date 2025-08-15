@@ -1,3 +1,16 @@
+/**
+ * PageSectionPlugin
+ *
+ * Toolbar'da header, footer ve page number ekleme/kaldırma işlemlerini yöneten React bileşeni.
+ *
+ * - Header/Footer ekle/kaldır: Sayfa node'larının header/footer alanlarını dinamik olarak yönetir.
+ * - Sayfa numarası ekle/kaldır: usePageNumberToggle ile entegre çalışır.
+ *
+ * Tüm butonlar Toolbar ile aynı görünüme sahiptir.
+ *
+ * @author Furkan Bulut
+ * @date 2025-08-15
+ */
 import * as React from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot } from 'lexical';
@@ -11,6 +24,14 @@ interface ToolbarPluginProps {
   setHeaderFooterEditMode: (v: boolean) => void;
 }
 
+/**
+ * PageSectionPlugin
+ *
+ * Toolbar'da header, footer ve page number ekle/kaldır işlemlerini yönetir.
+ *
+ * @param headerFooterEditMode - Header/footer düzenleme modu açık mı?
+ * @param setHeaderFooterEditMode - Modu açıp kapatan fonksiyon
+ */
 export function PageSectionPlugin({
   headerFooterEditMode,
   setHeaderFooterEditMode
@@ -18,7 +39,7 @@ export function PageSectionPlugin({
   const [editor] = useLexicalComposerContext();
   const handlePageNumber = usePageNumberToggle();
 
-  // Header ekle/kaldır
+  // Header ekle/kaldır fonksiyonu: Eğer header varsa siler, yoksa ekler.
   const handleHeader = (): void => {
     editor.update(() => {
       const root = $getRoot();
@@ -47,7 +68,7 @@ export function PageSectionPlugin({
     });
   };
 
-  // Footer ekle/kaldır
+  // Footer ekle/kaldır fonksiyonu: Eğer footer varsa siler, yoksa ekler.
   const handleFooter = (): void => {
     editor.update(() => {
       const root = $getRoot();
