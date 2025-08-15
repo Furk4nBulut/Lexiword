@@ -201,13 +201,39 @@ function PageSectionPlugin({
         .filter(
           (n) => typeof (n as any).getType === 'function' && (n as any).getType() === 'page'
         ) as PageNode[];
-      pageNodes.forEach((pageNode, idx) => {
-        // Eğer zaten PageNumberNode varsa tekrar ekleme
-        const hasPageNumber = pageNode.getChildren().some((c) => typeof (c as any).getType === 'function' && (c as any).getType() === 'page-number');
-        if (!hasPageNumber) {
-          pageNode.append($createPageNumberNode(idx + 1));
-        }
-      });
+      // Eğer herhangi bir sayfada PageNumberNode varsa, hepsini sil
+      const hasAnyPageNumber = pageNodes.some((pageNode) =>
+        pageNode
+          .getChildren()
+          .some(
+            (c) =>
+              typeof (c as any).getType === 'function' && (c as any).getType() === 'page-number'
+          )
+      );
+      if (hasAnyPageNumber) {
+        pageNodes.forEach((pageNode) => {
+          pageNode.getChildren().forEach((child) => {
+            if (
+              typeof (child as any).getType === 'function' &&
+              (child as any).getType() === 'page-number'
+            ) {
+              child.remove();
+            }
+          });
+        });
+      } else {
+        pageNodes.forEach((pageNode, idx) => {
+          const hasPageNumber = pageNode
+            .getChildren()
+            .some(
+              (c) =>
+                typeof (c as any).getType === 'function' && (c as any).getType() === 'page-number'
+            );
+          if (!hasPageNumber) {
+            pageNode.append($createPageNumberNode(idx + 1));
+          }
+        });
+      }
     });
   };
   const [editor] = useLexicalComposerContext();
