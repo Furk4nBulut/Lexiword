@@ -17,7 +17,7 @@ import './Toolbar.css';
 import type { PageNode } from '../editor/nodes/PageNode';
 import { PageHeaderNode } from '../editor/nodes/PageHeaderNode';
 import { PageFooterNode } from '../editor/nodes/PageFooterNode';
-import { $createPageNumberNode } from '../editor/nodes/PageNumberNode';
+import { usePageNumberToggle } from '../editor/plugins/PageNumberTogglePlugin';
 import { SET_HEADER_FOOTER_EDIT_MODE_COMMAND } from '../editor/plugins/HeaderFooterEditModePlugin';
 
 interface ToolbarPluginProps {
@@ -192,53 +192,9 @@ function PageSectionPlugin({
   headerFooterEditMode,
   setHeaderFooterEditMode
 }: ToolbarPluginProps): JSX.Element {
-  // PageNumber ekle
-  const handlePageNumber = (): void => {
-    editor.update(() => {
-      const root = $getRoot();
-      const pageNodes = root
-        .getChildren()
-        .filter(
-          (n) => typeof (n as any).getType === 'function' && (n as any).getType() === 'page'
-        ) as PageNode[];
-      // Eğer herhangi bir sayfada PageNumberNode varsa, hepsini sil
-      const hasAnyPageNumber = pageNodes.some((pageNode) =>
-        pageNode
-          .getChildren()
-          .some(
-            (c) =>
-              typeof (c as any).getType === 'function' && (c as any).getType() === 'page-number'
-          )
-      );
-      if (hasAnyPageNumber) {
-        pageNodes.forEach((pageNode) => {
-          pageNode.getChildren().forEach((child) => {
-            if (
-              typeof (child as any).getType === 'function' &&
-              (child as any).getType() === 'page-number'
-            ) {
-              child.remove();
-            }
-          });
-        });
-      } else {
-        pageNodes.forEach((pageNode, idx) => {
-          const hasPageNumber = pageNode
-            .getChildren()
-            .some(
-              (c) =>
-                typeof (c as any).getType === 'function' && (c as any).getType() === 'page-number'
-            );
-          if (!hasPageNumber) {
-            pageNode.append($createPageNumberNode(idx + 1));
-          }
-        });
-      }
-    });
-  };
   const [editor] = useLexicalComposerContext();
-
-  // Header ekle/kaldır
+  // PageNumber ekle/kaldır fonksiyonu artık plugin'den geliyor
+  const handlePageNumber = usePageNumberToggle();
   const handleHeader = (): void => {
     editor.update(() => {
       const root = $getRoot();
