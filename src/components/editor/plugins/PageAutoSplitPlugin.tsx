@@ -27,6 +27,7 @@ import {
   $isLineBreakNode
 } from 'lexical';
 import { $createPageNode, $isPageNode, type PageNode } from '../nodes/PageNode';
+import PageNumberNode, { $createPageNumberNode } from '../nodes/PageNumberNode';
 import { isContentNode, isHeaderNode, isFooterNode } from '../nodes/sectionTypeGuards';
 import { PageHeaderNode } from '../nodes/PageHeaderNode';
 import { PageFooterNode } from '../nodes/PageFooterNode';
@@ -169,6 +170,21 @@ export function PageAutoSplitPlugin({
           });
           nextPage.append(newFooter);
         }
+
+        // --- PageNumberNode kopyalama ---
+        // Root'taki diğer sayfalarda PageNumberNode var mı kontrol et
+        const root = pageNode.getParent();
+        if (root) {
+          const allPages = root.getChildren().filter($isPageNode) as PageNode[];
+          // En az bir sayfada PageNumberNode varsa yeni sayfaya da ekle
+          const hasPageNumber = allPages.some((p) => p.getChildren().some((c) => c instanceof PageNumberNode));
+          if (hasPageNumber) {
+            // Yeni sayfanın numarası, root'taki page sayısı kadardır (1-based)
+            const pageNumber = allPages.length + 1;
+            nextPage.append($createPageNumberNode(pageNumber));
+          }
+        }
+
         pageNode.insertAfter(nextPage);
       }
       const nextContent = nextPage
