@@ -17,7 +17,15 @@ import type { LexicalNode } from 'lexical';
 
 import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $getRoot } from 'lexical';
+import {
+  $getRoot,
+  ParagraphNode,
+  TextNode,
+  LineBreakNode,
+  $isElementNode,
+  $isTextNode,
+  $isLineBreakNode
+} from 'lexical';
 import { $createPageNode, $isPageNode, type PageNode } from '../nodes/PageNode';
 import { isContentNode, isHeaderNode, isFooterNode } from '../nodes/sectionTypeGuards';
 import { PageHeaderNode } from '../nodes/PageHeaderNode';
@@ -108,16 +116,58 @@ export function PageAutoSplitPlugin({
         nextPage = $createPageNode();
         const prevHeader = pageNode.getChildren().find((n) => isHeaderNode(n));
         const prevFooter = pageNode.getChildren().find((n) => isFooterNode(n));
+        // Header kopyalama
         if (prevHeader != null && prevHeader.__visible !== false) {
-          nextPage.append(
-            new PageHeaderNode()
-          );
+          const newHeader = new PageHeaderNode();
+          prevHeader.getChildren().forEach((child: LexicalNode | null | undefined) => {
+            if ($isElementNode(child)) {
+              const para = new ParagraphNode();
+              child.getChildren().forEach((grandChild) => {
+                if ($isTextNode(grandChild)) {
+                  const textNode = new TextNode(grandChild.getTextContent() ?? '');
+                  para.append(textNode);
+                } else if ($isLineBreakNode(grandChild)) {
+                  const brNode = new LineBreakNode();
+                  para.append(brNode);
+                }
+              });
+              newHeader.append(para);
+            } else if ($isTextNode(child)) {
+              const textNode = new TextNode(child.getTextContent() ?? '');
+              newHeader.append(textNode);
+            } else if ($isLineBreakNode(child)) {
+              const brNode = new LineBreakNode();
+              newHeader.append(brNode);
+            }
+          });
+          nextPage.append(newHeader);
         }
         nextPage.append(new PageContentNode());
+        // Footer kopyalama
         if (prevFooter != null && prevFooter.__visible !== false) {
-          nextPage.append(
-            new PageFooterNode()
-          );
+          const newFooter = new PageFooterNode();
+          prevFooter.getChildren().forEach((child: LexicalNode | null | undefined) => {
+            if ($isElementNode(child)) {
+              const para = new ParagraphNode();
+              child.getChildren().forEach((grandChild) => {
+                if ($isTextNode(grandChild)) {
+                  const textNode = new TextNode(grandChild.getTextContent() ?? '');
+                  para.append(textNode);
+                } else if ($isLineBreakNode(grandChild)) {
+                  const brNode = new LineBreakNode();
+                  para.append(brNode);
+                }
+              });
+              newFooter.append(para);
+            } else if ($isTextNode(child)) {
+              const textNode = new TextNode(child.getTextContent() ?? '');
+              newFooter.append(textNode);
+            } else if ($isLineBreakNode(child)) {
+              const brNode = new LineBreakNode();
+              newFooter.append(brNode);
+            }
+          });
+          nextPage.append(newFooter);
         }
         pageNode.insertAfter(nextPage);
       }
@@ -126,8 +176,8 @@ export function PageAutoSplitPlugin({
         .find((c: LexicalNode): c is PageContentNode => isContentNode(c));
       if (nextContent == null) return;
       const lastBlock = blocks[blocks.length - 1];
-      if (lastBlock != null && typeof (lastBlock as { getKey?: unknown }).getKey === 'function') {
-        nextContent.append(lastBlock as any);
+      if (lastBlock != null) {
+        nextContent.append(lastBlock);
       }
     }
 
@@ -144,11 +194,11 @@ export function PageAutoSplitPlugin({
         if (hasNonPage) {
           const page = $createPageNode();
           children.forEach((n) => {
-            if (!$isPageNode(n) && typeof n === 'object' && n !== null && 'getKey' in n) {
+            if (!$isPageNode(n)) {
               const contentSection = page
                 .getChildren()
                 .find((c): c is PageContentNode => isContentNode(c));
-              if (contentSection != null) contentSection.append(n as any);
+              if (contentSection != null) contentSection.append(n);
             }
           });
           root.append(page);
@@ -167,7 +217,7 @@ export function PageAutoSplitPlugin({
             paddingTop,
             paddingBottom
           } = getContentMetrics(pageEl);
-          const targetForScroll = contentDomEl !== null ? contentDomEl : pageEl;
+          const targetForScroll = contentDomEl ?? pageEl;
           const usedScroll = getContentScrollHeight(targetForScroll, paddingTop, paddingBottom);
           if (usedScroll > capacity + 2) {
             moveOverflowBlocksToNextPage(pageNode, capacity);
