@@ -20,6 +20,8 @@ import {
 import { $createPageNode, $isPageNode, type PageNode } from '../nodes/PageNode';
 import PageNumberNode, { $createPageNumberNode } from '../nodes/PageNumberNode';
 import { isContentNode, isHeaderNode, isFooterNode } from '../nodes/sectionTypeGuards';
+import { PageHeaderNode } from '../nodes/PageHeaderNode';
+import { PageFooterNode } from '../nodes/PageFooterNode';
 import { PageContentNode } from '../nodes/PageContentNode';
 
 export interface PageFlowSettings {
@@ -56,6 +58,17 @@ function cloneSection<T extends LexicalNode>(sectionNode: T | null): T | null {
   });
 
   return clonedSection;
+}
+
+/**
+ * Performans için idle-callback scheduler
+ */
+function scheduleReflow(run: () => void) {
+  if (typeof (window as any).requestIdleCallback === 'function') {
+    (window as any).requestIdleCallback(run, { timeout: 100 });
+  } else {
+    setTimeout(run, 0); // fallback
+  }
 }
 
 export function PageAutoSplitPlugin({
@@ -226,20 +239,23 @@ export function PageAutoSplitPlugin({
     const schedule = (): void => {
       if (isReflowingRef.current) return;
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+
       rafRef.current = requestAnimationFrame(() => {
         isReflowingRef.current = true;
         let passes = 0;
         const maxPasses = 30;
+
         const run = (): void => {
           const moved = reflowPass();
           passes++;
           if (moved && passes < maxPasses) {
-            setTimeout(run, 0);
+            scheduleReflow(run);
           } else {
             isReflowingRef.current = false;
           }
         };
-        setTimeout(run, 0);
+
+        scheduleReflow(run);
       });
     };
 
