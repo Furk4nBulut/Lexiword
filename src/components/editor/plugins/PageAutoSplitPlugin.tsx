@@ -2,17 +2,8 @@ import type { LexicalNode } from 'lexical';
 /**
  * PageAutoSplitPlugin
  *
- * Bu plugin, sayfa içeriği taşma (overflow) yaptığında fazla blokları otomatik olarak yeni bir sayfaya taşır.
- * Sayfa yüksekliği, üst ve alt marjlar gibi parametrelerle çalışır ve overflow durumunda yeni sayfa ekler.
- *
- * Kullanım Senaryosu:
- * - Kullanıcı içerik ekledikçe, sayfa dolduğunda fazla bloklar otomatik olarak yeni bir sayfaya aktarılır.
- * - Header/footer kopyalanır, içerik bölünür ve sayfa yapısı bozulmaz.
- *
- * Notlar:
- * - moveOverflowBlocksToNextPage fonksiyonu, taşan blokları bir sonraki sayfaya taşır.
- * - reflowPass fonksiyonu, tüm sayfaları kontrol eder ve overflow varsa taşımayı tetikler.
- * - schedule fonksiyonu, animasyon frame ve setTimeout ile reflow işlemini optimize eder.
+ * Sayfa içerikleri dolduğunda taşan blokları otomatik olarak yeni sayfaya taşır.
+ * Header/footer kopyalanır, PageNumberNode eklenir, içerik düzgün şekilde bölünür.
  */
 
 import { useEffect, useRef } from 'react';
@@ -24,13 +15,11 @@ import {
   LineBreakNode,
   $isElementNode,
   $isTextNode,
-  $isLineBreakNode
+  $isLineBreakNode,
 } from 'lexical';
 import { $createPageNode, $isPageNode, type PageNode } from '../nodes/PageNode';
 import PageNumberNode, { $createPageNumberNode } from '../nodes/PageNumberNode';
 import { isContentNode, isHeaderNode, isFooterNode } from '../nodes/sectionTypeGuards';
-import { PageHeaderNode } from '../nodes/PageHeaderNode';
-import { PageFooterNode } from '../nodes/PageFooterNode';
 import { PageContentNode } from '../nodes/PageContentNode';
 
 export interface PageFlowSettings {
@@ -39,10 +28,40 @@ export interface PageFlowSettings {
   marginBottomMm: number;
 }
 
+/**
+ * Yardımcı fonksiyon: Header/Footer klonlamak için
+ */
+function cloneSection<T extends LexicalNode>(sectionNode: T | null): T | null {
+  if (sectionNode == null) return null;
+
+  const SectionClass = sectionNode.constructor as { new (): T };
+  const clonedSection = new SectionClass();
+
+  sectionNode.getChildren().forEach((child) => {
+    if ($isElementNode(child)) {
+      const para = new ParagraphNode();
+      child.getChildren().forEach((grandChild) => {
+        if ($isTextNode(grandChild)) {
+          para.append(new TextNode(grandChild.getTextContent() ?? ''));
+        } else if ($isLineBreakNode(grandChild)) {
+          para.append(new LineBreakNode());
+        }
+      });
+      clonedSection.append(para);
+    } else if ($isTextNode(child)) {
+      clonedSection.append(new TextNode(child.getTextContent() ?? ''));
+    } else if ($isLineBreakNode(child)) {
+      clonedSection.append(new LineBreakNode());
+    }
+  });
+
+  return clonedSection;
+}
+
 export function PageAutoSplitPlugin({
   pageHeightMm,
   marginTopMm,
-  marginBottomMm
+  marginBottomMm,
 }: PageFlowSettings): null {
   const [editor] = useLexicalComposerContext();
   const rafRef = useRef<number | null>(null);
@@ -84,104 +103,60 @@ export function PageAutoSplitPlugin({
     }
 
     function moveOverflowBlocksToNextPage(pageNode: PageNode, capacity: number): void {
-      const contentSection = pageNode
-        .getChildren()
-        .find((c): c is PageContentNode => isContentNode(c));
+      const contentSection = pageNode.getChildren().find(isContentNode);
       if (contentSection == null) return;
+
       const blocks = contentSection.getChildren();
       if (blocks.length === 0) return;
+
       const el = editor.getElementByKey(contentSection.getKey());
       if (el == null) return;
-      // Header ve footer yüksekliğini capacity'den düş
-      const pageHeader = pageNode.getChildren().find((n) => isHeaderNode(n));
+
+      // Header & Footer yüksekliğini capacity'den düş
+      const pageHeader = pageNode.getChildren().find(isHeaderNode);
+      const pageFooter = pageNode.getChildren().find(isFooterNode);
+
       let headerHeight = 0;
-      if (pageHeader != null) {
-        const headerEl = editor.getElementByKey(pageHeader.getKey());
-        if (headerEl != null) {
-          headerHeight = headerEl.offsetHeight;
-        }
-      }
-      const pageFooter = pageNode.getChildren().find((n) => isFooterNode(n));
       let footerHeight = 0;
-      if (pageFooter != null) {
-        const footerEl = editor.getElementByKey(pageFooter.getKey());
-        if (footerEl != null) {
-          footerHeight = footerEl.offsetHeight;
-        }
+
+      if (pageHeader) {
+        const headerEl = editor.getElementByKey(pageHeader.getKey());
+        if (headerEl) headerHeight = headerEl.offsetHeight;
       }
+
+      if (pageFooter) {
+        const footerEl = editor.getElementByKey(pageFooter.getKey());
+        if (footerEl) footerHeight = footerEl.offsetHeight;
+      }
+
       const minLineGap = 24;
       const adjustedCapacity = capacity - headerHeight - footerHeight - minLineGap;
+
       if (!(el.scrollHeight > adjustedCapacity + 2)) return;
+
       let nextPage = pageNode.getNextSibling();
       if (!$isPageNode(nextPage)) {
         nextPage = $createPageNode();
-        const prevHeader = pageNode.getChildren().find((n) => isHeaderNode(n));
-        const prevFooter = pageNode.getChildren().find((n) => isFooterNode(n));
-        // Header kopyalama
-        if (prevHeader != null && prevHeader.__visible !== false) {
-          const newHeader = new PageHeaderNode();
-          prevHeader.getChildren().forEach((child: LexicalNode | null | undefined) => {
-            if ($isElementNode(child)) {
-              const para = new ParagraphNode();
-              child.getChildren().forEach((grandChild) => {
-                if ($isTextNode(grandChild)) {
-                  const textNode = new TextNode(grandChild.getTextContent() ?? '');
-                  para.append(textNode);
-                } else if ($isLineBreakNode(grandChild)) {
-                  const brNode = new LineBreakNode();
-                  para.append(brNode);
-                }
-              });
-              newHeader.append(para);
-            } else if ($isTextNode(child)) {
-              const textNode = new TextNode(child.getTextContent() ?? '');
-              newHeader.append(textNode);
-            } else if ($isLineBreakNode(child)) {
-              const brNode = new LineBreakNode();
-              newHeader.append(brNode);
-            }
-          });
-          nextPage.append(newHeader);
-        }
-        nextPage.append(new PageContentNode());
-        // Footer kopyalama
-        if (prevFooter != null && prevFooter.__visible !== false) {
-          const newFooter = new PageFooterNode();
-          prevFooter.getChildren().forEach((child: LexicalNode | null | undefined) => {
-            if ($isElementNode(child)) {
-              const para = new ParagraphNode();
-              child.getChildren().forEach((grandChild) => {
-                if ($isTextNode(grandChild)) {
-                  const textNode = new TextNode(grandChild.getTextContent() ?? '');
-                  para.append(textNode);
-                } else if ($isLineBreakNode(grandChild)) {
-                  const brNode = new LineBreakNode();
-                  para.append(brNode);
-                }
-              });
-              newFooter.append(para);
-            } else if ($isTextNode(child)) {
-              const textNode = new TextNode(child.getTextContent() ?? '');
-              newFooter.append(textNode);
-            } else if ($isLineBreakNode(child)) {
-              const brNode = new LineBreakNode();
-              newFooter.append(brNode);
-            }
-          });
-          nextPage.append(newFooter);
-        }
 
-        // --- PageNumberNode kopyalama ---
-        // Root'taki diğer sayfalarda PageNumberNode var mı kontrol et
+        // Header kopyala
+        const newHeader = cloneSection(pageHeader);
+        if (newHeader) nextPage.append(newHeader);
+
+        // Content ekle
+        nextPage.append(new PageContentNode());
+
+        // Footer kopyala
+        const newFooter = cloneSection(pageFooter);
+        if (newFooter) nextPage.append(newFooter);
+
+        // PageNumberNode kontrolü
         const root = pageNode.getParent();
         if (root !== null) {
           const allPages = root.getChildren().filter($isPageNode);
-          // En az bir sayfada PageNumberNode varsa yeni sayfaya da ekle
           const hasPageNumber = allPages.some((p) =>
             p.getChildren().some((c) => c instanceof PageNumberNode)
           );
           if (hasPageNumber) {
-            // Yeni sayfanın numarası, root'taki page sayısı kadardır (1-based)
             const pageNumber = allPages.length + 1;
             nextPage.append($createPageNumberNode(pageNumber));
           }
@@ -189,12 +164,13 @@ export function PageAutoSplitPlugin({
 
         pageNode.insertAfter(nextPage);
       }
-      const nextContent = nextPage
-        .getChildren()
-        .find((c: LexicalNode): c is PageContentNode => isContentNode(c));
-      if (nextContent == null) return;
+
+      const nextContent = nextPage.getChildren().find(isContentNode);
+      if (!nextContent) return;
+
+      // Şimdilik sadece son bloğu taşıyor
       const lastBlock = blocks[blocks.length - 1];
-      if (lastBlock != null) {
+      if (lastBlock) {
         nextContent.append(lastBlock);
       }
     }
@@ -207,20 +183,20 @@ export function PageAutoSplitPlugin({
           root.append($createPageNode());
           return;
         }
+
         const children = root.getChildren();
         const hasNonPage = children.some((n) => !$isPageNode(n));
         if (hasNonPage) {
           const page = $createPageNode();
           children.forEach((n) => {
             if (!$isPageNode(n)) {
-              const contentSection = page
-                .getChildren()
-                .find((c): c is PageContentNode => isContentNode(c));
-              if (contentSection != null) contentSection.append(n);
+              const contentSection = page.getChildren().find(isContentNode);
+              if (contentSection) contentSection.append(n);
             }
           });
           root.append(page);
         }
+
         let page = root.getFirstChild();
         while ($isPageNode(page)) {
           const pageNode = page;
@@ -233,7 +209,7 @@ export function PageAutoSplitPlugin({
             el: contentDomEl,
             height: capacity,
             paddingTop,
-            paddingBottom
+            paddingBottom,
           } = getContentMetrics(pageEl);
           const targetForScroll = contentDomEl ?? pageEl;
           const usedScroll = getContentScrollHeight(targetForScroll, paddingTop, paddingBottom);
