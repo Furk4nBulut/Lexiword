@@ -37,10 +37,14 @@ export function PageSectionPlugin({
   setHeaderFooterEditMode
 }: ToolbarPluginProps): JSX.Element {
   const [editor] = useLexicalComposerContext();
-  const handlePageNumber = usePageNumberToggle();
+  const handlePageNumber = () => {
+    console.log('[PageSectionPlugin] Sayfa Numarası Ekle butonuna basıldı');
+    usePageNumberToggle()();
+  };
 
   // Header ekle/kaldır fonksiyonu: Eğer header varsa siler, yoksa ekler.
   const handleHeader = (): void => {
+    console.log('[PageSectionPlugin] Header Ekle/Kaldır butonuna basıldı');
     editor.update(() => {
       const root = $getRoot();
       const pageNodes = root
@@ -51,6 +55,7 @@ export function PageSectionPlugin({
       pageNodes.forEach((pageNode) => {
         const header = pageNode.getHeaderNode();
         if (header != null) {
+          console.log('[PageSectionPlugin] Header kaldırılıyor', header);
           header.remove();
         } else if (typeof pageNode.ensureHeaderFooterContentChildren === 'function') {
           // Sadece header eksikse ekle
@@ -63,6 +68,7 @@ export function PageSectionPlugin({
           pageNode.append(new PageHeaderNode());
           if (content != null) pageNode.append(content);
           if (footer != null) pageNode.append(footer);
+          console.log('[PageSectionPlugin] Header eklendi');
         }
       });
     });
@@ -70,6 +76,7 @@ export function PageSectionPlugin({
 
   // Footer ekle/kaldır fonksiyonu: Eğer footer varsa siler, yoksa ekler.
   const handleFooter = (): void => {
+    console.log('[PageSectionPlugin] Footer Ekle/Kaldır butonuna basıldı');
     editor.update(() => {
       const root = $getRoot();
       const pageNodes = root
@@ -80,6 +87,7 @@ export function PageSectionPlugin({
       pageNodes.forEach((pageNode) => {
         const footer = pageNode.getFooterNode();
         if (footer != null) {
+          console.log('[PageSectionPlugin] Footer kaldırılıyor', footer);
           footer.remove();
         } else if (typeof pageNode.ensureHeaderFooterContentChildren === 'function') {
           // Sadece footer eksikse ekle
@@ -92,6 +100,7 @@ export function PageSectionPlugin({
           if (header != null) pageNode.append(header);
           if (content != null) pageNode.append(content);
           pageNode.append(new PageFooterNode());
+          console.log('[PageSectionPlugin] Footer eklendi');
         }
       });
     });

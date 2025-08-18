@@ -23,8 +23,10 @@ export function PageInitializerPlugin(): JSX.Element | null {
     // Editör açıldığında veya root boşsa, bir PageNode ekle
     editor.update(() => {
       const root = $getRoot();
+      console.log('[PageInitializerPlugin] Root children size:', root.getChildrenSize());
       if (root.getChildrenSize() === 0) {
         const page = new PageNode({});
+        console.log('[PageInitializerPlugin] Root is empty, creating new PageNode');
         // Eğer root'ta başka PageNode varsa ve onların header/footer'ı varsa, yeni sayfaya da ekle
         let headerToCopy: any;
         let footerToCopy: any;
@@ -33,13 +35,16 @@ export function PageInitializerPlugin(): JSX.Element | null {
         const otherPages = root
           .getChildren()
           .filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
+        console.log('[PageInitializerPlugin] Other pages found:', otherPages.length);
         if (otherPages.length > 0) {
           const firstPage = otherPages[0];
           if (typeof firstPage.getHeaderNode === 'function') {
             headerToCopy = firstPage.getHeaderNode();
+            console.log('[PageInitializerPlugin] Copying header from first page:', headerToCopy);
           }
           if (typeof firstPage.getFooterNode === 'function') {
             footerToCopy = firstPage.getFooterNode();
+            console.log('[PageInitializerPlugin] Copying footer from first page:', footerToCopy);
           }
         }
         // Eğer header varsa kopyala
@@ -49,8 +54,10 @@ export function PageInitializerPlugin(): JSX.Element | null {
             if (typeof child.clone === 'function') headerClone.append(child.clone());
           });
           page.append(headerClone);
+          console.log('[PageInitializerPlugin] Header cloned and appended');
         }
         page.append(new PageContentNode());
+        console.log('[PageInitializerPlugin] PageContentNode appended');
         // Eğer footer varsa kopyala
         if (typeof footerToCopy !== 'undefined' && footerToCopy !== null) {
           const footerClone = footerToCopy.clone();
@@ -58,8 +65,10 @@ export function PageInitializerPlugin(): JSX.Element | null {
             if (typeof child.clone === 'function') footerClone.append(child.clone());
           });
           page.append(footerClone);
+          console.log('[PageInitializerPlugin] Footer cloned and appended');
         }
         root.append(page);
+        console.log('[PageInitializerPlugin] New PageNode appended to root:', page);
       }
     });
   }, [editor]);
