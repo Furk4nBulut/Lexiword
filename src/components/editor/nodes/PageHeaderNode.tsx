@@ -31,6 +31,7 @@ export class PageHeaderNode extends ElementNode {
     dom.className = 'a4-header';
     dom.setAttribute('data-lexical-node-key', this.getKey());
     dom.setAttribute('data-edit-mode', CURRENT_HEADER_FOOTER_EDIT_MODE ? 'true' : 'false');
+    // Sadece edit moda göre ayarla, child'lara bakma
     dom.contentEditable = CURRENT_HEADER_FOOTER_EDIT_MODE ? 'true' : 'false';
     dom.setAttribute('tabIndex', '0');
     dom.addEventListener('click', (e) => {
@@ -40,6 +41,7 @@ export class PageHeaderNode extends ElementNode {
   }
 
   updateDOM(prevNode: PageHeaderNode, dom: HTMLElement): boolean {
+    // Sadece edit moda göre ayarla, child'lara bakma
     const editMode = dom.getAttribute('data-edit-mode') === 'true';
     dom.contentEditable = editMode ? 'true' : 'false';
     return false;

@@ -18,6 +18,7 @@ import { SET_HEADER_FOOTER_EDIT_MODE_COMMAND } from '../editor/plugins/HeaderFoo
 import { PageSectionPlugin } from '../editor/plugins/PageSectionPlugin';
 import { $getRoot } from 'lexical';
 import { $createPageNumberNode } from '../editor/nodes/PageNumberNode';
+import { ParagraphNode } from 'lexical';
 
 // HeaderPageNumberButton bileşeni
 function HeaderPageNumberButton() {
@@ -67,20 +68,26 @@ function useHeaderPageNumberToggle() {
   return React.useCallback(() => {
     editor.update(() => {
       const root = $getRoot();
-      const pageNodes = root.getChildren().filter((n) => typeof (n as any).getType === 'function' && (n as any).getType() === 'page');
+      const pageNodes = root.getChildren().filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
       pageNodes.forEach((pageNode, idx) => {
-        const header = pageNode.getChildren().find((c) => typeof (c as any).getType === 'function' && (c as any).getType() === 'page-header');
+        const header = pageNode.getChildren().find((c) => typeof c.getType === 'function' && c.getType() === 'page-header');
         if (header) {
           // Toggle: Eğer header'da page-number varsa sil, yoksa ekle
-          const hasPageNumber = (header.getChildren && header.getChildren().some((c) => typeof (c as any).getType === 'function' && (c as any).getType() === 'page-number'));
+          let paragraph = header.getChildren().find((c) => typeof c.getType === 'function' && c.getType() === 'paragraph') as ParagraphNode | undefined;
+          if (!paragraph) {
+            paragraph = new ParagraphNode();
+            header.append(paragraph);
+          }
+          const hasPageNumber = paragraph.getChildren?.().some((c) => typeof c.getType === 'function' && c.getType() === 'page-number');
           if (hasPageNumber) {
-            header.getChildren().forEach((child) => {
-              if (typeof (child as any).getType === 'function' && (child as any).getType() === 'page-number') {
+            paragraph.getChildren().forEach((child) => {
+              if (typeof child.getType === 'function' && child.getType() === 'page-number') {
                 child.remove();
               }
             });
           } else {
-            header.append($createPageNumberNode(idx + 1));
+            // Paragrafın sonuna ekle, böylece hem sağına hem soluna yazı yazılabilir
+            paragraph.append($createPageNumberNode(idx + 1));
           }
         }
       });
