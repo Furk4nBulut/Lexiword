@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot } from 'lexical';
@@ -17,14 +16,15 @@ export function useHeaderPageNumberToggle(): () => void {
       pageNodes.forEach((pageNode, idx) => {
         const header = pageNode
           .getChildren()
-          .find((c) => typeof c.getType === 'function' && c.getType() === 'page-header');
+          .find(
+            (c: { getType: () => string }) =>
+              typeof c.getType === 'function' && c.getType() === 'page-header'
+          );
         if (header != null) {
           const children = header.getChildren?.();
           const hasPageNumber =
-						Array.isArray(children) &&
-						children.some(
-						  (c) => typeof c.getType === 'function' && c.getType() === 'page-number'
-						);
+            Array.isArray(children) &&
+            children.some((c) => typeof c.getType === 'function' && c.getType() === 'page-number');
           if (hasPageNumber) {
             children.forEach((child) => {
               if (typeof child.getType === 'function' && child.getType() === 'page-number') {
@@ -52,14 +52,15 @@ export function useFooterPageNumberToggle(): () => void {
       pageNodes.forEach((pageNode, idx) => {
         const footer = pageNode
           .getChildren()
-          .find((c) => typeof c.getType === 'function' && c.getType() === 'page-footer');
+          .find(
+            (c: { getType: () => string }) =>
+              typeof c.getType === 'function' && c.getType() === 'page-footer'
+          );
         if (footer != null) {
           const children = footer.getChildren?.();
           const hasPageNumber =
-						Array.isArray(children) &&
-						children.some(
-						  (c) => typeof c.getType === 'function' && c.getType() === 'page-number'
-						);
+            Array.isArray(children) &&
+            children.some((c) => typeof c.getType === 'function' && c.getType() === 'page-number');
           if (hasPageNumber) {
             children.forEach((child) => {
               if (typeof child.getType === 'function' && child.getType() === 'page-number') {
@@ -92,9 +93,9 @@ export function HeaderPageNumberButton(): JSX.Element {
             const children = pageNode.getChildren();
             return (
               Array.isArray(children) &&
-							children.some(
-							  (c: any) => typeof c.getType === 'function' && c.getType() === 'page-header'
-							)
+              children.some(
+                (c: any) => typeof c.getType === 'function' && c.getType() === 'page-header'
+              )
             );
           })
         );
@@ -102,14 +103,14 @@ export function HeaderPageNumberButton(): JSX.Element {
     });
   }, [editor]);
   return (
-		<Toolbar.Button
-			onClick={toggleHeaderPageNumber}
-			disabled={!enabled}
-			title={"Header'a Sayfa Numarası Ekle/Çıkar"}
-			className="toolbarButton"
-		>
-			Header&apos;a Sayfa No
-		</Toolbar.Button>
+    <Toolbar.Button
+      onClick={toggleHeaderPageNumber}
+      disabled={!enabled}
+      title={"Header'a Sayfa Numarası Ekle/Çıkar"}
+      className="toolbarButton"
+    >
+      Header&apos;a Sayfa No{' '}
+    </Toolbar.Button>
   );
 }
 
@@ -136,13 +137,13 @@ export function FooterPageNumberButton(): JSX.Element {
     });
   }, [editor]);
   return (
-		<Toolbar.Button
-			onClick={toggleFooterPageNumber}
-			disabled={!enabled}
-			title={"Footer'a Sayfa Numarası Ekle/Çıkar"}
-			className="toolbarButton"
-		>
-			Footer&apos;a Sayfa No
-		</Toolbar.Button>
+    <Toolbar.Button
+      onClick={toggleFooterPageNumber}
+      disabled={!enabled}
+      title={"Footer'a Sayfa Numarası Ekle/Çıkar"}
+      className="toolbarButton"
+    >
+      Footer&apos;a Sayfa No
+    </Toolbar.Button>
   );
 }

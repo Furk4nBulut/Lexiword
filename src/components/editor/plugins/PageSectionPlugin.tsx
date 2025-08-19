@@ -47,7 +47,7 @@ export function PageSectionPlugin({
         // Seçimin anchor'ı bir header içindeyse, o header'ın parent'ı pageNode'dur
         const anchorNode = selection.anchor.getNode();
         let node: any = anchorNode;
-        while (node && typeof node.getType === 'function') {
+        while (Boolean(node) && typeof node.getType === 'function') {
           if (node.getType() === 'page-header') {
             targetPageNode = node.getParent();
             break;
@@ -61,7 +61,7 @@ export function PageSectionPlugin({
         .filter(
           (n) => typeof (n as any).getType === 'function' && (n as any).getType() === 'page'
         ) as PageNode[];
-      const nodesToProcess = targetPageNode ? [targetPageNode] : pageNodes;
+      const nodesToProcess = targetPageNode != null ? [targetPageNode] : pageNodes;
       nodesToProcess.forEach((pageNode) => {
         const header = pageNode.getHeaderNode();
         if (header != null) {
@@ -94,7 +94,7 @@ export function PageSectionPlugin({
         // Seçimin anchor'ı bir footer içindeyse, o footer'ın parent'ı pageNode'dur
         const anchorNode = selection.anchor.getNode();
         let node: any = anchorNode;
-        while (node && typeof node.getType === 'function') {
+        while (Boolean(node) && typeof node.getType === 'function') {
           if (node.getType() === 'page-footer') {
             targetPageNode = node.getParent();
             break;
@@ -108,7 +108,7 @@ export function PageSectionPlugin({
         .filter(
           (n) => typeof (n as any).getType === 'function' && (n as any).getType() === 'page'
         ) as PageNode[];
-      const nodesToProcess = targetPageNode ? [targetPageNode] : pageNodes;
+      const nodesToProcess = targetPageNode != null ? [targetPageNode] : pageNodes;
       nodesToProcess.forEach((pageNode) => {
         const footer = pageNode.getFooterNode();
         if (footer != null) {
