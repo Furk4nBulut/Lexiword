@@ -60,16 +60,7 @@ function cloneSection<T extends LexicalNode>(sectionNode: T | null): T | null {
   return clonedSection;
 }
 
-/**
- * Performans için idle-callback scheduler
- */
-function scheduleReflow(run: () => void) {
-  if (typeof (window as any).requestIdleCallback === 'function') {
-    (window as any).requestIdleCallback(run, { timeout: 100 });
-  } else {
-    setTimeout(run, 0); // fallback
-  }
-}
+
 
 export function PageAutoSplitPlugin({
   pageHeightMm,
@@ -77,10 +68,29 @@ export function PageAutoSplitPlugin({
   marginBottomMm,
 }: PageFlowSettings): null {
   const [editor] = useLexicalComposerContext();
-  const rafRef = useRef<number | null>(null);
   const isReflowingRef = useRef(false);
 
   useEffect(() => {
+    // Sadece taşma olduğunda reflow başlatmak için yardımcı fonksiyon
+    function isAnyPageOverflow(): boolean {
+      const root = $getRoot();
+      let overflow = false;
+      root.getChildren().forEach((child) => {
+        if ($isPageNode(child)) {
+          const pageEl = editor.getElementByKey(child.getKey());
+          if (pageEl !== null && pageEl !== undefined) {
+            const { el: contentDomEl, height: capacity, paddingTop, paddingBottom } = getContentMetrics(pageEl);
+            const targetForScroll = contentDomEl ?? pageEl;
+            const usedScroll = getContentScrollHeight(targetForScroll, paddingTop, paddingBottom);
+            if (usedScroll > capacity + 2) {
+              overflow = true;
+            }
+          }
+        }
+      });
+      return overflow;
+    }
+
     function getPageEl(page: PageNode): HTMLElement | null {
       return editor.getElementByKey(page.getKey());
     }
@@ -117,13 +127,13 @@ export function PageAutoSplitPlugin({
 
     function moveOverflowBlocksToNextPage(pageNode: PageNode, capacity: number): void {
       const contentSection = pageNode.getChildren().find(isContentNode);
-      if (contentSection == null) return;
+      if (contentSection === null || contentSection === undefined) return;
 
       const blocks = contentSection.getChildren();
       if (blocks.length === 0) return;
 
       const el = editor.getElementByKey(contentSection.getKey());
-      if (el == null) return;
+      if (el === null || el === undefined) return;
 
       // Header & Footer yüksekliğini capacity'den düş
       const pageHeader = pageNode.getChildren().find(isHeaderNode);
@@ -132,14 +142,14 @@ export function PageAutoSplitPlugin({
       let headerHeight = 0;
       let footerHeight = 0;
 
-      if (pageHeader) {
+      if (pageHeader !== null && pageHeader !== undefined) {
         const headerEl = editor.getElementByKey(pageHeader.getKey());
-        if (headerEl) headerHeight = headerEl.offsetHeight;
+        if (headerEl !== null && headerEl !== undefined) headerHeight = headerEl.offsetHeight;
       }
 
-      if (pageFooter) {
+      if (pageFooter !== null && pageFooter !== undefined) {
         const footerEl = editor.getElementByKey(pageFooter.getKey());
-        if (footerEl) footerHeight = footerEl.offsetHeight;
+        if (footerEl !== null && footerEl !== undefined) footerHeight = footerEl.offsetHeight;
       }
 
       const minLineGap = 24;
@@ -152,15 +162,15 @@ export function PageAutoSplitPlugin({
         nextPage = $createPageNode();
 
         // Header kopyala
-        const newHeader = cloneSection(pageHeader);
-        if (newHeader) nextPage.append(newHeader);
+        const newHeader = cloneSection(pageHeader ?? null);
+        if (newHeader !== null) nextPage.append(newHeader);
 
         // Content ekle
         nextPage.append(new PageContentNode());
 
         // Footer kopyala
-        const newFooter = cloneSection(pageFooter);
-        if (newFooter) nextPage.append(newFooter);
+        const newFooter = cloneSection(pageFooter ?? null);
+        if (newFooter !== null) nextPage.append(newFooter);
 
         // PageNumberNode kontrolü
         const root = pageNode.getParent();
@@ -179,11 +189,11 @@ export function PageAutoSplitPlugin({
       }
 
       const nextContent = nextPage.getChildren().find(isContentNode);
-      if (!nextContent) return;
+      if (nextContent === null || nextContent === undefined) return;
 
       // Şimdilik sadece son bloğu taşıyor
       const lastBlock = blocks[blocks.length - 1];
-      if (lastBlock) {
+      if (lastBlock !== null && lastBlock !== undefined) {
         nextContent.append(lastBlock);
       }
     }
@@ -204,7 +214,7 @@ export function PageAutoSplitPlugin({
           children.forEach((n) => {
             if (!$isPageNode(n)) {
               const contentSection = page.getChildren().find(isContentNode);
-              if (contentSection) contentSection.append(n);
+              if (contentSection !== null && contentSection !== undefined) contentSection.append(n);
             }
           });
           root.append(page);
@@ -214,7 +224,7 @@ export function PageAutoSplitPlugin({
         while ($isPageNode(page)) {
           const pageNode = page;
           const pageEl = getPageEl(pageNode);
-          if (pageEl === null) {
+          if (pageEl === null || pageEl === undefined) {
             page = pageNode.getNextSibling();
             continue;
           }
@@ -222,7 +232,7 @@ export function PageAutoSplitPlugin({
             el: contentDomEl,
             height: capacity,
             paddingTop,
-            paddingBottom,
+            paddingBottom
           } = getContentMetrics(pageEl);
           const targetForScroll = contentDomEl ?? pageEl;
           const usedScroll = getContentScrollHeight(targetForScroll, paddingTop, paddingBottom);
@@ -236,37 +246,37 @@ export function PageAutoSplitPlugin({
       return didMoveAny;
     }
 
-    const schedule = (): void => {
+    // Reflow işlemini kontrollü başlatan fonksiyon
+    function triggerReflowIfNeeded(): void {
       if (isReflowingRef.current) return;
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-
-      rafRef.current = requestAnimationFrame(() => {
+      // Sadece taşma varsa reflow başlat
+      editor.getEditorState().read(() => {
+        if (!isAnyPageOverflow()) return;
         isReflowingRef.current = true;
         let passes = 0;
         const maxPasses = 30;
-
-        const run = (): void => {
+        function run(): void {
           const moved = reflowPass();
           passes++;
           if (moved && passes < maxPasses) {
-            scheduleReflow(run);
+            // Hala taşma varsa tekrar çalıştır
+            setTimeout(run, 0);
           } else {
             isReflowingRef.current = false;
           }
-        };
-
-        scheduleReflow(run);
+        }
+        run();
       });
-    };
+    }
 
-    schedule();
+    // İlk mount'ta ve her update'te tetikle
+    triggerReflowIfNeeded();
 
     const unregister = editor.registerUpdateListener((): void => {
-      schedule();
+      triggerReflowIfNeeded();
     });
 
     return (): void => {
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       unregister();
       isReflowingRef.current = false;
     };
