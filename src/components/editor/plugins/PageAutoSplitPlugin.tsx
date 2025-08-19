@@ -15,13 +15,11 @@ import {
   LineBreakNode,
   $isElementNode,
   $isTextNode,
-  $isLineBreakNode,
+  $isLineBreakNode
 } from 'lexical';
 import { $createPageNode, $isPageNode, type PageNode } from '../nodes/PageNode';
 import PageNumberNode, { $createPageNumberNode } from '../nodes/PageNumberNode';
 import { isContentNode, isHeaderNode, isFooterNode } from '../nodes/sectionTypeGuards';
-import { PageHeaderNode } from '../nodes/PageHeaderNode';
-import { PageFooterNode } from '../nodes/PageFooterNode';
 import { PageContentNode } from '../nodes/PageContentNode';
 
 export interface PageFlowSettings {
@@ -36,10 +34,10 @@ export interface PageFlowSettings {
 function cloneSection<T extends LexicalNode>(sectionNode: T | null): T | null {
   if (sectionNode == null) return null;
 
-  const SectionClass = sectionNode.constructor as { new (): T };
+  const SectionClass = sectionNode.constructor as new () => T;
   const clonedSection = new SectionClass();
 
-  sectionNode.getChildren().forEach((child) => {
+  sectionNode.getChildren().forEach((child: LexicalNode | null | undefined) => {
     if ($isElementNode(child)) {
       const para = new ParagraphNode();
       child.getChildren().forEach((grandChild) => {
@@ -60,12 +58,10 @@ function cloneSection<T extends LexicalNode>(sectionNode: T | null): T | null {
   return clonedSection;
 }
 
-
-
 export function PageAutoSplitPlugin({
   pageHeightMm,
   marginTopMm,
-  marginBottomMm,
+  marginBottomMm
 }: PageFlowSettings): null {
   const [editor] = useLexicalComposerContext();
   const isReflowingRef = useRef(false);
