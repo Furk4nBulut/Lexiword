@@ -2,14 +2,19 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { useEffect, useRef } from 'react';
 import { $getRoot, ParagraphNode, TextNode, LineBreakNode, ElementNode } from 'lexical';
 import { deepEqual } from './deepEqual';
+import { HEADER_FOOTER_SYNC_ENABLED } from './HeaderFooterSyncMode';
 import { $isPageNode, type PageNode } from '../nodes/PageNode';
 
 // Sade ve tek fonksiyon: HeaderFooterSyncPlugin
 export function HeaderFooterSyncPlugin(): JSX.Element | null {
+  // Sync kapalıysa hiçbir şey yapma
+  if (!HEADER_FOOTER_SYNC_ENABLED) return null;
   const [editor] = useLexicalComposerContext();
   // Son düzenlenen header/footer'ın key'ini saklamak için ref kullanıyoruz
   const lastEditedHeaderKey = useRef<string | null>(null);
   const lastEditedFooterKey = useRef<string | null>(null);
+  // Sonsuz döngüyü engellemek için reentrancy guard
+  const isSyncingRef = useRef(false);
 
   // DOM event listener ekle: Her header/footer'a input/focus event'i ile key'i güncelle
   useEffect(() => {
@@ -49,6 +54,7 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
 
   useEffect(() => {
     return editor.registerUpdateListener(({ editorState }) => {
+      if (isSyncingRef.current) return;
       let pageNodes: PageNode[] = [];
       let refHeaderJSON: any[] | null = null;
       let refFooterJSON: any[] | null = null;
@@ -199,105 +205,116 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
       });
       if (pageNodes.length < 2) return;
       editor.update(() => {
+        if (isSyncingRef.current) return;
+        let didSync = false;
         if (typeof window !== 'undefined') {
           // eslint-disable-next-line no-console
           console.log('[DEBUG] editor.update başı');
         }
         // DEBUG: Sonsuz döngüye giren noktayı bulmak için
-        debugger;
         // Header güncellemesi
         if (refHeaderJSON !== null) {
-        for (let i = 0; i < pageNodes.length; i++) {
-          const page = pageNodes[i];
-          const header = page.getHeaderNode();
-          if (header instanceof ElementNode) {
-            const headerChildren = header.getChildren().filter((n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number');
-            const headerContentArr = headerChildren.map((n: any) => n.exportJSON());
-            if (!deepEqual(headerContentArr, refHeaderJSON)) {
-              header.clear();
-              refHeaderJSON.forEach((childJSON: any) => {
-                const type = childJSON.type;
-                if (type === 'paragraph') {
-                  const para = new ParagraphNode();
-                  if (Array.isArray(childJSON.children)) {
-                    childJSON.children.forEach((grandChild: any) => {
-                      if (
-                        typeof grandChild === 'object' &&
-                        grandChild !== null &&
-                        'type' in grandChild
-                      ) {
-                        const gType = (grandChild as { type: string }).type;
-                        if (gType === 'text') {
-                          const textVal = (grandChild as { text?: string }).text;
-                          const textNode = new TextNode(textVal ?? '');
-                          para.append(textNode);
-                        } else if (gType === 'linebreak') {
-                          const brNode = new LineBreakNode();
-                          para.append(brNode);
+          for (let i = 0; i < pageNodes.length; i++) {
+            const page = pageNodes[i];
+            const header = page.getHeaderNode();
+            if (header instanceof ElementNode) {
+              const headerChildren = header.getChildren().filter((n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number');
+              const headerContentArr = headerChildren.map((n: any) => n.exportJSON());
+              if (!deepEqual(headerContentArr, refHeaderJSON)) {
+                isSyncingRef.current = true;
+                didSync = true;
+                header.clear();
+                refHeaderJSON.forEach((childJSON: any) => {
+                  const type = childJSON.type;
+                  if (type === 'paragraph') {
+                    const para = new ParagraphNode();
+                    if (Array.isArray(childJSON.children)) {
+                      childJSON.children.forEach((grandChild: any) => {
+                        if (
+                          typeof grandChild === 'object' &&
+                          grandChild !== null &&
+                          'type' in grandChild
+                        ) {
+                          const gType = (grandChild as { type: string }).type;
+                          if (gType === 'text') {
+                            const textVal = (grandChild as { text?: string }).text;
+                            const textNode = new TextNode(textVal ?? '');
+                            para.append(textNode);
+                          } else if (gType === 'linebreak') {
+                            const brNode = new LineBreakNode();
+                            para.append(brNode);
+                          }
                         }
-                      }
-                    });
+                      });
+                    }
+                    header.append(para);
+                  } else if (type === 'text') {
+                    const textVal = (childJSON as { text?: string }).text;
+                    const textNode = new TextNode(textVal ?? '');
+                    header.append(textNode);
+                  } else if (type === 'linebreak') {
+                    const brNode = new LineBreakNode();
+                    header.append(brNode);
                   }
-                  header.append(para);
-                } else if (type === 'text') {
-                  const textVal = (childJSON as { text?: string }).text;
-                  const textNode = new TextNode(textVal ?? '');
-                  header.append(textNode);
-                } else if (type === 'linebreak') {
-                  const brNode = new LineBreakNode();
-                  header.append(brNode);
-                }
-              });
+                });
+              }
             }
           }
-        }
         }
         // Footer güncellemesi
         if (refFooterJSON !== null) {
-        for (let i = 0; i < pageNodes.length; i++) {
-          const page = pageNodes[i];
-          const footer = page.getFooterNode();
-          if (footer instanceof ElementNode) {
-            const footerChildren = footer.getChildren().filter((n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number');
-            const footerContentArr = footerChildren.map((n: any) => n.exportJSON());
-            if (!deepEqual(footerContentArr, refFooterJSON)) {
-              footer.clear();
-              refFooterJSON.forEach((childJSON: any) => {
-                const type = childJSON.type;
-                if (type === 'paragraph') {
-                  const para = new ParagraphNode();
-                  if (Array.isArray(childJSON.children)) {
-                    childJSON.children.forEach((grandChild: any) => {
-                      if (
-                        typeof grandChild === 'object' &&
-                        grandChild !== null &&
-                        'type' in grandChild
-                      ) {
-                        const gType = (grandChild as { type: string }).type;
-                        if (gType === 'text') {
-                          const textVal = (grandChild as { text?: string }).text;
-                          const textNode = new TextNode(textVal ?? '');
-                          para.append(textNode);
-                        } else if (gType === 'linebreak') {
-                          const brNode = new LineBreakNode();
-                          para.append(brNode);
+          for (let i = 0; i < pageNodes.length; i++) {
+            const page = pageNodes[i];
+            const footer = page.getFooterNode();
+            if (footer instanceof ElementNode) {
+              const footerChildren = footer.getChildren().filter((n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number');
+              const footerContentArr = footerChildren.map((n: any) => n.exportJSON());
+              if (!deepEqual(footerContentArr, refFooterJSON)) {
+                isSyncingRef.current = true;
+                didSync = true;
+                footer.clear();
+                refFooterJSON.forEach((childJSON: any) => {
+                  const type = childJSON.type;
+                  if (type === 'paragraph') {
+                    const para = new ParagraphNode();
+                    if (Array.isArray(childJSON.children)) {
+                      childJSON.children.forEach((grandChild: any) => {
+                        if (
+                          typeof grandChild === 'object' &&
+                          grandChild !== null &&
+                          'type' in grandChild
+                        ) {
+                          const gType = (grandChild as { type: string }).type;
+                          if (gType === 'text') {
+                            const textVal = (grandChild as { text?: string }).text;
+                            const textNode = new TextNode(textVal ?? '');
+                            para.append(textNode);
+                          } else if (gType === 'linebreak') {
+                            const brNode = new LineBreakNode();
+                            para.append(brNode);
+                          }
                         }
-                      }
-                    });
+                      });
+                    }
+                    footer.append(para);
+                  } else if (type === 'text') {
+                    const textVal = (childJSON as { text?: string }).text;
+                    const textNode = new TextNode(textVal ?? '');
+                    footer.append(textNode);
+                  } else if (type === 'linebreak') {
+                    const brNode = new LineBreakNode();
+                    footer.append(brNode);
                   }
-                  footer.append(para);
-                } else if (type === 'text') {
-                  const textVal = (childJSON as { text?: string }).text;
-                  const textNode = new TextNode(textVal ?? '');
-                  footer.append(textNode);
-                } else if (type === 'linebreak') {
-                  const brNode = new LineBreakNode();
-                  footer.append(brNode);
-                }
-              });
+                });
+              }
             }
           }
         }
+        if (didSync) {
+          // Bir defa sync yaptıysak, döngüye girmemek için flag'i hemen sıfırla (microtask'ta)
+          setTimeout(() => {
+            isSyncingRef.current = false;
+          }, 0);
         }
       });
     });

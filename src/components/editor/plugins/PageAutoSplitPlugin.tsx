@@ -18,6 +18,7 @@ import {
   $isLineBreakNode
 } from 'lexical';
 import { $createPageNode, $isPageNode, type PageNode } from '../nodes/PageNode';
+import { setHeaderFooterSyncEnabled } from './HeaderFooterSyncMode';
 import PageNumberNode, { $createPageNumberNode } from '../nodes/PageNumberNode';
 import { isContentNode, isHeaderNode, isFooterNode } from '../nodes/sectionTypeGuards';
 import { PageContentNode } from '../nodes/PageContentNode';
@@ -160,20 +161,23 @@ export function PageAutoSplitPlugin({
 
       let nextPage = pageNode.getNextSibling();
       if (!$isPageNode(nextPage)) {
+        // 1. Sync'i kapat
+        setHeaderFooterSyncEnabled(false);
+
         nextPage = $createPageNode();
 
-        // Header kopyala
+        // 2. Header kopyala
         const newHeader = cloneSection(pageHeader ?? null);
         if (newHeader !== null) nextPage.append(newHeader);
 
-        // Content ekle
+        // 3. Content ekle
         nextPage.append(new PageContentNode());
 
-        // Footer kopyala
+        // 4. Footer kopyala
         const newFooter = cloneSection(pageFooter ?? null);
         if (newFooter !== null) nextPage.append(newFooter);
 
-        // PageNumberNode kontrolü
+        // 5. PageNumberNode kontrolü (sync kesinlikle kapalıyken)
         const root = pageNode.getParent();
         if (root !== null) {
           const allPages = root.getChildren().filter($isPageNode);
@@ -185,6 +189,9 @@ export function PageAutoSplitPlugin({
             nextPage.append($createPageNumberNode(String(pageNumber)));
           }
         }
+
+        // 6. Sync'i tekrar aç
+        setHeaderFooterSyncEnabled(true);
 
         pageNode.insertAfter(nextPage);
       }

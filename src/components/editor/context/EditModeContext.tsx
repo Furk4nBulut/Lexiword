@@ -15,7 +15,8 @@
  * - Provider'a verilen value nesnesi memoize edilir, böylece gereksiz render'lar önlenir.
  */
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useMemo, useEffect } from 'react';
+import { setHeaderFooterSyncEnabled } from '../plugins/HeaderFooterSyncMode';
 
 export interface EditModeContextValue {
   headerFooterEditMode: boolean;
@@ -35,6 +36,11 @@ export function EditModeProvider({
   value: EditModeContextValue;
   children: React.ReactNode;
 }): JSX.Element {
+  // Edit mode değiştiğinde sync mode'u güncelle
+  useEffect(() => {
+    setHeaderFooterSyncEnabled(!value.headerFooterEditMode);
+  }, [value.headerFooterEditMode]);
+
   const memo = useMemo(() => value, [value.headerFooterEditMode, value.setHeaderFooterEditMode]);
   return <EditModeContext.Provider value={memo}>{children}</EditModeContext.Provider>;
 }
