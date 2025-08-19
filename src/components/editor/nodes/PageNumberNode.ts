@@ -7,9 +7,14 @@ export type SerializedPageNumberNode = SerializedTextNode & {
 };
 
 export class PageNumberNode extends TextNode {
+  // PageNumberNode'u normal bir karakter gibi silinebilir yapmak için
+  isSimpleText(): boolean {
+    return true;
+  }
   __pageNumber: number;
 
   constructor(pageNumber: number = 1, key?: string) {
+    // Başlangıçta sayfa numarası metniyle başlat, hem efekt hem görünürlük için
     super(String(pageNumber), key);
     this.__pageNumber = pageNumber;
   }
@@ -23,23 +28,16 @@ export class PageNumberNode extends TextNode {
   }
 
   createDOM(_config: EditorConfig): HTMLElement {
-    const dom = document.createElement('span');
-    dom.className = 'a4-page-number';
-    dom.textContent = String(this.__pageNumber);
-    dom.style.display = 'inline';
-    dom.style.verticalAlign = 'baseline';
-    dom.style.fontFamily = 'inherit';
-    dom.style.fontSize = 'inherit';
-    dom.style.color = 'inherit';
-    dom.style.lineHeight = 'inherit';
-    dom.style.userSelect = 'none';
-    dom.setAttribute('data-lexical-node-key', this.getKey());
-    return dom;
+  const dom = document.createElement('span');
+  dom.textContent = this.getTextContent();
+  dom.setAttribute('data-lexical-node-key', this.getKey());
+  return dom;
   }
 
   updateDOM(prevNode: PageNumberNode, dom: HTMLElement): boolean {
-    if (prevNode.__pageNumber !== this.__pageNumber) {
-      dom.textContent = String(this.__pageNumber);
+    // TextNode gibi davranması için, textContent'i güncelle
+    if (prevNode.getTextContent() !== this.getTextContent()) {
+      dom.textContent = this.getTextContent();
     }
     return false;
   }

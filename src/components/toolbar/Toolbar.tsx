@@ -73,21 +73,16 @@ function useHeaderPageNumberToggle() {
         const header = pageNode.getChildren().find((c) => typeof c.getType === 'function' && c.getType() === 'page-header');
         if (header) {
           // Toggle: Eğer header'da page-number varsa sil, yoksa ekle
-          let paragraph = header.getChildren().find((c) => typeof c.getType === 'function' && c.getType() === 'paragraph') as ParagraphNode | undefined;
-          if (!paragraph) {
-            paragraph = new ParagraphNode();
-            header.append(paragraph);
-          }
-          const hasPageNumber = paragraph.getChildren?.().some((c) => typeof c.getType === 'function' && c.getType() === 'page-number');
+          const hasPageNumber = header.getChildren?.().some((c) => typeof c.getType === 'function' && c.getType() === 'page-number');
           if (hasPageNumber) {
-            paragraph.getChildren().forEach((child) => {
+            header.getChildren().forEach((child) => {
               if (typeof child.getType === 'function' && child.getType() === 'page-number') {
                 child.remove();
               }
             });
           } else {
-            // Paragrafın sonuna ekle, böylece hem sağına hem soluna yazı yazılabilir
-            paragraph.append($createPageNumberNode(idx + 1));
+            // Header'ın sonuna doğrudan PageNumberNode (span) ekle
+            header.append($createPageNumberNode(idx + 1));
           }
         }
       });
