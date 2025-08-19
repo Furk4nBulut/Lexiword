@@ -32,6 +32,7 @@
   margin-bottom: 24px;
   z-index: 10;
 }
+
 .a4-header {
   /* 32mm ≈ 121px at 96dpi */
   flex: 0 0 121px;
@@ -41,6 +42,33 @@
   font-size: 20px;
   color: #333;
   box-sizing: border-box;
+  transition: background 180ms;
+}
+
+/* Header edit mode: highlight background */
+
+.a4-header[data-edit-mode='true'] {
+  background: #fff;
+  border-bottom: 2px dashed #a5b4fc;
+  position: relative;
+  z-index: 1;
+}
+
+.a4-header[data-edit-mode='true']::after {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  border-bottom: 2px dashed #a5b4fc;
+  pointer-events: none;
+}
+
+/* Header normal mode: match content background */
+.a4-header[data-edit-mode='false'] {
+  background: #fff;
 }
 
 .a4-content {
@@ -76,6 +104,7 @@
   display: none;
 }
 
+
 .a4-footer {
   /* 20mm ≈ 76px at 96dpi */
   flex: 0 0 76px;
@@ -88,6 +117,33 @@
   align-items: center; /* tek satırı dikey hizala */
   line-height: 1.2; /* satır kutusunu daralt */
   margin-top: auto; /* Footer'ı her zaman en alta it */
+  transition: background 180ms;
+}
+
+/* Footer edit mode: highlight background */
+
+.a4-footer[data-edit-mode='true'] {
+  background: #fff;
+  border-top: 2px dashed #a5b4fc;
+  position: relative;
+  z-index: 1;
+}
+
+.a4-footer[data-edit-mode='true']::before {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 0;
+  border-top: 2px dashed #a5b4fc;
+  pointer-events: none;
+}
+
+/* Footer normal mode: match content background */
+.a4-footer[data-edit-mode='false'] {
+  background: #fff;
 }
 
 /* Footer içindeki default margin'leri sıfırla */
