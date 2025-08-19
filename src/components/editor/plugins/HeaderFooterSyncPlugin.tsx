@@ -1,8 +1,8 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useEffect, useRef } from 'react';
 import { $getRoot, ParagraphNode, TextNode, LineBreakNode, ElementNode } from 'lexical';
-import { deepEqual } from './deepEqual';
-import { HEADER_FOOTER_SYNC_ENABLED } from './HeaderFooterSyncMode';
+import { deepEqual } from '../utils/deepEqual';
+import { HEADER_FOOTER_SYNC_ENABLED } from '../context/HeaderFooterSyncModeContext';
 import { $isPageNode, type PageNode } from '../nodes/PageNode';
 
 // Sade ve tek fonksiyon: HeaderFooterSyncPlugin
@@ -74,7 +74,8 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
               (h) => h !== undefined && h !== null && h.getKey() === lastEditedHeaderKey.current
             );
           if (header !== undefined && header !== null) {
-            refHeaderJSON = header.getChildren()
+            refHeaderJSON = header
+              .getChildren()
               .filter((n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number')
               .map((n: any) => n.exportJSON());
           }
@@ -92,8 +93,11 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
                 headerDom = document.querySelector(`[data-lexical-node-key='${headerKey}']`);
               }
               if (headerDom !== null && activeElement === headerDom) {
-                refHeaderJSON = header.getChildren()
-                  .filter((n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number')
+                refHeaderJSON = header
+                  .getChildren()
+                  .filter(
+                    (n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number'
+                  )
                   .map((n: any) => n.exportJSON());
                 break;
               }
@@ -106,7 +110,11 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
             const page = pageNodes[i];
             const header = page.getHeaderNode();
             if (header instanceof ElementNode) {
-              const children = header.getChildren().filter((n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number');
+              const children = header
+                .getChildren()
+                .filter(
+                  (n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number'
+                );
               const isEmpty =
                 children.length === 0 ||
                 children.every((child: any) => {
@@ -144,7 +152,8 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
               (f) => f !== undefined && f !== null && f.getKey() === lastEditedFooterKey.current
             );
           if (footer !== undefined && footer !== null) {
-            refFooterJSON = footer.getChildren()
+            refFooterJSON = footer
+              .getChildren()
               .filter((n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number')
               .map((n: any) => n.exportJSON());
           }
@@ -162,8 +171,11 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
                 footerDom = document.querySelector(`[data-lexical-node-key='${footerKey}']`);
               }
               if (footerDom !== null && activeElement === footerDom) {
-                refFooterJSON = footer.getChildren()
-                  .filter((n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number')
+                refFooterJSON = footer
+                  .getChildren()
+                  .filter(
+                    (n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number'
+                  )
                   .map((n: any) => n.exportJSON());
                 break;
               }
@@ -176,7 +188,11 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
             const page = pageNodes[i];
             const footer = page.getFooterNode();
             if (footer instanceof ElementNode) {
-              const children = footer.getChildren().filter((n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number');
+              const children = footer
+                .getChildren()
+                .filter(
+                  (n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number'
+                );
               const isEmpty =
                 children.length === 0 ||
                 children.every((child: any) => {
@@ -218,7 +234,11 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
             const page = pageNodes[i];
             const header = page.getHeaderNode();
             if (header instanceof ElementNode) {
-              const headerChildren = header.getChildren().filter((n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number');
+              const headerChildren = header
+                .getChildren()
+                .filter(
+                  (n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number'
+                );
               const headerContentArr = headerChildren.map((n: any) => n.exportJSON());
               if (!deepEqual(headerContentArr, refHeaderJSON)) {
                 isSyncingRef.current = true;
@@ -267,7 +287,11 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
             const page = pageNodes[i];
             const footer = page.getFooterNode();
             if (footer instanceof ElementNode) {
-              const footerChildren = footer.getChildren().filter((n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number');
+              const footerChildren = footer
+                .getChildren()
+                .filter(
+                  (n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number'
+                );
               const footerContentArr = footerChildren.map((n: any) => n.exportJSON());
               if (!deepEqual(footerContentArr, refFooterJSON)) {
                 isSyncingRef.current = true;

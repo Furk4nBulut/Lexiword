@@ -16,7 +16,7 @@
  */
 
 import React, { createContext, useContext, useMemo, useEffect } from 'react';
-import { setHeaderFooterSyncEnabled } from '../plugins/HeaderFooterSyncMode';
+import { setHeaderFooterSyncEnabled } from './HeaderFooterSyncModeContext';
 
 export interface EditModeContextValue {
   headerFooterEditMode: boolean;

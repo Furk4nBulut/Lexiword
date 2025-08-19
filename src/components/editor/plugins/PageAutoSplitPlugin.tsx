@@ -18,7 +18,7 @@ import {
   $isLineBreakNode
 } from 'lexical';
 import { $createPageNode, $isPageNode, type PageNode } from '../nodes/PageNode';
-import { setHeaderFooterSyncEnabled } from './HeaderFooterSyncMode';
+import { setHeaderFooterSyncEnabled } from '../context/HeaderFooterSyncModeContext';
 import PageNumberNode, { $createPageNumberNode } from '../nodes/PageNumberNode';
 import { isContentNode, isHeaderNode, isFooterNode } from '../nodes/sectionTypeGuards';
 import { PageContentNode } from '../nodes/PageContentNode';
