@@ -12,7 +12,7 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
 
   // DOM event listener ekle: Her header/footer'a input/focus event'i ile key'i güncelle
   useEffect(() => {
-    function handleInputOrFocus(e: Event) {
+    function handleInputOrFocus(e: Event): void {
       const el = e.target as HTMLElement;
       const key = el.getAttribute('data-lexical-node-key');
       if (el.classList.contains('a4-header')) {
@@ -22,13 +22,13 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
       }
     }
     // Tüm header/footer DOM'larına event listener ekle
-    function addListeners() {
+    function addListeners(): void {
       document.querySelectorAll('.a4-header, .a4-footer').forEach((el) => {
         el.addEventListener('input', handleInputOrFocus);
         el.addEventListener('focus', handleInputOrFocus);
       });
     }
-    function removeListeners() {
+    function removeListeners(): void {
       document.querySelectorAll('.a4-header, .a4-footer').forEach((el) => {
         el.removeEventListener('input', handleInputOrFocus);
         el.removeEventListener('focus', handleInputOrFocus);
@@ -56,13 +56,21 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
         pageNodes = root.getChildren().filter($isPageNode);
         if (pageNodes.length < 2) return;
         // Öncelik: Son düzenlenen header/footer'ın key'i
-        if (lastEditedHeaderKey.current) {
+        if (
+          lastEditedHeaderKey.current !== null &&
+          lastEditedHeaderKey.current !== undefined &&
+          lastEditedHeaderKey.current !== ''
+        ) {
           const header = pageNodes
             .map((p) => p.getHeaderNode())
-            .find((h) => h && h.getKey() === lastEditedHeaderKey.current);
-          if (header) refHeaderJSON = header.getChildren().map((n: any) => n.exportJSON());
+            .find(
+              (h) => h !== undefined && h !== null && h.getKey() === lastEditedHeaderKey.current
+            );
+          if (header !== undefined && header !== null) {
+            refHeaderJSON = header.getChildren().map((n: any) => n.exportJSON());
+          }
         }
-        if (!refHeaderJSON) {
+        if (refHeaderJSON === null) {
           // Fallback: focus veya ilk dolu header
           const activeElement = typeof document !== 'undefined' ? document.activeElement : null;
           for (let i = 0; i < pageNodes.length; i++) {
@@ -81,7 +89,7 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
             }
           }
         }
-        if (!refHeaderJSON) {
+        if (refHeaderJSON === null) {
           // Fallback: ilk dolu header
           for (let i = 0; i < pageNodes.length; i++) {
             const page = pageNodes[i];
@@ -114,13 +122,21 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
           }
         }
         // Aynı mantıkla footer
-        if (lastEditedFooterKey.current) {
+        if (
+          lastEditedFooterKey.current !== null &&
+          lastEditedFooterKey.current !== undefined &&
+          lastEditedFooterKey.current !== ''
+        ) {
           const footer = pageNodes
             .map((p) => p.getFooterNode())
-            .find((f) => f && f.getKey() === lastEditedFooterKey.current);
-          if (footer) refFooterJSON = footer.getChildren().map((n: any) => n.exportJSON());
+            .find(
+              (f) => f !== undefined && f !== null && f.getKey() === lastEditedFooterKey.current
+            );
+          if (footer !== undefined && footer !== null) {
+            refFooterJSON = footer.getChildren().map((n: any) => n.exportJSON());
+          }
         }
-        if (!refFooterJSON) {
+        if (refFooterJSON === null) {
           // Fallback: focus veya ilk dolu footer
           const activeElement = typeof document !== 'undefined' ? document.activeElement : null;
           for (let i = 0; i < pageNodes.length; i++) {
@@ -139,7 +155,7 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
             }
           }
         }
-        if (!refFooterJSON) {
+        if (refFooterJSON === null) {
           // Fallback: ilk dolu footer
           for (let i = 0; i < pageNodes.length; i++) {
             const page = pageNodes[i];
