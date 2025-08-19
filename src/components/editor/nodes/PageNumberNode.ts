@@ -23,11 +23,11 @@ export class PageNumberNode extends TextNode {
   }
 
   createDOM(_config: EditorConfig): HTMLElement {
-  const dom = document.createElement('span');
-  dom.textContent = this.getTextContent();
-  dom.setAttribute('data-lexical-node-key', this.getKey());
-  dom.setAttribute('data-lexical-text', 'true');
-  return dom;
+    const dom = document.createElement('span');
+    dom.textContent = this.getTextContent();
+    dom.setAttribute('data-lexical-node-key', this.getKey());
+    dom.setAttribute('data-lexical-text', 'true');
+    return dom;
   }
 
   updateDOM(prevNode: PageNumberNode, dom: HTMLElement): boolean {

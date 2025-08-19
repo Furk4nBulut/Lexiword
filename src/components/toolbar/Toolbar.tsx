@@ -20,7 +20,7 @@ import { $getRoot } from 'lexical';
 import { $createPageNumberNode } from '../editor/nodes/PageNumberNode';
 
 // HeaderPageNumberButton bileşeni
-function HeaderPageNumberButton() {
+function HeaderPageNumberButton(): JSX.Element {
   const toggleHeaderPageNumber = useHeaderPageNumberToggle();
   const [enabled, setEnabled] = React.useState(false);
   const [editor] = useLexicalComposerContext();
@@ -28,20 +28,36 @@ function HeaderPageNumberButton() {
     return editor.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
         const root = $getRoot();
-        const pageNodes = root.getChildren().filter((n: any) => typeof n.getType === 'function' && n.getType() === 'page');
-        setEnabled(pageNodes.some((pageNode: any) => pageNode.getChildren().some((c: any) => typeof c.getType === 'function' && c.getType() === 'page-header')));
+        const pageNodes = root
+          .getChildren()
+          .filter((n: any) => typeof n.getType === 'function' && n.getType() === 'page');
+        setEnabled(
+          pageNodes.some((pageNode: any) => {
+            const children = pageNode.getChildren();
+            return (
+              Array.isArray(children) &&
+              children.some(
+                (c: any) => typeof c.getType === 'function' && c.getType() === 'page-header'
+              )
+            );
+          })
+        );
       });
     });
   }, [editor]);
   return (
-    <ToolbarButton onClick={toggleHeaderPageNumber} disabled={!enabled} title="Header'a Sayfa Numarası Ekle/Çıkar">
-      Header'a Sayfa No
+    <ToolbarButton
+      onClick={toggleHeaderPageNumber}
+      disabled={!enabled}
+      title={"Header'a Sayfa Numarası Ekle/Çıkar"}
+    >
+      Header&apos;a Sayfa No
     </ToolbarButton>
   );
 }
 
 // FooterPageNumberButton bileşeni
-function FooterPageNumberButton() {
+function FooterPageNumberButton(): JSX.Element {
   const toggleFooterPageNumber = useFooterPageNumberToggle();
   const [enabled, setEnabled] = React.useState(false);
   const [editor] = useLexicalComposerContext();
@@ -49,32 +65,53 @@ function FooterPageNumberButton() {
     return editor.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
         const root = $getRoot();
-        const pageNodes = root.getChildren().filter((n: any) => typeof n.getType === 'function' && n.getType() === 'page');
-        setEnabled(pageNodes.some((pageNode: any) => pageNode.getChildren().some((c: any) => typeof c.getType === 'function' && c.getType() === 'page-footer')));
+        const pageNodes = root
+          .getChildren()
+          .filter((n: any) => typeof n.getType === 'function' && n.getType() === 'page');
+        setEnabled(
+          pageNodes.some((pageNode: any) =>
+            pageNode
+              .getChildren()
+              .some((c: any) => typeof c.getType === 'function' && c.getType() === 'page-footer')
+          )
+        );
       });
     });
   }, [editor]);
   return (
-    <ToolbarButton onClick={toggleFooterPageNumber} disabled={!enabled} title="Footer'a Sayfa Numarası Ekle/Çıkar">
-      Footer'a Sayfa No
+    <ToolbarButton
+      onClick={toggleFooterPageNumber}
+      disabled={!enabled}
+      title={"Footer'a Sayfa Numarası Ekle/Çıkar"}
+    >
+      Footer&apos;a Sayfa No
     </ToolbarButton>
   );
 }
 
 // Header'a sayfa numarası ekle/çıkar fonksiyonu
-function useHeaderPageNumberToggle() {
+function useHeaderPageNumberToggle(): () => void {
   const [editor] = useLexicalComposerContext();
   return React.useCallback(() => {
     editor.update(() => {
       const root = $getRoot();
-      const pageNodes = root.getChildren().filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
+      const pageNodes = root
+        .getChildren()
+        .filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
       pageNodes.forEach((pageNode, idx) => {
-        const header = pageNode.getChildren().find((c) => typeof c.getType === 'function' && c.getType() === 'page-header');
-        if (header) {
+        const header = pageNode
+          .getChildren()
+          .find((c: any) => typeof c.getType === 'function' && c.getType() === 'page-header');
+        if (header != null) {
           // Toggle: Eğer header'da page-number varsa sil, yoksa ekle
-          const hasPageNumber = header.getChildren?.().some((c) => typeof c.getType === 'function' && c.getType() === 'page-number');
+          const children = header.getChildren?.();
+          const hasPageNumber =
+            Array.isArray(children) &&
+            children.some(
+              (c: any) => typeof c.getType === 'function' && c.getType() === 'page-number'
+            );
           if (hasPageNumber) {
-            header.getChildren().forEach((child) => {
+            children.forEach((child: any) => {
               if (typeof child.getType === 'function' && child.getType() === 'page-number') {
                 if (typeof child.setTextContent === 'function') {
                   child.setTextContent('');
@@ -94,19 +131,28 @@ function useHeaderPageNumberToggle() {
 }
 
 // Footer'a sayfa numarası ekle/çıkar fonksiyonu
-function useFooterPageNumberToggle() {
+function useFooterPageNumberToggle(): () => void {
   const [editor] = useLexicalComposerContext();
   return React.useCallback(() => {
     editor.update(() => {
       const root = $getRoot();
-      const pageNodes = root.getChildren().filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
+      const pageNodes = root
+        .getChildren()
+        .filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
       pageNodes.forEach((pageNode, idx) => {
-        const footer = pageNode.getChildren().find((c) => typeof c.getType === 'function' && c.getType() === 'page-footer');
-        if (footer) {
+        const footer = pageNode
+          .getChildren()
+          .find((c: any) => typeof c.getType === 'function' && c.getType() === 'page-footer');
+        if (footer != null) {
           // Toggle: Eğer footer'da page-number varsa sil, yoksa ekle
-          const hasPageNumber = footer.getChildren?.().some((c) => typeof c.getType === 'function' && c.getType() === 'page-number');
+          const children = footer.getChildren?.();
+          const hasPageNumber =
+            Array.isArray(children) &&
+            children.some(
+              (c: any) => typeof c.getType === 'function' && c.getType() === 'page-number'
+            );
           if (hasPageNumber) {
-            footer.getChildren().forEach((child) => {
+            children.forEach((child: any) => {
               if (typeof child.getType === 'function' && child.getType() === 'page-number') {
                 if (typeof child.setTextContent === 'function') {
                   child.setTextContent('');
