@@ -16,152 +16,8 @@ import './Toolbar.css';
 
 import { SET_HEADER_FOOTER_EDIT_MODE_COMMAND } from '../editor/plugins/HeaderFooterEditModePlugin';
 import { PageSectionPlugin } from '../editor/plugins/PageSectionPlugin';
-import { $getRoot } from 'lexical';
-import { $createPageNumberNode } from '../editor/nodes/PageNumberNode';
 
-// HeaderPageNumberButton bileşeni
-function HeaderPageNumberButton(): JSX.Element {
-  const toggleHeaderPageNumber = useHeaderPageNumberToggle();
-  const [enabled, setEnabled] = React.useState(false);
-  const [editor] = useLexicalComposerContext();
-  React.useEffect(() => {
-    return editor.registerUpdateListener(({ editorState }) => {
-      editorState.read(() => {
-        const root = $getRoot();
-        const pageNodes = root
-          .getChildren()
-          .filter((n: any) => typeof n.getType === 'function' && n.getType() === 'page');
-        setEnabled(
-          pageNodes.some((pageNode: any) => {
-            const children = pageNode.getChildren();
-            return (
-              Array.isArray(children) &&
-              children.some(
-                (c: any) => typeof c.getType === 'function' && c.getType() === 'page-header'
-              )
-            );
-          })
-        );
-      });
-    });
-  }, [editor]);
-  return (
-    <ToolbarButton
-      onClick={toggleHeaderPageNumber}
-      disabled={!enabled}
-      title={"Header'a Sayfa Numarası Ekle/Çıkar"}
-    >
-      Header&apos;a Sayfa No
-    </ToolbarButton>
-  );
-}
-
-// FooterPageNumberButton bileşeni
-function FooterPageNumberButton(): JSX.Element {
-  const toggleFooterPageNumber = useFooterPageNumberToggle();
-  const [enabled, setEnabled] = React.useState(false);
-  const [editor] = useLexicalComposerContext();
-  React.useEffect(() => {
-    return editor.registerUpdateListener(({ editorState }) => {
-      editorState.read(() => {
-        const root = $getRoot();
-        const pageNodes = root
-          .getChildren()
-          .filter((n: any) => typeof n.getType === 'function' && n.getType() === 'page');
-        setEnabled(
-          pageNodes.some((pageNode: any) =>
-            pageNode
-              .getChildren()
-              .some((c: any) => typeof c.getType === 'function' && c.getType() === 'page-footer')
-          )
-        );
-      });
-    });
-  }, [editor]);
-  return (
-    <ToolbarButton
-      onClick={toggleFooterPageNumber}
-      disabled={!enabled}
-      title={"Footer'a Sayfa Numarası Ekle/Çıkar"}
-    >
-      Footer&apos;a Sayfa No
-    </ToolbarButton>
-  );
-}
-
-// Header'a sayfa numarası ekle/çıkar fonksiyonu
-function useHeaderPageNumberToggle(): () => void {
-  const [editor] = useLexicalComposerContext();
-  return React.useCallback(() => {
-    editor.update(() => {
-      const root = $getRoot();
-      const pageNodes = root
-        .getChildren()
-        .filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
-      pageNodes.forEach((pageNode, idx) => {
-        const header = pageNode
-          .getChildren()
-          .find((c: any) => typeof c.getType === 'function' && c.getType() === 'page-header');
-        if (header != null) {
-          // Toggle: Eğer header'da page-number varsa sil, yoksa ekle
-          const children = header.getChildren?.();
-          const hasPageNumber =
-            Array.isArray(children) &&
-            children.some(
-              (c: any) => typeof c.getType === 'function' && c.getType() === 'page-number'
-            );
-          if (hasPageNumber) {
-            children.forEach((child: any) => {
-              if (typeof child.getType === 'function' && child.getType() === 'page-number') {
-                child.remove();
-              }
-            });
-          } else {
-            // Header'ın sonuna doğrudan PageNumberNode (span) ekle
-            header.append($createPageNumberNode(String(idx + 1)));
-          }
-        }
-      });
-    });
-  }, [editor]);
-}
-
-// Footer'a sayfa numarası ekle/çıkar fonksiyonu
-function useFooterPageNumberToggle(): () => void {
-  const [editor] = useLexicalComposerContext();
-  return React.useCallback(() => {
-    editor.update(() => {
-      const root = $getRoot();
-      const pageNodes = root
-        .getChildren()
-        .filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
-      pageNodes.forEach((pageNode, idx) => {
-        const footer = pageNode
-          .getChildren()
-          .find((c: any) => typeof c.getType === 'function' && c.getType() === 'page-footer');
-        if (footer != null) {
-          // Toggle: Eğer footer'da page-number varsa sil, yoksa ekle
-          const children = footer.getChildren?.();
-          const hasPageNumber =
-            Array.isArray(children) &&
-            children.some(
-              (c: any) => typeof c.getType === 'function' && c.getType() === 'page-number'
-            );
-          if (hasPageNumber) {
-            children.forEach((child: any) => {
-              if (typeof child.getType === 'function' && child.getType() === 'page-number') {
-                child.remove();
-              }
-            });
-          } else {
-            // Footer'ın sonuna doğrudan PageNumberNode (span) ekle
-            footer.append($createPageNumberNode(String(idx + 1)));
-          }
-        }
-      });
-    });
-  }, [editor]);
-}
+import { HeaderPageNumberButton, FooterPageNumberButton } from '../editor/plugins/PageNumberPlugin';
 
 interface ToolbarPluginProps {
   headerFooterEditMode: boolean;
@@ -343,8 +199,8 @@ export function ToolbarPlugin({
       <TextFormatToolbarPlugin />
       <HeadingToolbarPlugin />
       <ListToolbarPlugin />
-      <HeaderPageNumberButton />
-      <FooterPageNumberButton />
+  <HeaderPageNumberButton />
+  <FooterPageNumberButton />
       <PageSectionPlugin
         headerFooterEditMode={headerFooterEditMode}
         setHeaderFooterEditMode={setHeaderFooterEditMode}
