@@ -199,8 +199,8 @@ export function ToolbarPlugin({
       <TextFormatToolbarPlugin />
       <HeadingToolbarPlugin />
       <ListToolbarPlugin />
-  <HeaderPageNumberButton />
-  <FooterPageNumberButton />
+      <HeaderPageNumberButton />
+      <FooterPageNumberButton />
       <PageSectionPlugin
         headerFooterEditMode={headerFooterEditMode}
         setHeaderFooterEditMode={setHeaderFooterEditMode}
