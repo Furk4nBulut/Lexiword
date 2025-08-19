@@ -1,7 +1,13 @@
 // Global variable to track current edit mode for header/footer
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useEffect } from 'react';
-import { createCommand, $getRoot, $isElementNode, $setSelection, $createRangeSelection } from 'lexical';
+import {
+  createCommand,
+  $getRoot,
+  $isElementNode,
+  $setSelection,
+  $createRangeSelection
+} from 'lexical';
 export let CURRENT_HEADER_FOOTER_EDIT_MODE = false;
 
 // Tek bir yerde tanımlanır ve export edilir
@@ -33,7 +39,9 @@ export function HeaderFooterEditModePlugin(): JSX.Element | null {
           setTimeout(() => {
             editor.update(() => {
               const root = $getRoot();
-              const pageNodes = root.getChildren().filter((n) => $isElementNode(n) && typeof n.getChildren === 'function');
+              const pageNodes = root
+                .getChildren()
+                .filter((n) => $isElementNode(n) && typeof n.getChildren === 'function');
               // Öncelik: header, sonra footer
               let found = false;
               for (const page of pageNodes) {

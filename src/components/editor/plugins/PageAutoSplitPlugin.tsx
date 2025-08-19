@@ -75,7 +75,12 @@ export function PageAutoSplitPlugin({
         if ($isPageNode(child)) {
           const pageEl = editor.getElementByKey(child.getKey());
           if (pageEl !== null && pageEl !== undefined) {
-            const { el: contentDomEl, height: capacity, paddingTop, paddingBottom } = getContentMetrics(pageEl);
+            const {
+              el: contentDomEl,
+              height: capacity,
+              paddingTop,
+              paddingBottom
+            } = getContentMetrics(pageEl);
             const targetForScroll = contentDomEl ?? pageEl;
             const usedScroll = getContentScrollHeight(targetForScroll, paddingTop, paddingBottom);
             if (usedScroll > capacity + 2) {

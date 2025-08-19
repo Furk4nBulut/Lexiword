@@ -1,4 +1,3 @@
-
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useEffect } from 'react';
 import { $getRoot, ParagraphNode, TextNode, LineBreakNode, ElementNode } from 'lexical';

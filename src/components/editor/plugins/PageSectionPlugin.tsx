@@ -13,7 +13,7 @@
  */
 import * as React from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $getRoot } from 'lexical';
+import { $getRoot, $getSelection, $isRangeSelection } from 'lexical';
 import type { PageNode } from '../nodes/PageNode';
 import { PageHeaderNode } from '../nodes/PageHeaderNode';
 import { PageFooterNode } from '../nodes/PageFooterNode';
@@ -41,13 +41,28 @@ export function PageSectionPlugin({
   const handleHeader = (): void => {
     console.log('[PageSectionPlugin] Header Ekle/Kaldır butonuna basıldı');
     editor.update(() => {
+      const selection = $getSelection();
+      let targetPageNode: PageNode | null = null;
+      if ($isRangeSelection(selection)) {
+        // Seçimin anchor'ı bir header içindeyse, o header'ın parent'ı pageNode'dur
+        const anchorNode = selection.anchor.getNode();
+        let node: any = anchorNode;
+        while (node && typeof node.getType === 'function') {
+          if (node.getType() === 'page-header') {
+            targetPageNode = node.getParent();
+            break;
+          }
+          node = node.getParent?.() ?? null;
+        }
+      }
       const root = $getRoot();
       const pageNodes = root
         .getChildren()
         .filter(
           (n) => typeof (n as any).getType === 'function' && (n as any).getType() === 'page'
         ) as PageNode[];
-      pageNodes.forEach((pageNode) => {
+      const nodesToProcess = targetPageNode ? [targetPageNode] : pageNodes;
+      nodesToProcess.forEach((pageNode) => {
         const header = pageNode.getHeaderNode();
         if (header != null) {
           console.log('[PageSectionPlugin] Header kaldırılıyor', header);
@@ -73,13 +88,28 @@ export function PageSectionPlugin({
   const handleFooter = (): void => {
     console.log('[PageSectionPlugin] Footer Ekle/Kaldır butonuna basıldı');
     editor.update(() => {
+      const selection = $getSelection();
+      let targetPageNode: PageNode | null = null;
+      if ($isRangeSelection(selection)) {
+        // Seçimin anchor'ı bir footer içindeyse, o footer'ın parent'ı pageNode'dur
+        const anchorNode = selection.anchor.getNode();
+        let node: any = anchorNode;
+        while (node && typeof node.getType === 'function') {
+          if (node.getType() === 'page-footer') {
+            targetPageNode = node.getParent();
+            break;
+          }
+          node = node.getParent?.() ?? null;
+        }
+      }
       const root = $getRoot();
       const pageNodes = root
         .getChildren()
         .filter(
           (n) => typeof (n as any).getType === 'function' && (n as any).getType() === 'page'
         ) as PageNode[];
-      pageNodes.forEach((pageNode) => {
+      const nodesToProcess = targetPageNode ? [targetPageNode] : pageNodes;
+      nodesToProcess.forEach((pageNode) => {
         const footer = pageNode.getFooterNode();
         if (footer != null) {
           console.log('[PageSectionPlugin] Footer kaldırılıyor', footer);

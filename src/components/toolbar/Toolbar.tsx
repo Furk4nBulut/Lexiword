@@ -113,11 +113,7 @@ function useHeaderPageNumberToggle(): () => void {
           if (hasPageNumber) {
             children.forEach((child: any) => {
               if (typeof child.getType === 'function' && child.getType() === 'page-number') {
-                if (typeof child.setTextContent === 'function') {
-                  child.setTextContent('');
-                } else {
-                  child.remove();
-                }
+                child.remove();
               }
             });
           } else {
@@ -154,11 +150,7 @@ function useFooterPageNumberToggle(): () => void {
           if (hasPageNumber) {
             children.forEach((child: any) => {
               if (typeof child.getType === 'function' && child.getType() === 'page-number') {
-                if (typeof child.setTextContent === 'function') {
-                  child.setTextContent('');
-                } else {
-                  child.remove();
-                }
+                child.remove();
               }
             });
           } else {
