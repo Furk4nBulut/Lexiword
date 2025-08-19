@@ -17,7 +17,6 @@ import { $getRoot } from 'lexical';
 import type { PageNode } from '../nodes/PageNode';
 import { PageHeaderNode } from '../nodes/PageHeaderNode';
 import { PageFooterNode } from '../nodes/PageFooterNode';
-import { usePageNumberToggle } from './PageNumberTogglePlugin';
 
 interface ToolbarPluginProps {
   headerFooterEditMode: boolean;
@@ -37,10 +36,6 @@ export function PageSectionPlugin({
   setHeaderFooterEditMode
 }: ToolbarPluginProps): JSX.Element {
   const [editor] = useLexicalComposerContext();
-  const handlePageNumber = () => {
-    console.log('[PageSectionPlugin] Sayfa Numarası Ekle butonuna basıldı');
-    usePageNumberToggle()();
-  };
 
   // Header ekle/kaldır fonksiyonu: Eğer header varsa siler, yoksa ekler.
   const handleHeader = (): void => {
@@ -125,9 +120,6 @@ export function PageSectionPlugin({
           </button>
           <button className="toolbarButton" onClick={handleFooter} title="Footer Ekle/Kaldır">
             Footer Ekle/Kaldır
-          </button>
-          <button className="toolbarButton" onClick={handlePageNumber} title="Sayfa Numarası Ekle">
-            Sayfa Numarası Ekle
           </button>
         </>
       )}
