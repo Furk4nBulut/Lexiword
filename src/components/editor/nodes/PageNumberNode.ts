@@ -31,11 +31,8 @@ export class PageNumberNode extends TextNode {
   }
 
   updateDOM(prevNode: PageNumberNode, dom: HTMLElement): boolean {
-    // TextNode gibi davranması için, textContent'i güncelle
-    if (prevNode.getTextContent() !== this.getTextContent()) {
-      dom.textContent = this.getTextContent();
-    }
-    // Key her zaman güncellensin, böylece silinmez
+    // Her güncellemede textContent'i ata, böylece silme efekti anında görünür
+    dom.textContent = this.getTextContent();
     dom.setAttribute('data-lexical-node-key', this.getKey());
     return false;
   }
