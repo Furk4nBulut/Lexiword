@@ -1,11 +1,50 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { $getRoot, ParagraphNode, TextNode, LineBreakNode, ElementNode } from 'lexical';
 import { $isPageNode, type PageNode } from '../nodes/PageNode';
 
 // Sade ve tek fonksiyon: HeaderFooterSyncPlugin
 export function HeaderFooterSyncPlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
+  // Son düzenlenen header/footer'ın key'ini saklamak için ref kullanıyoruz
+  const lastEditedHeaderKey = useRef<string | null>(null);
+  const lastEditedFooterKey = useRef<string | null>(null);
+
+  // DOM event listener ekle: Her header/footer'a input/focus event'i ile key'i güncelle
+  useEffect(() => {
+    function handleInputOrFocus(e: Event) {
+      const el = e.target as HTMLElement;
+      const key = el.getAttribute('data-lexical-node-key');
+      if (el.classList.contains('a4-header')) {
+        lastEditedHeaderKey.current = key;
+      } else if (el.classList.contains('a4-footer')) {
+        lastEditedFooterKey.current = key;
+      }
+    }
+    // Tüm header/footer DOM'larına event listener ekle
+    function addListeners() {
+      document.querySelectorAll('.a4-header, .a4-footer').forEach((el) => {
+        el.addEventListener('input', handleInputOrFocus);
+        el.addEventListener('focus', handleInputOrFocus);
+      });
+    }
+    function removeListeners() {
+      document.querySelectorAll('.a4-header, .a4-footer').forEach((el) => {
+        el.removeEventListener('input', handleInputOrFocus);
+        el.removeEventListener('focus', handleInputOrFocus);
+      });
+    }
+    addListeners();
+    // Her Lexical güncellemesinde tekrar ekle (çünkü DOM değişebilir)
+    const cleanup = editor.registerUpdateListener(() => {
+      removeListeners();
+      addListeners();
+    });
+    return () => {
+      removeListeners();
+      cleanup();
+    };
+  }, [editor]);
 
   useEffect(() => {
     return editor.registerUpdateListener(({ editorState }) => {
@@ -16,24 +55,34 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
         const root = $getRoot();
         pageNodes = root.getChildren().filter($isPageNode);
         if (pageNodes.length < 2) return;
-        const activeElement = typeof document !== 'undefined' ? document.activeElement : null;
-        // Header focus veya ilk dolu header
-        for (let i = 0; i < pageNodes.length; i++) {
-          const page = pageNodes[i];
-          const header = page.getHeaderNode();
-          if (header instanceof ElementNode) {
-            const headerKey = header.getKey();
-            let headerDom: Element | null = null;
-            if (typeof document !== 'undefined') {
-              headerDom = document.querySelector(`[data-lexical-node-key='${headerKey}']`);
-            }
-            if (headerDom !== null && activeElement === headerDom) {
-              refHeaderJSON = header.getChildren().map((n: any) => n.exportJSON());
-              break;
+        // Öncelik: Son düzenlenen header/footer'ın key'i
+        if (lastEditedHeaderKey.current) {
+          const header = pageNodes
+            .map((p) => p.getHeaderNode())
+            .find((h) => h && h.getKey() === lastEditedHeaderKey.current);
+          if (header) refHeaderJSON = header.getChildren().map((n: any) => n.exportJSON());
+        }
+        if (!refHeaderJSON) {
+          // Fallback: focus veya ilk dolu header
+          const activeElement = typeof document !== 'undefined' ? document.activeElement : null;
+          for (let i = 0; i < pageNodes.length; i++) {
+            const page = pageNodes[i];
+            const header = page.getHeaderNode();
+            if (header instanceof ElementNode) {
+              const headerKey = header.getKey();
+              let headerDom: Element | null = null;
+              if (typeof document !== 'undefined') {
+                headerDom = document.querySelector(`[data-lexical-node-key='${headerKey}']`);
+              }
+              if (headerDom !== null && activeElement === headerDom) {
+                refHeaderJSON = header.getChildren().map((n: any) => n.exportJSON());
+                break;
+              }
             }
           }
         }
-        if (refHeaderJSON === null) {
+        if (!refHeaderJSON) {
+          // Fallback: ilk dolu header
           for (let i = 0; i < pageNodes.length; i++) {
             const page = pageNodes[i];
             const header = page.getHeaderNode();
@@ -64,23 +113,34 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
             }
           }
         }
-        // Footer focus veya ilk dolu footer
-        for (let i = 0; i < pageNodes.length; i++) {
-          const page = pageNodes[i];
-          const footer = page.getFooterNode();
-          if (footer instanceof ElementNode) {
-            const footerKey = footer.getKey();
-            let footerDom: Element | null = null;
-            if (typeof document !== 'undefined') {
-              footerDom = document.querySelector(`[data-lexical-node-key='${footerKey}']`);
-            }
-            if (footerDom !== null && activeElement === footerDom) {
-              refFooterJSON = footer.getChildren().map((n: any) => n.exportJSON());
-              break;
+        // Aynı mantıkla footer
+        if (lastEditedFooterKey.current) {
+          const footer = pageNodes
+            .map((p) => p.getFooterNode())
+            .find((f) => f && f.getKey() === lastEditedFooterKey.current);
+          if (footer) refFooterJSON = footer.getChildren().map((n: any) => n.exportJSON());
+        }
+        if (!refFooterJSON) {
+          // Fallback: focus veya ilk dolu footer
+          const activeElement = typeof document !== 'undefined' ? document.activeElement : null;
+          for (let i = 0; i < pageNodes.length; i++) {
+            const page = pageNodes[i];
+            const footer = page.getFooterNode();
+            if (footer instanceof ElementNode) {
+              const footerKey = footer.getKey();
+              let footerDom: Element | null = null;
+              if (typeof document !== 'undefined') {
+                footerDom = document.querySelector(`[data-lexical-node-key='${footerKey}']`);
+              }
+              if (footerDom !== null && activeElement === footerDom) {
+                refFooterJSON = footer.getChildren().map((n: any) => n.exportJSON());
+                break;
+              }
             }
           }
         }
-        if (refFooterJSON === null) {
+        if (!refFooterJSON) {
+          // Fallback: ilk dolu footer
           for (let i = 0; i < pageNodes.length; i++) {
             const page = pageNodes[i];
             const footer = page.getFooterNode();
