@@ -3,20 +3,15 @@ import { TextNode, type SerializedTextNode, type EditorConfig } from 'lexical';
 export type SerializedPageNumberNode = SerializedTextNode & {
   type: 'page-number';
   version: 1;
-  pageNumber: number;
 };
 
 export class PageNumberNode extends TextNode {
-  // PageNumberNode'u normal bir karakter gibi silinebilir yapmak için
   isSimpleText(): boolean {
     return true;
   }
-  __pageNumber: number;
 
-  constructor(pageNumber: number = 1, key?: string) {
-    // Başlangıçta sayfa numarası metniyle başlat, hem efekt hem görünürlük için
-    super(String(pageNumber), key);
-    this.__pageNumber = pageNumber;
+  constructor(text: string = '', key?: string) {
+    super(text, key);
   }
 
   static getType(): string {
@@ -24,13 +19,14 @@ export class PageNumberNode extends TextNode {
   }
 
   static clone(node: PageNumberNode): PageNumberNode {
-    return new PageNumberNode(node.__pageNumber, node.__key);
+    return new PageNumberNode(node.getTextContent(), node.__key);
   }
 
   createDOM(_config: EditorConfig): HTMLElement {
   const dom = document.createElement('span');
   dom.textContent = this.getTextContent();
   dom.setAttribute('data-lexical-node-key', this.getKey());
+  dom.setAttribute('data-lexical-text', 'true');
   return dom;
   }
 
@@ -45,21 +41,20 @@ export class PageNumberNode extends TextNode {
   }
 
   static importJSON(serializedNode: SerializedPageNumberNode): PageNumberNode {
-    return new PageNumberNode(serializedNode.pageNumber);
+    return new PageNumberNode(serializedNode.text);
   }
 
   exportJSON(): SerializedPageNumberNode {
     return {
       ...super.exportJSON(),
       type: 'page-number',
-      version: 1,
-      pageNumber: this.__pageNumber
+      version: 1
     };
   }
 }
 
-export function $createPageNumberNode(pageNumber: number): PageNumberNode {
-  return new PageNumberNode(pageNumber);
+export function $createPageNumberNode(text: string): PageNumberNode {
+  return new PageNumberNode(text);
 }
 
 export default PageNumberNode;

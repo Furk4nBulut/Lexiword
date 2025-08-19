@@ -18,7 +18,6 @@ import { SET_HEADER_FOOTER_EDIT_MODE_COMMAND } from '../editor/plugins/HeaderFoo
 import { PageSectionPlugin } from '../editor/plugins/PageSectionPlugin';
 import { $getRoot } from 'lexical';
 import { $createPageNumberNode } from '../editor/nodes/PageNumberNode';
-import { ParagraphNode } from 'lexical';
 
 // HeaderPageNumberButton bileşeni
 function HeaderPageNumberButton() {
@@ -77,12 +76,16 @@ function useHeaderPageNumberToggle() {
           if (hasPageNumber) {
             header.getChildren().forEach((child) => {
               if (typeof child.getType === 'function' && child.getType() === 'page-number') {
-                child.remove();
+                if (typeof child.setTextContent === 'function') {
+                  child.setTextContent('');
+                } else {
+                  child.remove();
+                }
               }
             });
           } else {
             // Header'ın sonuna doğrudan PageNumberNode (span) ekle
-            header.append($createPageNumberNode(idx + 1));
+            header.append($createPageNumberNode(String(idx + 1)));
           }
         }
       });
@@ -96,20 +99,25 @@ function useFooterPageNumberToggle() {
   return React.useCallback(() => {
     editor.update(() => {
       const root = $getRoot();
-      const pageNodes = root.getChildren().filter((n) => typeof (n as any).getType === 'function' && (n as any).getType() === 'page');
+      const pageNodes = root.getChildren().filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
       pageNodes.forEach((pageNode, idx) => {
-        const footer = pageNode.getChildren().find((c) => typeof (c as any).getType === 'function' && (c as any).getType() === 'page-footer');
+        const footer = pageNode.getChildren().find((c) => typeof c.getType === 'function' && c.getType() === 'page-footer');
         if (footer) {
           // Toggle: Eğer footer'da page-number varsa sil, yoksa ekle
-          const hasPageNumber = (footer.getChildren && footer.getChildren().some((c) => typeof (c as any).getType === 'function' && (c as any).getType() === 'page-number'));
+          const hasPageNumber = footer.getChildren?.().some((c) => typeof c.getType === 'function' && c.getType() === 'page-number');
           if (hasPageNumber) {
             footer.getChildren().forEach((child) => {
-              if (typeof (child as any).getType === 'function' && (child as any).getType() === 'page-number') {
-                child.remove();
+              if (typeof child.getType === 'function' && child.getType() === 'page-number') {
+                if (typeof child.setTextContent === 'function') {
+                  child.setTextContent('');
+                } else {
+                  child.remove();
+                }
               }
             });
           } else {
-            footer.append($createPageNumberNode(idx + 1));
+            // Footer'ın sonuna doğrudan PageNumberNode (span) ekle
+            footer.append($createPageNumberNode(String(idx + 1)));
           }
         }
       });

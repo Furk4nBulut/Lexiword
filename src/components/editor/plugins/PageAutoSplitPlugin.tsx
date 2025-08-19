@@ -177,7 +177,7 @@ export function PageAutoSplitPlugin({
           );
           if (hasPageNumber) {
             const pageNumber = allPages.length + 1;
-            nextPage.append($createPageNumberNode(pageNumber));
+            nextPage.append($createPageNumberNode(String(pageNumber)));
           }
         }
 
