@@ -39,6 +39,8 @@ export class PageNumberNode extends TextNode {
     if (prevNode.getTextContent() !== this.getTextContent()) {
       dom.textContent = this.getTextContent();
     }
+    // Key her zaman güncellensin, böylece silinmez
+    dom.setAttribute('data-lexical-node-key', this.getKey());
     return false;
   }
 
