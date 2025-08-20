@@ -51,6 +51,7 @@ export class PageContentNode extends ElementNode {
     const dom = document.createElement('div');
     dom.className = 'a4-content';
     dom.setAttribute('data-lexical-node-key', this.getKey());
+    dom.setAttribute('data-lexical-page-section', 'content');
     return dom;
   }
 
