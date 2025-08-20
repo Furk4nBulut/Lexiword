@@ -223,11 +223,6 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
       editor.update(() => {
         if (isSyncingRef.current) return;
         let didSync = false;
-        if (typeof window !== 'undefined') {
-          // eslint-disable-next-line no-console
-          console.log('[DEBUG] editor.update başı');
-        }
-        // DEBUG: Sonsuz döngüye giren noktayı bulmak için
         // Header güncellemesi
         if (refHeaderJSON !== null) {
           for (let i = 0; i < pageNodes.length; i++) {

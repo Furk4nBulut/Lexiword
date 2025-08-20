@@ -35,7 +35,7 @@
 
 .a4-header {
   /* 32mm ≈ 121px at 96dpi */
-  flex: 0 0 121px;
+  flex: 0 0 50px;
   background: #f8fafc;
   padding: 12px 24px;
   font-weight: 600;
@@ -107,7 +107,7 @@
 
 .a4-footer {
   /* 20mm ≈ 76px at 96dpi */
-  flex: 0 0 76px;
+  flex: 0 0 50px;
   background: #f8fafc;
   /* border-top kaldırıldı, page number ile birleşik görünsün */
   padding: 8px 24px 0 24px;

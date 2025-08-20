@@ -18,6 +18,7 @@ import { SET_HEADER_FOOTER_EDIT_MODE_COMMAND } from '../editor/plugins/HeaderFoo
 import { PageSectionPlugin } from '../editor/plugins/PageSectionPlugin';
 
 import { HeaderPageNumberButton, FooterPageNumberButton } from '../editor/plugins/PageNumberPlugin';
+import { PageCleanupPlugin } from '../editor/plugins/PageCleanupPlugin';
 
 interface ToolbarPluginProps {
   headerFooterEditMode: boolean;
@@ -201,6 +202,7 @@ export function ToolbarPlugin({
       <ListToolbarPlugin />
       <HeaderPageNumberButton />
       <FooterPageNumberButton />
+      <PageCleanupPlugin />
       <PageSectionPlugin
         headerFooterEditMode={headerFooterEditMode}
         setHeaderFooterEditMode={setHeaderFooterEditMode}
