@@ -201,9 +201,11 @@ export class PageNode extends ElementNode {
     // Content node'u yoksa oluştur
     if (content == null) content = new PageContentNode();
 
-    // Tüm mevcut çocukları kaldır
+    // Tüm mevcut çocukları kaldırma, sadece content node'u kaldır
     this.getChildren().forEach((child) => {
-      child.remove();
+      if (child.getType() === 'page-content') {
+        child.remove();
+      }
     });
 
     // Sadece header varsa ve doğru tipteyse ekle

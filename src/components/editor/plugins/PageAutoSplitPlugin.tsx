@@ -9,19 +9,20 @@ import type { LexicalNode } from 'lexical';
 import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
-  $getRoot,
-  ParagraphNode,
-  TextNode,
-  LineBreakNode,
-  $isElementNode,
-  $isTextNode,
-  $isLineBreakNode
+  $getRoot
+  // ParagraphNode,
+  // TextNode,
+  // LineBreakNode,
+  // $isElementNode,
+  // $isTextNode,
+  // $isLineBreakNode
 } from 'lexical';
 import { $createPageNode, $isPageNode, type PageNode } from '../nodes/PageNode';
 import { setHeaderFooterSyncEnabled } from '../context/HeaderFooterSyncModeContext';
 import PageNumberNode, { $createPageNumberNode } from '../nodes/PageNumberNode';
 import { isContentNode, isHeaderNode, isFooterNode } from '../nodes/sectionTypeGuards';
 import { PageContentNode } from '../nodes/PageContentNode';
+import { FooterTextNode } from '../nodes/FooterTextNode';
 
 export interface PageFlowSettings {
   pageHeightMm: number;
@@ -35,24 +36,22 @@ export interface PageFlowSettings {
 function cloneSection<T extends LexicalNode>(sectionNode: T | null): T | null {
   if (sectionNode == null) return null;
 
+  // Derin klon: node'un tipini ve tüm çocuklarını clone() ile kopyala
   const SectionClass = sectionNode.constructor as new () => T;
   const clonedSection = new SectionClass();
 
   sectionNode.getChildren().forEach((child: LexicalNode | null | undefined) => {
-    if ($isElementNode(child)) {
-      const para = new ParagraphNode();
-      child.getChildren().forEach((grandChild) => {
-        if ($isTextNode(grandChild)) {
-          para.append(new TextNode(grandChild.getTextContent() ?? ''));
-        } else if ($isLineBreakNode(grandChild)) {
-          para.append(new LineBreakNode());
-        }
-      });
-      clonedSection.append(para);
-    } else if ($isTextNode(child)) {
-      clonedSection.append(new TextNode(child.getTextContent() ?? ''));
-    } else if ($isLineBreakNode(child)) {
-      clonedSection.append(new LineBreakNode());
+    if (child !== null && child !== undefined && typeof (child as any).clone === 'function') {
+      // Eğer orijinal node bir TextNode ise ve parent footer ise FooterTextNode olarak ekle
+      if (
+        clonedSection.getType() === 'page-footer' &&
+        typeof child.getType === 'function' &&
+        child.getType() === 'text'
+      ) {
+        clonedSection.append(new FooterTextNode(child.getTextContent()));
+      } else {
+        clonedSection.append((child as any).clone());
+      }
     }
   });
 

@@ -4,6 +4,7 @@ import { PageHeaderNode } from './PageHeaderNode';
 import { PageContentNode } from './PageContentNode';
 import { PageFooterNode } from './PageFooterNode';
 import { ParagraphNode, TextNode, LineBreakNode } from 'lexical';
+import { FooterTextNode } from './FooterTextNode';
 import PageNumberNode from './PageNumberNode';
 
 // Lexical'ın kendi node'ları (özellikle ParagraphNode ve TextNode) mutlaka eklenmeli!
@@ -13,6 +14,7 @@ export const editorNodes = [
   PageContentNode,
   PageFooterNode,
   PageNumberNode,
+  FooterTextNode,
   ParagraphNode,
   TextNode,
   LineBreakNode
