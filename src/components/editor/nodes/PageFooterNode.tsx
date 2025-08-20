@@ -18,7 +18,7 @@ export class PageFooterNode extends ElementNode {
     if (typeof window !== 'undefined') {
       // debug log kaldırıldı
     }
-  // Artık FooterTextNode eklenmiyor
+    // Artık FooterTextNode eklenmiyor
   }
 
   static getType(): string {
@@ -74,5 +74,4 @@ export function $createPageFooterNode(): PageFooterNode {
 export type SerializedPageFooterNode = SerializedElementNode & {
   type: 'page-footer';
   version: 1;
-}
-
+};

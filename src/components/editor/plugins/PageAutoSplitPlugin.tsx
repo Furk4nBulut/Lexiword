@@ -41,8 +41,8 @@ function cloneSection<T extends LexicalNode>(sectionNode: T | null): T | null {
 
   sectionNode.getChildren().forEach((child: LexicalNode | null | undefined) => {
     if (child !== null && child !== undefined && typeof (child as any).clone === 'function') {
-  // Standart klonlama
-  clonedSection.append((child as any).clone());
+      // Standart klonlama
+      clonedSection.append((child as any).clone());
     }
   });
 
