@@ -22,7 +22,6 @@ import { setHeaderFooterSyncEnabled } from '../context/HeaderFooterSyncModeConte
 import PageNumberNode, { $createPageNumberNode } from '../nodes/PageNumberNode';
 import { isContentNode, isHeaderNode, isFooterNode } from '../nodes/sectionTypeGuards';
 import { PageContentNode } from '../nodes/PageContentNode';
-import { FooterTextNode } from '../nodes/FooterTextNode';
 
 export interface PageFlowSettings {
   pageHeightMm: number;
@@ -42,16 +41,8 @@ function cloneSection<T extends LexicalNode>(sectionNode: T | null): T | null {
 
   sectionNode.getChildren().forEach((child: LexicalNode | null | undefined) => {
     if (child !== null && child !== undefined && typeof (child as any).clone === 'function') {
-      // Eğer orijinal node bir TextNode ise ve parent footer ise FooterTextNode olarak ekle
-      if (
-        clonedSection.getType() === 'page-footer' &&
-        typeof child.getType === 'function' &&
-        child.getType() === 'text'
-      ) {
-        clonedSection.append(new FooterTextNode(child.getTextContent()));
-      } else {
-        clonedSection.append((child as any).clone());
-      }
+  // Standart klonlama
+  clonedSection.append((child as any).clone());
     }
   });
 

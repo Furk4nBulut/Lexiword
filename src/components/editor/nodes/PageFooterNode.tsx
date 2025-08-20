@@ -1,15 +1,6 @@
 import { CURRENT_HEADER_FOOTER_EDIT_MODE } from '../plugins/HeaderFooterEditModePlugin';
 import { ElementNode, type SerializedElementNode, type EditorConfig } from 'lexical';
-import { FooterTextNode } from './FooterTextNode';
 
-export function $createPageFooterNode(): PageFooterNode {
-  return new PageFooterNode();
-}
-
-export type SerializedPageFooterNode = SerializedElementNode & {
-  type: 'page-footer';
-  version: 1;
-};
 // PageFooterNode: Sayfa alt bilgisini (footer) temsil eden Lexical ElementNode sınıfı.
 // Footer'ın içeriği bir paragraf node olarak tutulur.
 export class PageFooterNode extends ElementNode {
@@ -27,10 +18,7 @@ export class PageFooterNode extends ElementNode {
     if (typeof window !== 'undefined') {
       // debug log kaldırıldı
     }
-    // Eğer hiç çocuk yoksa, bir FooterTextNode ekle
-    if (this.getChildren().length === 0) {
-      this.append(new FooterTextNode(''));
-    }
+  // Artık FooterTextNode eklenmiyor
   }
 
   static getType(): string {
@@ -78,3 +66,13 @@ export class PageFooterNode extends ElementNode {
     };
   }
 }
+
+export function $createPageFooterNode(): PageFooterNode {
+  return new PageFooterNode();
+}
+
+export type SerializedPageFooterNode = SerializedElementNode & {
+  type: 'page-footer';
+  version: 1;
+}
+
