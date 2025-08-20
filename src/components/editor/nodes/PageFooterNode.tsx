@@ -12,6 +12,15 @@ export type SerializedPageFooterNode = SerializedElementNode & {
 // PageFooterNode: Sayfa alt bilgisini (footer) temsil eden Lexical ElementNode sınıfı.
 // Footer'ın içeriği bir paragraf node olarak tutulur.
 export class PageFooterNode extends ElementNode {
+  /**
+   * Edit mode harici silinemez.
+   */
+  remove(): void {
+    if (CURRENT_HEADER_FOOTER_EDIT_MODE) {
+      super.remove();
+    } // edit mode dışında hiçbir şey yapma (silinemez)
+  }
+
   constructor(key?: string) {
     super(key);
     if (typeof window !== 'undefined') {

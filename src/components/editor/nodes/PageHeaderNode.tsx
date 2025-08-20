@@ -10,6 +10,15 @@ export type SerializedPageHeaderNode = SerializedElementNode & {
 // PageHeaderNode: Sayfa başlığını (header) temsil eden Lexical ElementNode sınıfı.
 // Header'ın içeriği bir paragraf node olarak tutulur.
 export class PageHeaderNode extends ElementNode {
+  /**
+   * Edit mode harici silinemez.
+   */
+  remove(): void {
+    if (CURRENT_HEADER_FOOTER_EDIT_MODE) {
+      super.remove();
+    } // edit mode dışında hiçbir şey yapma (silinemez)
+  }
+
   constructor(key?: string) {
     super(key);
     if (typeof window !== 'undefined') {
