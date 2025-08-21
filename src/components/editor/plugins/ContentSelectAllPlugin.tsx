@@ -11,42 +11,46 @@
  * - Lexical editörün registerCommand API'si ile global kısayol dinlenir.
  * - DOM'da .a4-content class'ı ile işaretli alan hedeflenir.
  */
-
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useEffect } from 'react';
-import { KEY_MODIFIER_COMMAND, COMMAND_PRIORITY_CRITICAL } from 'lexical';
+import {
+  KEY_MODIFIER_COMMAND,
+  COMMAND_PRIORITY_CRITICAL,
+  $getRoot,
+  $setSelection,
+  $createRangeSelection
+} from 'lexical';
+import { isContentNode } from '../nodes/sectionTypeGuards';
 
 export function ContentSelectAllPlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
-    // Ctrl+A veya Cmd+A tuş kombinasyonunu dinle.
-    // Eğer .a4-content alanı varsa, tüm içeriği seç.
+    // Sadece .a4-content odaklıyken Ctrl+A ile Lexical selection yap, paste'e karışma
     const unregister = editor.registerCommand(
       KEY_MODIFIER_COMMAND,
       (event: KeyboardEvent) => {
+        const active = document.activeElement;
+        if (active == null) return false;
+        if (!(active instanceof HTMLElement)) return false;
+        if (!active.classList.contains('a4-content')) return false;
+        // Sadece .a4-content odaklıyken Ctrl+A çalışsın
         if ((event.ctrlKey || event.metaKey) && (event.key === 'a' || event.key === 'A')) {
-          console.log('[ContentSelectAllPlugin] Ctrl+A veya Cmd+A algılandı');
-          // .a4-content alanını bul
-          const content = document.querySelector('.a4-content');
-          if (content === null) {
-            console.log('[ContentSelectAllPlugin] .a4-content bulunamadı');
-            return false;
-          }
           event.preventDefault();
-          // Range ile tüm içeriği seç
-          const range = document.createRange();
-          range.selectNodeContents(content);
-          console.log('[ContentSelectAllPlugin] Range oluşturuldu ve içerik seçildi');
-          const sel = window.getSelection();
-          if (sel === null) {
-            console.log('[ContentSelectAllPlugin] window.getSelection() null');
-            return true;
-          }
-          sel.removeAllRanges();
-          sel.addRange(range);
-          console.log('[ContentSelectAllPlugin] Seçim window.getSelection ile uygulandı');
-          return true; // handled
+          editor.update(() => {
+            // Tüm PageContentNode'ları seç
+            const rootNode = $getRoot();
+            if (rootNode == null) return;
+            const contentNodes = rootNode.getChildren().filter(isContentNode);
+            if (contentNodes.length === 0) return;
+            const first = contentNodes[0];
+            const last = contentNodes[contentNodes.length - 1];
+            const selection = $createRangeSelection();
+            selection.anchor.set(first.getKey(), 0, 'element');
+            selection.focus.set(last.getKey(), last.getChildrenSize(), 'element');
+            $setSelection(selection);
+          });
+          return true;
         }
         return false;
       },
@@ -54,6 +58,5 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
     );
     return unregister;
   }, [editor]);
-
   return null;
 }
