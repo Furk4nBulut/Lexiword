@@ -1,5 +1,13 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $getRoot, ParagraphNode, TextNode, LineBreakNode, type SerializedParagraphNode, type SerializedTextNode, type SerializedLineBreakNode } from 'lexical';
+import {
+  $getRoot,
+  ParagraphNode,
+  TextNode,
+  LineBreakNode,
+  type SerializedParagraphNode,
+  type SerializedTextNode,
+  type SerializedLineBreakNode
+} from 'lexical';
 import { useEffect } from 'react';
 import { $isPageNode } from '../nodes/PageNode';
 
@@ -22,9 +30,7 @@ export function PageCleanupPlugin(): null {
         const pagesToRemove = pages.filter((pageNode) => {
           const contentNode = pageNode.getChildren().find((c) => c.getType() === 'page-content');
           return (
-            contentNode !== undefined &&
-            contentNode !== null &&
-            contentNode.getChildrenSize() === 0 // İçerik tamamen boşsa
+            contentNode !== undefined && contentNode !== null && contentNode.getChildrenSize() === 0 // İçerik tamamen boşsa
           );
         });
         if (pagesToRemove.length === 0) return;
@@ -116,6 +122,7 @@ export function PageCleanupPlugin(): null {
       });
     });
   }, [editor]);
-
   return null;
 }
+
+export default PageCleanupPlugin;

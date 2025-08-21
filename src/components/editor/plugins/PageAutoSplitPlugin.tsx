@@ -270,8 +270,9 @@ export function PageAutoSplitPlugin({
           // Editör state'inde selection gerçekten son block'un SONUNDA mı?
           const selectionState = editor.getEditorState().read(() => {
             const selection = window.getSelection();
-            if (selection === null || selection === undefined || selection.rangeCount === 0)
+            if (selection === null || selection === undefined || selection.rangeCount === 0) {
               return false;
+            }
             const range = selection.getRangeAt(0);
             // Son block'un DOM elementini bul
             const lastBlockEl = editor.getElementByKey(lastBlock.getKey());

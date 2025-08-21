@@ -12,9 +12,12 @@ export class PageContentNode extends ElementNode {
    */
   getTextContent(): string {
     return this.getChildren()
-      .map((child: any) => (typeof child.getTextContent === 'function' ? child.getTextContent() : ''))
+      .map((child: any) =>
+        typeof child.getTextContent === 'function' ? child.getTextContent() : ''
+      )
       .join('');
   }
+
   static getType(): string {
     return 'page-content';
   }
