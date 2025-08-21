@@ -270,20 +270,27 @@ export function PageAutoSplitPlugin({
           // Editör state'inde selection gerçekten son block'un SONUNDA mı?
           const selectionState = editor.getEditorState().read(() => {
             const selection = window.getSelection();
-            if (!selection || selection.rangeCount === 0) return false;
+            if (selection === null || selection === undefined || selection.rangeCount === 0)
+              return false;
             const range = selection.getRangeAt(0);
             // Son block'un DOM elementini bul
             const lastBlockEl = editor.getElementByKey(lastBlock.getKey());
-            if (!lastBlockEl) return false;
+            if (lastBlockEl === null || lastBlockEl === undefined) return false;
             // Caret gerçekten son block'un DOM'unda ve block'un SONUNDA mı?
             // (range.collapsed && range.endContainer == lastBlockEl veya child'ı && endOffset == text uzunluğu)
             if (!range.collapsed) return false;
             // Eğer bir text node ise ve caret textin sonunda ise
-            if (range.endContainer.nodeType === Node.TEXT_NODE && lastBlockEl.contains(range.endContainer)) {
+            if (
+              range.endContainer.nodeType === Node.TEXT_NODE &&
+              lastBlockEl.contains(range.endContainer)
+            ) {
               return range.endOffset === range.endContainer.textContent?.length;
             }
             // Eğer block elementin kendisindeyse ve offset child sayısı kadar ise (yani en sonda)
-            if (range.endContainer === lastBlockEl && range.endOffset === lastBlockEl.childNodes.length) {
+            if (
+              range.endContainer === lastBlockEl &&
+              range.endOffset === lastBlockEl.childNodes.length
+            ) {
               return true;
             }
             return false;
@@ -294,13 +301,20 @@ export function PageAutoSplitPlugin({
                 let selectionNode = insertedBlock;
                 if (
                   insertedBlock !== null &&
-                  typeof ((insertedBlock as unknown) as { getFirstDescendant?: () => unknown }).getFirstDescendant === 'function'
+                  typeof (insertedBlock as unknown as { getFirstDescendant?: () => unknown })
+                    .getFirstDescendant === 'function'
                 ) {
-                  const desc = ((insertedBlock as unknown) as { getFirstDescendant: () => unknown }).getFirstDescendant();
+                  const desc = (
+                    insertedBlock as unknown as { getFirstDescendant: () => unknown }
+                  ).getFirstDescendant();
                   if (
                     desc !== null &&
                     desc !== undefined &&
-                    typeof ((desc as unknown) as { select?: (anchorOffset: number, focusOffset: number) => void }).select === 'function'
+                    typeof (
+                      desc as unknown as {
+                        select?: (anchorOffset: number, focusOffset: number) => void;
+                      }
+                    ).select === 'function'
                   ) {
                     selectionNode = desc as LexicalNode;
                   }
@@ -308,9 +322,17 @@ export function PageAutoSplitPlugin({
                 if (
                   selectionNode !== null &&
                   selectionNode !== undefined &&
-                  typeof ((selectionNode as unknown) as { select?: (anchorOffset: number, focusOffset: number) => void }).select === 'function'
+                  typeof (
+                    selectionNode as unknown as {
+                      select?: (anchorOffset: number, focusOffset: number) => void;
+                    }
+                  ).select === 'function'
                 ) {
-                  ((selectionNode as unknown) as { select: (anchorOffset: number, focusOffset: number) => void }).select(0, 0);
+                  (
+                    selectionNode as unknown as {
+                      select: (anchorOffset: number, focusOffset: number) => void;
+                    }
+                  ).select(0, 0);
                 }
               } catch (e) {
                 // ignore
