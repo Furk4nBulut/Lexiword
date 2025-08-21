@@ -61,6 +61,7 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
       editorState.read(() => {
         const root = $getRoot();
         pageNodes = root.getChildren().filter($isPageNode);
+        // Eğer referans alınacak header/footer yoksa veya tek sayfa varsa, sync işlemini atla
         if (pageNodes.length < 2) return;
         // Öncelik: Son düzenlenen header/footer'ın key'i
         if (
@@ -219,12 +220,13 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
           }
         }
       });
-      if (pageNodes.length < 2) return;
+      // Eğer referans alınacak header/footer yoksa, sync işlemini atla
+      if (refHeaderJSON === null && refFooterJSON === null) return;
       editor.update(() => {
         if (isSyncingRef.current) return;
         let didSync = false;
         // Header güncellemesi
-        if (refHeaderJSON !== null) {
+        if (refHeaderJSON !== null && Array.isArray(refHeaderJSON) && refHeaderJSON.length > 0) {
           for (let i = 0; i < pageNodes.length; i++) {
             const page = pageNodes[i];
             const header = page.getHeaderNode();
@@ -235,6 +237,8 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
                   (n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number'
                 );
               const headerContentArr = headerChildren.map((n: any) => n.exportJSON());
+              // Eğer referans içerik boşsa asla clear ve append yapma
+              if (refHeaderJSON.length === 0) continue;
               if (!deepEqual(headerContentArr, refHeaderJSON)) {
                 isSyncingRef.current = true;
                 didSync = true;
@@ -277,7 +281,7 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
           }
         }
         // Footer güncellemesi
-        if (refFooterJSON !== null) {
+        if (refFooterJSON !== null && Array.isArray(refFooterJSON) && refFooterJSON.length > 0) {
           for (let i = 0; i < pageNodes.length; i++) {
             const page = pageNodes[i];
             const footer = page.getFooterNode();
@@ -288,6 +292,8 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
                   (n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number'
                 );
               const footerContentArr = footerChildren.map((n: any) => n.exportJSON());
+              // Eğer referans içerik boşsa asla clear ve append yapma
+              if (refFooterJSON.length === 0) continue;
               if (!deepEqual(footerContentArr, refFooterJSON)) {
                 isSyncingRef.current = true;
                 didSync = true;
