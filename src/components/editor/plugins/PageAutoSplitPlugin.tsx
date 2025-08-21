@@ -256,7 +256,7 @@ export function PageAutoSplitPlugin({
       const lastBlock = blocks[blocks.length - 1];
       if (lastBlock !== null && lastBlock !== undefined) {
         lastBlock.remove();
-        let insertedBlock: LexicalNode | null = lastBlock;
+        const insertedBlock: LexicalNode | null = lastBlock;
         // Yeni sayfanın content section'u boş değilse başına ekle, yoksa sona ekle
         const firstChildInNext = nextContent.getFirstChild();
         if (firstChildInNext !== null && firstChildInNext !== undefined) {
@@ -264,25 +264,60 @@ export function PageAutoSplitPlugin({
         } else {
           nextContent.append(lastBlock);
         }
-        // Cursor'u yeni sayfaya taşınan bloğun başına ayarla
-        editor.update(() => {
-          try {
-            // Eğer block bir text node ise başına, değilse ilk text child'ın başına selection ayarla
-            let selectionNode = insertedBlock;
-            // Eğer block'un içinde text node varsa, ona git
-            if (typeof (insertedBlock as any).getFirstDescendant === 'function') {
-              const desc = (insertedBlock as any).getFirstDescendant();
-              if (desc && typeof desc.select === 'function') {
-                selectionNode = desc;
+        // Sadece ve sadece kullanıcı gerçekten sayfanın en sonunda (caret en sonda) ise cursor'u taşı
+        const isLastBlock = blocks.length > 0 && lastBlock === blocks[blocks.length - 1];
+        if (isLastBlock) {
+          // Editör state'inde selection gerçekten son block'un SONUNDA mı?
+          const selectionState = editor.getEditorState().read(() => {
+            const selection = window.getSelection();
+            if (!selection || selection.rangeCount === 0) return false;
+            const range = selection.getRangeAt(0);
+            // Son block'un DOM elementini bul
+            const lastBlockEl = editor.getElementByKey(lastBlock.getKey());
+            if (!lastBlockEl) return false;
+            // Caret gerçekten son block'un DOM'unda ve block'un SONUNDA mı?
+            // (range.collapsed && range.endContainer == lastBlockEl veya child'ı && endOffset == text uzunluğu)
+            if (!range.collapsed) return false;
+            // Eğer bir text node ise ve caret textin sonunda ise
+            if (range.endContainer.nodeType === Node.TEXT_NODE && lastBlockEl.contains(range.endContainer)) {
+              return range.endOffset === range.endContainer.textContent?.length;
+            }
+            // Eğer block elementin kendisindeyse ve offset child sayısı kadar ise (yani en sonda)
+            if (range.endContainer === lastBlockEl && range.endOffset === lastBlockEl.childNodes.length) {
+              return true;
+            }
+            return false;
+          });
+          if (selectionState) {
+            editor.update(() => {
+              try {
+                let selectionNode = insertedBlock;
+                if (
+                  insertedBlock !== null &&
+                  typeof ((insertedBlock as unknown) as { getFirstDescendant?: () => unknown }).getFirstDescendant === 'function'
+                ) {
+                  const desc = ((insertedBlock as unknown) as { getFirstDescendant: () => unknown }).getFirstDescendant();
+                  if (
+                    desc !== null &&
+                    desc !== undefined &&
+                    typeof ((desc as unknown) as { select?: (anchorOffset: number, focusOffset: number) => void }).select === 'function'
+                  ) {
+                    selectionNode = desc as LexicalNode;
+                  }
+                }
+                if (
+                  selectionNode !== null &&
+                  selectionNode !== undefined &&
+                  typeof ((selectionNode as unknown) as { select?: (anchorOffset: number, focusOffset: number) => void }).select === 'function'
+                ) {
+                  ((selectionNode as unknown) as { select: (anchorOffset: number, focusOffset: number) => void }).select(0, 0);
+                }
+              } catch (e) {
+                // ignore
               }
-            }
-            if (selectionNode && typeof (selectionNode as any).select === 'function') {
-              (selectionNode as any).select(0, 0); // Başına selection
-            }
-          } catch (e) {
-            // ignore
+            });
           }
-        });
+        }
       }
     }
 
