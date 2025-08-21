@@ -6,6 +6,15 @@ export type SerializedPageContentNode = SerializedElementNode & {
 };
 
 export class PageContentNode extends ElementNode {
+  /**
+   * Tüm çocukların metin içeriğini birleştirir.
+   * Lexical'ın __cachedText ve kopyalama işlemleri için gereklidir.
+   */
+  getTextContent(): string {
+    return this.getChildren()
+      .map((child: any) => (typeof child.getTextContent === 'function' ? child.getTextContent() : ''))
+      .join('');
+  }
   static getType(): string {
     return 'page-content';
   }
