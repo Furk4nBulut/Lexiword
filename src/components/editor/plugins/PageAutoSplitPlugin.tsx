@@ -75,7 +75,7 @@ export function PageAutoSplitPlugin({
     } {
       const el = pageEl.querySelector('[data-lexical-page-section="content"]');
       const contentEl = el instanceof HTMLElement ? el : null;
-      const target = contentEl ?? pageEl;
+      const target = contentEl !== null && contentEl !== undefined ? contentEl : pageEl;
       const rect = target.getBoundingClientRect();
       const styles = window.getComputedStyle(target);
       let paddingTop = parseFloat(styles.paddingTop);
@@ -158,9 +158,9 @@ export function PageAutoSplitPlugin({
         lastBlock.remove(); // Önce çıkar
         const firstChildInNext = nextContent.getFirstChild();
         if (firstChildInNext !== null && firstChildInNext !== undefined) {
-            firstChildInNext.insertBefore(lastBlock);
+          firstChildInNext.insertBefore(lastBlock);
         } else {
-            nextContent.append(lastBlock);
+          nextContent.append(lastBlock);
         }
       }
     }
@@ -178,7 +178,7 @@ export function PageAutoSplitPlugin({
         if (hasNonPage) {
           const page = $createPageNode();
           const contentSection = page.getChildren().find(isContentNode);
-          if (contentSection) {
+          if (contentSection !== null && contentSection !== undefined) {
             children.forEach((n) => {
               if (!$isPageNode(n)) {
                 contentSection.append(n);
@@ -227,7 +227,7 @@ export function PageAutoSplitPlugin({
           if (animationFrameIdRef.current !== null) {
             cancelAnimationFrame(animationFrameIdRef.current);
           }
-          
+
           const moved = reflowPass();
           passes++;
           if (moved && passes < maxPasses) {
