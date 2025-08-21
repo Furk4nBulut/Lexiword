@@ -88,7 +88,7 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
           break;
         }
       }
-      if (allInContent) {
+  if (allInContent) {
         // Eğer sadece 1 tane page node varsa hiçbir şey silme
         event.preventDefault();
         event.stopPropagation();
@@ -101,8 +101,10 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
             for (let i = 0; i < pages.length - 1; i++) {
               pages[i].remove();
             }
-            // Son page node'unun content'ini tamamen temizle
-            const lastPage = pages[pages.length - 1];
+          }
+          // Her durumda (tek veya çok sayfa) sadece son page'in content node'unun çocuklarını sil
+          const lastPage = pages.length > 0 ? pages[pages.length - 1] : null;
+          if (lastPage !== null) {
             const contentNode = lastPage.getChildren().find((c: any) => typeof c.getType === 'function' && c.getType() === 'page-content');
             if (contentNode && typeof contentNode.getChildren === 'function') {
               const children = contentNode.getChildren();
@@ -111,6 +113,11 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
                   child.remove();
                 }
               }
+              // Silme sonrası selection'ı content node'un başına ayarla
+              const selection = $createRangeSelection();
+              selection.anchor.set(contentNode.getKey(), 0, 'element');
+              selection.focus.set(contentNode.getKey(), 0, 'element');
+              $setSelection(selection);
             }
           }
         });
