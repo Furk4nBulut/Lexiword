@@ -255,9 +255,8 @@ export function PageAutoSplitPlugin({
       // Son bloğu mevcut sayfadan çıkarıp yeni sayfanın başına ekle
       const lastBlock = blocks[blocks.length - 1];
       if (lastBlock !== null && lastBlock !== undefined) {
-        // Klonlama yerine doğrudan taşıma daha güvenli olabilir, ancak orijinal mantık korunuyor.
-        // lastBlock.remove() ile blok mevcut sayfadan çıkarılır.
         lastBlock.remove();
+        let insertedBlock: LexicalNode | null = lastBlock;
         // Yeni sayfanın content section'u boş değilse başına ekle, yoksa sona ekle
         const firstChildInNext = nextContent.getFirstChild();
         if (firstChildInNext !== null && firstChildInNext !== undefined) {
@@ -265,6 +264,25 @@ export function PageAutoSplitPlugin({
         } else {
           nextContent.append(lastBlock);
         }
+        // Cursor'u yeni sayfaya taşınan bloğun başına ayarla
+        editor.update(() => {
+          try {
+            // Eğer block bir text node ise başına, değilse ilk text child'ın başına selection ayarla
+            let selectionNode = insertedBlock;
+            // Eğer block'un içinde text node varsa, ona git
+            if (typeof (insertedBlock as any).getFirstDescendant === 'function') {
+              const desc = (insertedBlock as any).getFirstDescendant();
+              if (desc && typeof desc.select === 'function') {
+                selectionNode = desc;
+              }
+            }
+            if (selectionNode && typeof (selectionNode as any).select === 'function') {
+              (selectionNode as any).select(0, 0); // Başına selection
+            }
+          } catch (e) {
+            // ignore
+          }
+        });
       }
     }
 
