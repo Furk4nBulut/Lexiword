@@ -1,22 +1,7 @@
 import type { LexicalNode } from 'lexical';
-/**
- * PageAutoSplitPlugin
- *
- * Sayfa içerikleri dolduğunda taşan blokları otomatik olarak yeni sayfaya taşır.
- * Header/footer kopyalanır, PageNumberNode eklenir, içerik düzgün şekilde bölünür.
- */
-
 import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import {
-  $getRoot
-  // ParagraphNode,
-  // TextNode,
-  // LineBreakNode,
-  // $isElementNode,
-  // $isTextNode,
-  // $isLineBreakNode
-} from 'lexical';
+import { $getRoot } from 'lexical';
 import { $createPageNode, $isPageNode, type PageNode } from '../nodes/PageNode';
 import { setHeaderFooterSyncEnabled } from '../context/HeaderFooterSyncModeContext';
 import PageNumberNode, { $createPageNumberNode } from '../nodes/PageNumberNode';
@@ -29,23 +14,15 @@ export interface PageFlowSettings {
   marginBottomMm: number;
 }
 
-/**
- * Yardımcı fonksiyon: Header/Footer klonlamak için
- */
 function cloneSection<T extends LexicalNode>(sectionNode: T | null): T | null {
   if (sectionNode == null) return null;
-
-  // Derin klon: node'un tipini ve tüm çocuklarını clone() ile kopyala
   const SectionClass = sectionNode.constructor as new () => T;
   const clonedSection = new SectionClass();
-
   sectionNode.getChildren().forEach((child: LexicalNode | null | undefined) => {
     if (child !== null && child !== undefined && typeof (child as any).clone === 'function') {
-      // Standart klonlama
       clonedSection.append((child as any).clone());
     }
   });
-
   return clonedSection;
 }
 
@@ -56,9 +33,10 @@ export function PageAutoSplitPlugin({
 }: PageFlowSettings): null {
   const [editor] = useLexicalComposerContext();
   const isReflowingRef = useRef(false);
+  // Animasyon çerçevesi ID'sini saklamak için bir ref ekliyoruz.
+  const animationFrameIdRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // Sadece taşma olduğunda reflow başlatmak için yardımcı fonksiyon
     function isAnyPageOverflow(): boolean {
       const root = $getRoot();
       let overflow = false;
@@ -120,54 +98,37 @@ export function PageAutoSplitPlugin({
     function moveOverflowBlocksToNextPage(pageNode: PageNode, capacity: number): void {
       const contentSection = pageNode.getChildren().find(isContentNode);
       if (contentSection === null || contentSection === undefined) return;
-
       const blocks = contentSection.getChildren();
       if (blocks.length === 0) return;
-
       const el = editor.getElementByKey(contentSection.getKey());
       if (el === null || el === undefined) return;
 
-      // Header & Footer yüksekliğini capacity'den düş
       const pageHeader = pageNode.getChildren().find(isHeaderNode);
       const pageFooter = pageNode.getChildren().find(isFooterNode);
 
       let headerHeight = 0;
       let footerHeight = 0;
-
       if (pageHeader !== null && pageHeader !== undefined) {
         const headerEl = editor.getElementByKey(pageHeader.getKey());
         if (headerEl !== null && headerEl !== undefined) headerHeight = headerEl.offsetHeight;
       }
-
       if (pageFooter !== null && pageFooter !== undefined) {
         const footerEl = editor.getElementByKey(pageFooter.getKey());
         if (footerEl !== null && footerEl !== undefined) footerHeight = footerEl.offsetHeight;
       }
-
       const minLineGap = 24;
       const adjustedCapacity = capacity - headerHeight - footerHeight - minLineGap;
-
       if (!(el.scrollHeight > adjustedCapacity + 2)) return;
 
       let nextPage = pageNode.getNextSibling();
       if (!$isPageNode(nextPage)) {
-        // 1. Sync'i kapat
         setHeaderFooterSyncEnabled(false);
-
         nextPage = $createPageNode();
-
-        // 2. Header kopyala
         const newHeader = cloneSection(pageHeader ?? null);
         if (newHeader !== null) nextPage.append(newHeader);
-
-        // 3. Content ekle
         nextPage.append(new PageContentNode());
-
-        // 4. Footer kopyala
         const newFooter = cloneSection(pageFooter ?? null);
         if (newFooter !== null) nextPage.append(newFooter);
-
-        // 5. PageNumberNode kontrolü (sync kesinlikle kapalıyken)
         const root = pageNode.getParent();
         if (root !== null) {
           const allPages = root.getChildren().filter($isPageNode);
@@ -179,20 +140,28 @@ export function PageAutoSplitPlugin({
             nextPage.append($createPageNumberNode(String(pageNumber)));
           }
         }
-
-        // 6. Sync'i tekrar aç
         setHeaderFooterSyncEnabled(true);
-
         pageNode.insertAfter(nextPage);
       }
 
       const nextContent = nextPage.getChildren().find(isContentNode);
       if (nextContent === null || nextContent === undefined) return;
 
-      // Şimdilik sadece son bloğu taşıyor
+      if (blocks.length === 1) {
+        return;
+      }
+
       const lastBlock = blocks[blocks.length - 1];
       if (lastBlock !== null && lastBlock !== undefined) {
-        nextContent.append(lastBlock);
+        // Klonlama mantığı yerine doğrudan taşıma daha güvenli olabilir,
+        // ancak orijinal mantığı koruyoruz.
+        lastBlock.remove(); // Önce çıkar
+        const firstChildInNext = nextContent.getFirstChild();
+        if (firstChildInNext !== null && firstChildInNext !== undefined) {
+            firstChildInNext.insertBefore(lastBlock);
+        } else {
+            nextContent.append(lastBlock);
+        }
       }
     }
 
@@ -204,22 +173,22 @@ export function PageAutoSplitPlugin({
           root.append($createPageNode());
           return;
         }
-
         const children = root.getChildren();
         const hasNonPage = children.some((n) => !$isPageNode(n));
         if (hasNonPage) {
           const page = $createPageNode();
-          children.forEach((n) => {
-            if (!$isPageNode(n)) {
-              const contentSection = page.getChildren().find(isContentNode);
-              if (contentSection !== null && contentSection !== undefined) contentSection.append(n);
-            }
-          });
+          const contentSection = page.getChildren().find(isContentNode);
+          if (contentSection) {
+            children.forEach((n) => {
+              if (!$isPageNode(n)) {
+                contentSection.append(n);
+              }
+            });
+          }
           root.append(page);
         }
-
         let page = root.getFirstChild();
-        while ($isPageNode(page)) {
+        while (page !== null && $isPageNode(page)) {
           const pageNode = page;
           const pageEl = getPageEl(pageNode);
           if (pageEl === null || pageEl === undefined) {
@@ -244,32 +213,36 @@ export function PageAutoSplitPlugin({
       return didMoveAny;
     }
 
-    // Reflow işlemini kontrollü başlatan fonksiyon
     function triggerReflowIfNeeded(): void {
       if (isReflowingRef.current) return;
-      // Sadece taşma varsa reflow başlat
       editor.getEditorState().read(() => {
         if (!isAnyPageOverflow()) return;
+
         isReflowingRef.current = true;
         let passes = 0;
-        const maxPasses = 30;
+        const maxPasses = 30; // Güvenlik ağı
+
         function run(): void {
+          // Önceki animasyon çerçevesini temizle
+          if (animationFrameIdRef.current !== null) {
+            cancelAnimationFrame(animationFrameIdRef.current);
+          }
+          
           const moved = reflowPass();
           passes++;
           if (moved && passes < maxPasses) {
-            // Hala taşma varsa tekrar çalıştır
-            setTimeout(run, 0);
+            // setTimeout yerine requestAnimationFrame kullan
+            animationFrameIdRef.current = requestAnimationFrame(run);
           } else {
             isReflowingRef.current = false;
+            animationFrameIdRef.current = null;
           }
         }
         run();
       });
     }
 
-    // İlk mount'ta ve her update'te tetikle
     triggerReflowIfNeeded();
-
     const unregister = editor.registerUpdateListener((): void => {
       triggerReflowIfNeeded();
     });
@@ -277,6 +250,10 @@ export function PageAutoSplitPlugin({
     return (): void => {
       unregister();
       isReflowingRef.current = false;
+      // Component kaldırıldığında bekleyen bir animasyon çerçevesi varsa iptal et.
+      if (animationFrameIdRef.current !== null) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+      }
     };
   }, [editor, pageHeightMm, marginTopMm, marginBottomMm]);
 
