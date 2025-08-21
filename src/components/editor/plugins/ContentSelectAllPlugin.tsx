@@ -96,9 +96,22 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
           const root = $getRoot();
           // Tüm page node'larını bul
           const pages = root.getChildren().filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
-          // En az bir page node bırak, diğerlerini sil
-          for (let i = 1; i < pages.length; i++) {
-            pages[i].remove();
+          if (pages.length > 1) {
+            // Son page node'u hariç hepsini sil
+            for (let i = 0; i < pages.length - 1; i++) {
+              pages[i].remove();
+            }
+            // Son page node'unun content'ini tamamen temizle
+            const lastPage = pages[pages.length - 1];
+            const contentNode = lastPage.getChildren().find((c: any) => typeof c.getType === 'function' && c.getType() === 'page-content');
+            if (contentNode && typeof contentNode.getChildren === 'function') {
+              const children = contentNode.getChildren();
+              for (const child of children) {
+                if (typeof child.remove === 'function') {
+                  child.remove();
+                }
+              }
+            }
           }
         });
         return true;
