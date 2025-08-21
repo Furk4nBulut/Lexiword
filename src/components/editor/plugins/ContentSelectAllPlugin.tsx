@@ -23,27 +23,95 @@ import {
 } from 'lexical';
 import { isContentNode } from '../nodes/sectionTypeGuards';
 
+// Helper: Tüm PageContentNode'ları bul (dışarı taşıdık)
+function getAllContentNodes(): any[] {
+  const rootNode = $getRoot();
+  if (rootNode == null) return [];
+  const allContentNodes: any[] = [];
+  rootNode.getChildren().forEach((pageNode: any) => {
+    if (typeof pageNode.getChildren === 'function') {
+      pageNode.getChildren().forEach((child: any) => {
+        if (isContentNode(child)) {
+          allContentNodes.push(child);
+        }
+      });
+    }
+  });
+  return allContentNodes;
+}
+
 export function ContentSelectAllPlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
   const blockInputRef = useRef(false);
 
   useEffect(() => {
-    // Helper: Tüm PageContentNode'ları bul
-    function getAllContentNodes(): any[] {
-      const rootNode = $getRoot();
-      if (rootNode == null) return [];
-      const allContentNodes: any[] = [];
-      rootNode.getChildren().forEach((pageNode: any) => {
-        if (typeof pageNode.getChildren === 'function') {
-          pageNode.getChildren().forEach((child: any) => {
-            if (isContentNode(child)) {
-              allContentNodes.push(child);
-            }
-          });
+    // Delete/backspace ile tüm content node'larını temizle
+    const handleDeleteAllContent = (event: KeyboardEvent): boolean => {
+      // Sadece .a4-content aktifken ve tüm content seçiliyken çalışsın
+      const active = document.activeElement;
+      if (!(active instanceof HTMLElement)) return false;
+      let contentElement: HTMLElement | null = null;
+      if (active.classList.contains('a4-content')) {
+        contentElement = active;
+      } else {
+        contentElement = active.querySelector('.a4-content');
+      }
+      if (contentElement === null) return false;
+      // Sadece delete/backspace ise
+      if (event.key !== 'Delete' && event.key !== 'Backspace') return false;
+      // Seçim tüm content node'larını kapsıyor mu?
+      const allContentNodes = editor.getEditorState().read(getAllContentNodes);
+      if (allContentNodes.length === 0) return false;
+      // Lexical selection kontrolü
+      const selection = window.getSelection();
+  if (selection == null || selection.isCollapsed) return false;
+      // DOM'da .a4-content dışında bir şey seçiliyse engelleme
+      let allInContent = true;
+      for (let i = 0; i < selection.rangeCount; i++) {
+        const range = selection.getRangeAt(i);
+        let startContainer = range.startContainer;
+        let endContainer = range.endContainer;
+        if (startContainer.nodeType === Node.TEXT_NODE) {
+          startContainer = startContainer.parentElement as HTMLElement;
         }
-      });
-      return allContentNodes;
-    }
+        if (endContainer.nodeType === Node.TEXT_NODE) {
+          endContainer = endContainer.parentElement as HTMLElement;
+        }
+        if (!(startContainer instanceof HTMLElement) || !(endContainer instanceof HTMLElement)) {
+          allInContent = false;
+          break;
+        }
+        const startClosest = startContainer.closest('.a4-content');
+        const endClosest = endContainer.closest('.a4-content');
+        if (startClosest === null || endClosest === null) {
+          allInContent = false;
+          break;
+        }
+      }
+      if (allInContent) {
+        event.preventDefault();
+        event.stopPropagation();
+        editor.update(() => {
+          for (const node of getAllContentNodes()) {
+            // Sadece .a4-content node'unun çocuklarını gez
+            if (typeof node.getChildren === 'function') {
+              const children = node.getChildren();
+              for (const child of children) {
+                if (
+                  typeof child.getType === 'function' &&
+                  child.getType() === 'text' &&
+                  typeof child.setTextContent === 'function'
+                ) {
+                  child.setTextContent('');
+                }
+              }
+            }
+          }
+        });
+        return true;
+      }
+      return false;
+    };
 
     // Sadece .a4-content dışında paste'i engelle
     const unregisterSelectAll = editor.registerCommand(
@@ -145,6 +213,12 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
       COMMAND_PRIORITY_CRITICAL
     );
 
+    // Delete/backspace tuşunu yakala (capture phase, root elemde)
+    const rootElem = editor.getRootElement?.();
+    if (rootElem !== null && rootElem !== undefined) {
+      rootElem.addEventListener('keydown', handleDeleteAllContent, true);
+    }
+
     // Ctrl+C kopyalama komutunu yakala
     const unregisterCopy = editor.registerCommand(
       COPY_COMMAND,
@@ -194,10 +268,7 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
       COMMAND_PRIORITY_CRITICAL
     );
 
-    // Tek bir rootElem tanımı
-    const rootElem = editor.getRootElement?.();
-
-    // Input'u engellemek için event listener ekle
+  // Input'u engellemek için event listener ekle
     const handleBeforeInput = (e: InputEvent): void => {
       if (blockInputRef.current) {
         console.debug('[ContentSelectAllPlugin] Input blocked');
@@ -240,6 +311,7 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
         rootElem.removeEventListener('beforeinput', handleBeforeInput, true);
         rootElem.removeEventListener('blur', handleBlur, true);
         rootElem.removeEventListener('paste', handlePaste, true);
+        rootElem.removeEventListener('keydown', handleDeleteAllContent, true);
       }
     };
   }, [editor]);
