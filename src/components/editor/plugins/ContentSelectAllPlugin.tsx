@@ -62,8 +62,8 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
       // Seçim tüm content node'larını kapsıyor mu?
       const allContentNodes = editor.getEditorState().read(getAllContentNodes);
       if (allContentNodes.length === 0) return false;
-      // Lexical selection kontrolü
-      const selection = window.getSelection();
+  // Lexical selection kontrolü
+  const selection = window.getSelection();
   if (selection == null || selection.isCollapsed) return false;
       // DOM'da .a4-content dışında bir şey seçiliyse engelleme
       let allInContent = true;
@@ -89,23 +89,16 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
         }
       }
       if (allInContent) {
+        // Eğer sadece 1 tane page node varsa hiçbir şey silme
         event.preventDefault();
         event.stopPropagation();
         editor.update(() => {
-          for (const node of getAllContentNodes()) {
-            // Sadece .a4-content node'unun çocuklarını gez
-            if (typeof node.getChildren === 'function') {
-              const children = node.getChildren();
-              for (const child of children) {
-                if (
-                  typeof child.getType === 'function' &&
-                  child.getType() === 'text' &&
-                  typeof child.setTextContent === 'function'
-                ) {
-                  child.setTextContent('');
-                }
-              }
-            }
+          const root = $getRoot();
+          // Tüm page node'larını bul
+          const pages = root.getChildren().filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
+          // En az bir page node bırak, diğerlerini sil
+          for (let i = 1; i < pages.length; i++) {
+            pages[i].remove();
           }
         });
         return true;
@@ -268,7 +261,7 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
       COMMAND_PRIORITY_CRITICAL
     );
 
-  // Input'u engellemek için event listener ekle
+    // Input'u engellemek için event listener ekle
     const handleBeforeInput = (e: InputEvent): void => {
       if (blockInputRef.current) {
         console.debug('[ContentSelectAllPlugin] Input blocked');

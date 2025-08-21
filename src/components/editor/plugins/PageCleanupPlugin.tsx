@@ -1,13 +1,9 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import {
-  $getRoot,
-  ParagraphNode,
-  TextNode,
-  LineBreakNode,
-  type SerializedParagraphNode,
-  type SerializedTextNode,
-  type SerializedLineBreakNode
-} from 'lexical';
+import { $getRoot, ParagraphNode, TextNode, LineBreakNode, type SerializedParagraphNode, type SerializedTextNode, type SerializedLineBreakNode } from 'lexical';
+import { PageNode } from '../nodes/PageNode';
+import { PageHeaderNode } from '../nodes/PageHeaderNode';
+import { PageFooterNode } from '../nodes/PageFooterNode';
+import { PageContentNode } from '../nodes/PageContentNode';
 import { useEffect } from 'react';
 import { $isPageNode } from '../nodes/PageNode';
 
@@ -24,7 +20,16 @@ export function PageCleanupPlugin(): null {
     return editor.registerUpdateListener(() => {
       editor.update(() => {
         const root = $getRoot();
-        const pages = root.getChildren().filter($isPageNode);
+  const pages = root.getChildren().filter($isPageNode);
+        // Eğer hiç page node'u kalmadıysa otomatik olarak bir tane ekle
+        if (pages.length === 0) {
+          const newPage = new PageNode({});
+          newPage.append(new PageHeaderNode());
+          newPage.append(new PageContentNode());
+          newPage.append(new PageFooterNode());
+          root.append(newPage);
+          return;
+        }
         if (pages.length <= 1) return; // En az bir sayfa kalsın
         // Silinecek sayfalar ve kalan sayfa
         const pagesToRemove = pages.filter((pageNode) => {
