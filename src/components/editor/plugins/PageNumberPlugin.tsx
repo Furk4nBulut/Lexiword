@@ -3,6 +3,8 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { $getRoot, createCommand } from 'lexical';
 import { $createPageNumberNode } from '../nodes/PageNumberNode';
 import { setHeaderPageNumberActive, setFooterPageNumberActive } from './PageAutoSplitPlugin';
+// Aktiflik değişkenlerini import et
+import { isHeaderPageNumberActive, isFooterPageNumberActive } from './PageAutoSplitPlugin';
 import * as Toolbar from '@radix-ui/react-toolbar';
 
 // Lexical command tanımları
@@ -31,13 +33,12 @@ export function useFooterPageNumberToggle(): () => void {
 export function PageNumberCommandPlugin(): null {
   const [editor] = useLexicalComposerContext();
   React.useEffect(() => {
-    // Page number command aktifliğini PageAutoSplitPlugin'e bildir
-    setHeaderPageNumberActive(true);
-    setFooterPageNumberActive(true);
     // Header komutu
     const unregisterHeader = editor.registerCommand(
       TOGGLE_HEADER_PAGE_NUMBER_COMMAND,
       () => {
+        // Eğer mod aktif değilse hiçbir şey yapma
+        if (!isHeaderPageNumberActive) return true;
         editor.update(() => {
           const root = $getRoot();
           const pageNodes = root
@@ -77,6 +78,8 @@ export function PageNumberCommandPlugin(): null {
     const unregisterFooter = editor.registerCommand(
       TOGGLE_FOOTER_PAGE_NUMBER_COMMAND,
       () => {
+        // Eğer mod aktif değilse hiçbir şey yapma
+        if (!isFooterPageNumberActive) return true;
         editor.update(() => {
           const root = $getRoot();
           const pageNodes = root
@@ -113,8 +116,6 @@ export function PageNumberCommandPlugin(): null {
       0
     );
     return () => {
-      setHeaderPageNumberActive(false);
-      setFooterPageNumberActive(false);
       unregisterHeader();
       unregisterFooter();
     };
@@ -125,6 +126,13 @@ export function PageNumberCommandPlugin(): null {
 // HeaderPageNumberButton bileşeni
 export function HeaderPageNumberButton(): JSX.Element {
   const toggleHeaderPageNumber = useHeaderPageNumberToggle();
+  // Page number modunu toggle et
+  const [active, setActive] = React.useState(isHeaderPageNumberActive);
+  const handleClick = () => {
+    setHeaderPageNumberActive(!active);
+    setActive(!active);
+    toggleHeaderPageNumber();
+  };
   const [enabled, setEnabled] = React.useState(false);
   const [editor] = useLexicalComposerContext();
   React.useEffect(() => {
@@ -150,10 +158,10 @@ export function HeaderPageNumberButton(): JSX.Element {
   }, [editor]);
   return (
     <Toolbar.Button
-      onClick={toggleHeaderPageNumber}
+      onClick={handleClick}
       disabled={!enabled}
       title={"Header'a Sayfa Numarası Ekle/Çıkar"}
-      className="toolbarButton"
+      className={`toolbarButton${active ? ' active' : ''}`}
     >
       Header&apos;a Sayfa No{' '}
     </Toolbar.Button>
@@ -163,6 +171,13 @@ export function HeaderPageNumberButton(): JSX.Element {
 // FooterPageNumberButton bileşeni
 export function FooterPageNumberButton(): JSX.Element {
   const toggleFooterPageNumber = useFooterPageNumberToggle();
+  // Page number modunu toggle et
+  const [active, setActive] = React.useState(isFooterPageNumberActive);
+  const handleClick = () => {
+    setFooterPageNumberActive(!active);
+    setActive(!active);
+    toggleFooterPageNumber();
+  };
   const [enabled, setEnabled] = React.useState(false);
   const [editor] = useLexicalComposerContext();
   React.useEffect(() => {
@@ -184,10 +199,10 @@ export function FooterPageNumberButton(): JSX.Element {
   }, [editor]);
   return (
     <Toolbar.Button
-      onClick={toggleFooterPageNumber}
+      onClick={handleClick}
       disabled={!enabled}
       title={"Footer'a Sayfa Numarası Ekle/Çıkar"}
-      className="toolbarButton"
+      className={`toolbarButton${active ? ' active' : ''}`}
     >
       Footer&apos;a Sayfa No
     </Toolbar.Button>

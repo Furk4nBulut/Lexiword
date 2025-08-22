@@ -20,10 +20,13 @@ import { $getRoot } from 'lexical';
 import { $createPageNode, $isPageNode, type PageNode } from '../nodes/PageNode';
 import { setHeaderFooterSyncEnabled } from '../context/HeaderFooterSyncModeContext';
 import { $createPageNumberNode } from '../nodes/PageNumberNode';
+import { isContentNode, isHeaderNode, isFooterNode } from '../nodes/sectionTypeGuards';
+import { PageContentNode } from '../nodes/PageContentNode';
 
 // Page number komutunun aktif olup olmadığını global olarak takip et
-let isHeaderPageNumberActive = false;
-let isFooterPageNumberActive = false;
+
+export let isHeaderPageNumberActive = false;
+export let isFooterPageNumberActive = false;
 
 export function setHeaderPageNumberActive(active: boolean): void {
   isHeaderPageNumberActive = active;
@@ -31,8 +34,6 @@ export function setHeaderPageNumberActive(active: boolean): void {
 export function setFooterPageNumberActive(active: boolean): void {
   isFooterPageNumberActive = active;
 }
-import { isContentNode, isHeaderNode, isFooterNode } from '../nodes/sectionTypeGuards';
-import { PageContentNode } from '../nodes/PageContentNode';
 
 /**
  * Sayfa akış ayarları arayüzü
@@ -242,6 +243,7 @@ export function PageAutoSplitPlugin({
         pageNode.insertAfter(nextPage);
 
         // Page number command aktifse, tüm sayfalardaki page number'ları güncelle
+        // DÜZELTME: Sadece ilgili mod aktifse ekle, aksi halde asla ekleme!
         if (isHeaderPageNumberActive || isFooterPageNumberActive) {
           const root = pageNode.getParent();
           if (root != null) {
