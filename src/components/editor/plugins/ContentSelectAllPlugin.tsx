@@ -62,9 +62,9 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
       // Seçim tüm content node'larını kapsıyor mu?
       const allContentNodes = editor.getEditorState().read(getAllContentNodes);
       if (allContentNodes.length === 0) return false;
-  // Lexical selection kontrolü
-  const selection = window.getSelection();
-  if (selection == null || selection.isCollapsed) return false;
+      // Lexical selection kontrolü
+      const selection = window.getSelection();
+      if (selection == null || selection.isCollapsed) return false;
       // DOM'da .a4-content dışında bir şey seçiliyse engelleme
       let allInContent = true;
       for (let i = 0; i < selection.rangeCount; i++) {
@@ -88,14 +88,16 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
           break;
         }
       }
-  if (allInContent) {
+      if (allInContent) {
         // Eğer sadece 1 tane page node varsa hiçbir şey silme
         event.preventDefault();
         event.stopPropagation();
         editor.update(() => {
           const root = $getRoot();
           // Tüm page node'larını bul
-          const pages = root.getChildren().filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
+          const pages = root
+            .getChildren()
+            .filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
           if (pages.length > 1) {
             // Son page node'u hariç hepsini sil
             for (let i = 0; i < pages.length - 1; i++) {
@@ -105,8 +107,10 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
           // Her durumda (tek veya çok sayfa) sadece son page'in content node'unun çocuklarını sil
           const lastPage = pages.length > 0 ? pages[pages.length - 1] : null;
           if (lastPage !== null) {
-            const contentNode = lastPage.getChildren().find((c: any) => typeof c.getType === 'function' && c.getType() === 'page-content');
-            if (contentNode && typeof contentNode.getChildren === 'function') {
+            const contentNode = lastPage
+              .getChildren()
+              .find((c: any) => typeof c.getType === 'function' && c.getType() === 'page-content');
+            if (Boolean(contentNode) && typeof contentNode.getChildren === 'function') {
               const children = contentNode.getChildren();
               for (const child of children) {
                 if (typeof child.remove === 'function') {
