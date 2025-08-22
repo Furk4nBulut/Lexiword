@@ -126,7 +126,40 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
         }
       }
 
-      if (allInContent) {
+      // --- EK KONTROL: Seçim gerçekten tüm içeriği kapsıyor mu? ---
+      // Her bir content node'un başından sonuna kadar mı seçili?
+      // Sadece tüm bloklar seçiliyse toplu silme yapılmalı.
+      let allFullySelected = true;
+      for (const contentNode of allContentNodes) {
+        const el = editor.getElementByKey?.(contentNode.getKey?.());
+        if (el == null) {
+          allFullySelected = false;
+          break;
+        }
+        let nodeFullySelected = false;
+        for (let i = 0; i < selection.rangeCount; i++) {
+          const range = selection.getRangeAt(i);
+          // Seçim bu elementin tamamını kapsıyor mu?
+          const selRange = document.createRange();
+          selRange.selectNodeContents(el);
+          // Seçim aralığı, node'un tamamını kapsıyor mu?
+          if (
+            range.startContainer === selRange.startContainer &&
+            range.startOffset <= selRange.startOffset &&
+            range.endContainer === selRange.endContainer &&
+            range.endOffset >= selRange.endOffset
+          ) {
+            nodeFullySelected = true;
+            break;
+          }
+        }
+        if (!nodeFullySelected) {
+          allFullySelected = false;
+          break;
+        }
+      }
+
+      if (allInContent && allFullySelected) {
         // Default silme işlemini engelle
         event.preventDefault();
         event.stopPropagation();
@@ -134,7 +167,6 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
         // Lexical güncellemesi başlat
         editor.update(() => {
           const root = $getRoot();
-
           // Tüm page node’larını bul
           const pages = root
             .getChildren()
@@ -172,6 +204,7 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
         });
         return true;
       }
+      // Eğer seçim tüm içeriği kapsamıyorsa, normal silme devam etsin
       return false;
     };
 
