@@ -1,5 +1,13 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $getRoot, ParagraphNode, TextNode, LineBreakNode, type SerializedParagraphNode, type SerializedTextNode, type SerializedLineBreakNode } from 'lexical';
+import {
+  $getRoot,
+  ParagraphNode,
+  TextNode,
+  LineBreakNode,
+  type SerializedParagraphNode,
+  type SerializedTextNode,
+  type SerializedLineBreakNode
+} from 'lexical';
 import { PageNode, $isPageNode } from '../nodes/PageNode';
 import { PageHeaderNode } from '../nodes/PageHeaderNode';
 import { PageFooterNode } from '../nodes/PageFooterNode';

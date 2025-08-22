@@ -1,16 +1,17 @@
 /**
- * ContentSelectAllPlugin
+ * ContentSelectAllPlugin.tsx
  *
- * Bu plugin, Ctrl+A (veya Mac'te Cmd+A) kısayoluna basıldığında sadece .a4-content alanındaki tüm içeriği seçer.
- * Böylece kullanıcı, sayfa içeriğini kolayca topluca seçebilir.
+ * Bu plugin, Lexical editöründe Ctrl+A (veya Cmd+A) ve bazı kısayolları özelleştirerek
+ * sadece `.a4-content` alanındaki içerik üzerinde işlem yapılmasına izin verir.
  *
- * Kullanım Senaryosu:
- * - Standart Ctrl+A davranışını override ederek, sadece içerik alanını seçmek için kullanılır.
- *
- * Notlar:
- * - Lexical editörün registerCommand API'si ile global kısayol dinlenir.
- * - DOM'da .a4-content class'ı ile işaretli alan hedeflenir.
+ * Sağladığı Özellikler:
+ * - Ctrl+A → Tüm `.a4-content` içeriğini seçer (dışarıyı seçmez).
+ * - Delete/Backspace → Tüm içeriği siler ama her zaman 1 boş sayfa bırakır.
+ * - Ctrl+C → Panoya sadece `.a4-content` metnini kopyalar.
+ * - Ctrl+V → Sadece `.a4-content` içine yapıştırmaya izin verir.
+ * - Kopyalama sonrası kısa süreli input kilidi ekler (selection bozulmasın diye).
  */
+
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useEffect, useRef } from 'react';
 import {
@@ -23,13 +24,23 @@ import {
 } from 'lexical';
 import { isContentNode } from '../nodes/sectionTypeGuards';
 
-// Helper: Tüm PageContentNode'ları bul (dışarı taşıdık)
+/**
+ * Helper Fonksiyon: getAllContentNodes
+ *
+ * Editördeki tüm PageContentNode (yani `.a4-content` karşılığı) node'larını bulur ve döner.
+ *
+ * Dönüş:
+ * - PageContentNode[] dizisi
+ */
 function getAllContentNodes(): any[] {
   const rootNode = $getRoot();
   if (rootNode == null) return [];
   const allContentNodes: any[] = [];
+
+  // Root’un çocukları page node’lardır
   rootNode.getChildren().forEach((pageNode: any) => {
     if (typeof pageNode.getChildren === 'function') {
+      // Her page node’un içindeki content node’larını bul
       pageNode.getChildren().forEach((child: any) => {
         if (isContentNode(child)) {
           allContentNodes.push(child);
@@ -37,19 +48,41 @@ function getAllContentNodes(): any[] {
       });
     }
   });
+
   return allContentNodes;
 }
 
+/**
+ * React Component: ContentSelectAllPlugin
+ *
+ * Lexical editör için bir React pluginidir. `useEffect` içinde global komutlar
+ * ve event listener'lar kaydedilir. Bu listener'lar sayesinde:
+ * - Ctrl+A → sadece içerik seçilir
+ * - Delete/Backspace → içerik temizlenir ama en az 1 boş sayfa kalır
+ * - Ctrl+C → içerik text’i panoya kopyalanır
+ * - Ctrl+V → sadece içerik içine yapıştırılır
+ */
 export function ContentSelectAllPlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
+
+  // Kopyalama sonrası kısa süre input’u engellemek için flag
   const blockInputRef = useRef(false);
 
   useEffect(() => {
-    // Delete/backspace ile tüm content node'larını temizle
+    /**
+     * Event Handler: handleDeleteAllContent
+     *
+     * Delete veya Backspace tuşuna basıldığında tetiklenir.
+     * Eğer seçim `.a4-content` içindeyse:
+     * - Birden fazla sayfa varsa → son sayfa hariç hepsi silinir.
+     * - Son sayfanın content node’u içindeki tüm çocuklar temizlenir.
+     * - Seçim (cursor) content node’un başına konumlanır.
+     */
     const handleDeleteAllContent = (event: KeyboardEvent): boolean => {
-      // Sadece .a4-content aktifken ve tüm content seçiliyken çalışsın
       const active = document.activeElement;
       if (!(active instanceof HTMLElement)) return false;
+
+      // Aktif element `.a4-content` mi?
       let contentElement: HTMLElement | null = null;
       if (active.classList.contains('a4-content')) {
         contentElement = active;
@@ -57,15 +90,19 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
         contentElement = active.querySelector('.a4-content');
       }
       if (contentElement === null) return false;
-      // Sadece delete/backspace ise
+
+      // Sadece Delete veya Backspace yakalansın
       if (event.key !== 'Delete' && event.key !== 'Backspace') return false;
-      // Seçim tüm content node'larını kapsıyor mu?
+
+      // İçerikte hiç content node yoksa çık
       const allContentNodes = editor.getEditorState().read(getAllContentNodes);
       if (allContentNodes.length === 0) return false;
-      // Lexical selection kontrolü
+
+      // Seçim gerçekten tüm içerikte mi yapılmış?
       const selection = window.getSelection();
       if (selection == null || selection.isCollapsed) return false;
-      // DOM'da .a4-content dışında bir şey seçiliyse engelleme
+
+      // DOM seviyesinde kontrol: seçim .a4-content dışına taşmış mı?
       let allInContent = true;
       for (let i = 0; i < selection.rangeCount; i++) {
         const range = selection.getRangeAt(i);
@@ -88,36 +125,44 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
           break;
         }
       }
+
       if (allInContent) {
-        // Eğer sadece 1 tane page node varsa hiçbir şey silme
+        // Default silme işlemini engelle
         event.preventDefault();
         event.stopPropagation();
+
+        // Lexical güncellemesi başlat
         editor.update(() => {
           const root = $getRoot();
-          // Tüm page node'larını bul
+
+          // Tüm page node’larını bul
           const pages = root
             .getChildren()
             .filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
+
           if (pages.length > 1) {
-            // Son page node'u hariç hepsini sil
+            // Son page hariç tüm sayfaları sil
             for (let i = 0; i < pages.length - 1; i++) {
               pages[i].remove();
             }
           }
-          // Her durumda (tek veya çok sayfa) sadece son page'in content node'unun çocuklarını sil
+
+          // Son page’in content node’unu temizle
           const lastPage = pages.length > 0 ? pages[pages.length - 1] : null;
           if (lastPage !== null) {
             const contentNode = lastPage
               .getChildren()
               .find((c: any) => typeof c.getType === 'function' && c.getType() === 'page-content');
             if (Boolean(contentNode) && typeof contentNode.getChildren === 'function') {
+              // Çocukları sil
               const children = contentNode.getChildren();
               for (const child of children) {
                 if (typeof child.remove === 'function') {
                   child.remove();
                 }
               }
-              // Silme sonrası selection'ı content node'un başına ayarla
+
+              // Cursor’u content’in başına taşı
               const selection = $createRangeSelection();
               selection.anchor.set(contentNode.getKey(), 0, 'element');
               selection.focus.set(contentNode.getKey(), 0, 'element');
@@ -130,29 +175,37 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
       return false;
     };
 
-    // Sadece .a4-content dışında paste'i engelle
+    /**
+     * Ctrl+A Override
+     *
+     * - Eğer `.a4-content` içindeysek default Ctrl+A iptal edilir.
+     * - Bunun yerine tüm content node’lar seçilir.
+     * - Ayrıca içerik text’i toplanıp panoya kopyalanır.
+     */
     const unregisterSelectAll = editor.registerCommand(
       KEY_MODIFIER_COMMAND,
       (event: KeyboardEvent): boolean => {
         const active = document.activeElement;
-        if (!(active instanceof HTMLElement)) {
-          return false;
-        }
+        if (!(active instanceof HTMLElement)) return false;
+
+        // `.a4-content` alanını bul
         let contentElement: HTMLElement | null = null;
         if (active.classList.contains('a4-content')) {
           contentElement = active;
         } else {
           contentElement = active.querySelector('.a4-content');
         }
-        if (contentElement === null) {
-          return false;
-        }
+        if (contentElement === null) return false;
+
+        // Ctrl+A veya Cmd+A yakala
         if ((event.ctrlKey || event.metaKey) && (event.key === 'a' || event.key === 'A')) {
           event.preventDefault();
+
           editor.update(() => {
             const allContentNodes = getAllContentNodes();
             if (allContentNodes.length === 0) return;
-            // Tüm content node'lar içindeki ilk ve son text node'u bul
+
+            // İlk text node’u bul
             function findFirstTextNode(node: any): any {
               if (typeof node.getChildren !== 'function') return null;
               for (const child of node.getChildren()) {
@@ -169,6 +222,8 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
               }
               return null;
             }
+
+            // Son text node’u bul
             function findLastTextNode(node: any): any {
               if (typeof node.getChildren !== 'function') return null;
               const children = node.getChildren();
@@ -187,40 +242,34 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
               }
               return null;
             }
+
+            // Başlangıç ve bitiş node’larını belirle
             const firstContent = allContentNodes[0];
             const lastContent = allContentNodes[allContentNodes.length - 1];
             const firstText = findFirstTextNode(firstContent) ?? firstContent;
             const lastText = findLastTextNode(lastContent) ?? lastContent;
+
+            // Seçim objesi oluştur ve ayarla
             const selection = $createRangeSelection();
             selection.anchor.set(firstText.getKey(), 0, 'text');
             selection.focus.set(lastText.getKey(), lastText.getTextContent().length, 'text');
             $setSelection(selection);
-            // Her PageContentNode'un getTextContent() ile içeriğini sırayla birleştirip panoya kopyala
+
+            // İçeriği panoya yaz
             const contentText = allContentNodes
               .map((node) =>
                 typeof node.getTextContent === 'function' ? node.getTextContent() : ''
               )
               .join('\n');
+
             if (typeof contentText === 'string') {
-              navigator.clipboard
-                .writeText(contentText)
-                .then(() => {
-                  blockInputRef.current = true;
-                  setTimeout(() => {
-                    blockInputRef.current = false;
-                  }, 120);
-                })
-                .catch(() => {
-                  blockInputRef.current = true;
-                  setTimeout(() => {
-                    blockInputRef.current = false;
-                  }, 120);
-                });
-            } else {
-              blockInputRef.current = true;
-              setTimeout(() => {
-                blockInputRef.current = false;
-              }, 120);
+              navigator.clipboard.writeText(contentText).finally(() => {
+                // Kısa süreli input engeli
+                blockInputRef.current = true;
+                setTimeout(() => {
+                  blockInputRef.current = false;
+                }, 120);
+              });
             }
           });
           return true;
@@ -230,23 +279,22 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
       COMMAND_PRIORITY_CRITICAL
     );
 
-    // Delete/backspace tuşunu yakala (capture phase, root elemde)
-    const rootElem = editor.getRootElement?.();
-    if (rootElem !== null && rootElem !== undefined) {
-      rootElem.addEventListener('keydown', handleDeleteAllContent, true);
-    }
-
-    // Ctrl+C kopyalama komutunu yakala
+    /**
+     * Ctrl+C Override
+     *
+     * Eğer seçim tamamen `.a4-content` içindeyse → tüm içerik toplanıp panoya yazılır.
+     * Böylece `.a4-content` dışındaki elementler kopyalanmaz.
+     */
     const unregisterCopy = editor.registerCommand(
       COPY_COMMAND,
       (event: ClipboardEvent): boolean => {
-        // Eğer seçim tüm content node'larını kapsıyorsa, sadece contentText'i kopyala
         const allContentNodes = getAllContentNodes();
         if (allContentNodes.length === 0) return false;
-        // Seçim anchor/focus ilk ve son content node'da mı?
+
         const selection = window.getSelection();
         if (selection == null) return false;
-        // DOM'da .a4-content dışında bir şey seçiliyse engelleme
+
+        // Seçim `.a4-content` dışında mı?
         let allInContent = true;
         for (let i = 0; i < selection.rangeCount; i++) {
           const range = selection.getRangeAt(i);
@@ -269,7 +317,9 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
             break;
           }
         }
+
         if (allInContent) {
+          // Text’i panoya yaz
           const contentText = allContentNodes
             .map((node) => (typeof node.getTextContent === 'function' ? node.getTextContent() : ''))
             .join('\n');
@@ -285,7 +335,12 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
       COMMAND_PRIORITY_CRITICAL
     );
 
-    // Input'u engellemek için event listener ekle
+    /**
+     * Input Event Engelleme
+     *
+     * Eğer blockInputRef true ise (örneğin kopyalama sonrası),
+     * input işlemleri kısa süreliğine engellenir.
+     */
     const handleBeforeInput = (e: InputEvent): void => {
       if (blockInputRef.current) {
         console.debug('[ContentSelectAllPlugin] Input blocked');
@@ -293,13 +348,22 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
       }
     };
 
-    // Odağı kaybedince tekrar yazmaya izin ver
+    /**
+     * Blur Event
+     *
+     * Editör focus kaybettiğinde input engeli kaldırılır.
+     */
     const handleBlur = (): void => {
       blockInputRef.current = false;
       console.debug('[ContentSelectAllPlugin] Input unblocked (blur)');
     };
 
-    // Sadece .a4-content dışında paste'i engelle (parent'ları da kontrol et)
+    /**
+     * Paste Event
+     *
+     * Yapıştırma işlemleri sadece `.a4-content` içinde izinlidir.
+     * Dışarıya yapıştırma engellenir.
+     */
     const handlePaste = (e: ClipboardEvent): void => {
       const target = e.target as HTMLElement | null;
       const contentParent = target?.closest?.('.a4-content');
@@ -315,12 +379,16 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
       console.debug('[ContentSelectAllPlugin] Paste allowed in .a4-content');
     };
 
+    // Root elemde event listener’ları kaydet
+    const rootElem = editor.getRootElement?.();
     if (rootElem !== null && rootElem !== undefined) {
+      rootElem.addEventListener('keydown', handleDeleteAllContent, true);
       rootElem.addEventListener('beforeinput', handleBeforeInput, true);
       rootElem.addEventListener('blur', handleBlur, true);
       rootElem.addEventListener('paste', handlePaste, true);
     }
 
+    // Cleanup: component unmount olduğunda listener’ları kaldır
     return () => {
       unregisterSelectAll();
       unregisterCopy();
