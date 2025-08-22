@@ -41,8 +41,7 @@ export function PageUnderflowPlugin(): null {
               if (firstBlock != null) {
                 firstBlock.remove();
                 content.append(firstBlock);
-                // Sadece bir blok taşı, döngüyü kır
-                break;
+                // Zincirleme şekilde tüm sayfa çiftlerinde blok yukarı çekilsin, break kaldırıldı
               }
             }
           }
