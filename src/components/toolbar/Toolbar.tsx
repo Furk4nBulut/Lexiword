@@ -200,8 +200,10 @@ export function ToolbarPlugin({
       <TextFormatToolbarPlugin />
       <HeadingToolbarPlugin />
       <ListToolbarPlugin />
-      <HeaderPageNumberButton />
-      <FooterPageNumberButton />
+      <div className="toolbarGroup">
+        <HeaderPageNumberButton />
+        <FooterPageNumberButton />
+      </div>
       <PageCleanupPlugin />
       <PageSectionPlugin
         headerFooterEditMode={headerFooterEditMode}

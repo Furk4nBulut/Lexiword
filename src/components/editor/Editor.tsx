@@ -34,6 +34,7 @@ import { HeaderFooterSyncPlugin } from './plugins/HeaderFooterSyncPlugin';
 import { HeaderFooterEditModePlugin } from './plugins/HeaderFooterEditModePlugin';
 import PageUnderflowPlugin from './plugins/PageUnderflowPlugin';
 import { PasteContentPlugin } from './plugins/PasteContentPlugin';
+import { PageNumberCommandPlugin } from './plugins/PageNumberPlugin';
 
 const theme = {
   text: {
@@ -80,6 +81,7 @@ export default function Editor(): JSX.Element {
             placeholder={<div className="editor-placeholder">Start typing...</div>}
             ErrorBoundary={LexicalErrorBoundary}
           />
+          <PageNumberCommandPlugin />
           <PageInitializerPlugin />
           <HistoryPlugin />
           <PasteContentPlugin />
