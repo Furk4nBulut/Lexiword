@@ -1,5 +1,6 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useEffect } from 'react';
+import { $getSelection } from 'lexical';
 
 /**
  * PasteContentPlugin
@@ -20,7 +21,27 @@ export function PasteContentPlugin(): JSX.Element | null {
         e.stopPropagation();
         return;
       }
-      console.debug('[PasteContentPlugin] Paste allowed in .a4-content');
+      const html = e.clipboardData?.getData('text/html') ?? '';
+      const text = e.clipboardData?.getData('text/plain') ?? '';
+      // Eğer dışarıdan (HTML içeren) paste ise düz metne çevir
+      if (typeof html === 'string' && html.length > 0) {
+        e.preventDefault();
+        e.stopPropagation();
+        editor.update(() => {
+          const selection = $getSelection();
+          if (
+            selection !== null &&
+            selection !== undefined &&
+            typeof selection.insertText === 'function'
+          ) {
+            selection.insertText(text);
+          }
+        });
+        console.debug('[PasteContentPlugin] HTML paste converted to plain text.');
+        return;
+      }
+      // Sadece text/plain varsa, Lexical'ın kendi paste işlemi çalışsın (engelleme)
+      console.debug('[PasteContentPlugin] Native paste allowed (plain text only).');
     };
 
     const rootElem = editor.getRootElement?.();
