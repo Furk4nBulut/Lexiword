@@ -30,12 +30,12 @@ export function PageUnderflowPlugin(): null {
         let selectedBlockCount = 1;
         editor.getEditorState().read(() => {
           const selection = editor.getEditorState()._selection;
-          if (selection && typeof selection.getNodes === 'function') {
+          if (selection != null && typeof selection.getNodes === 'function') {
             const nodes = selection.getNodes();
             // Sadece content node içindeki blokları say
             const count = nodes.filter((n: any) => {
               const parent = n.getParent?.();
-              return parent && isContentNode(parent);
+              return parent !== null && parent !== undefined && isContentNode(parent);
             }).length;
             if (count > 0) selectedBlockCount = count;
           }
