@@ -19,7 +19,18 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { $getRoot } from 'lexical';
 import { $createPageNode, $isPageNode, type PageNode } from '../nodes/PageNode';
 import { setHeaderFooterSyncEnabled } from '../context/HeaderFooterSyncModeContext';
-import PageNumberNode, { $createPageNumberNode } from '../nodes/PageNumberNode';
+import { $createPageNumberNode } from '../nodes/PageNumberNode';
+
+// Page number komutunun aktif olup olmadığını global olarak takip et
+let isHeaderPageNumberActive = false;
+let isFooterPageNumberActive = false;
+
+export function setHeaderPageNumberActive(active: boolean): void {
+  isHeaderPageNumberActive = active;
+}
+export function setFooterPageNumberActive(active: boolean): void {
+  isFooterPageNumberActive = active;
+}
 import { isContentNode, isHeaderNode, isFooterNode } from '../nodes/sectionTypeGuards';
 import { PageContentNode } from '../nodes/PageContentNode';
 
@@ -228,19 +239,46 @@ export function PageAutoSplitPlugin({
         nextPage.append(new PageContentNode());
         const newFooter = cloneSection(pageFooter ?? null);
         if (newFooter !== null) nextPage.append(newFooter);
-        const root = pageNode.getParent();
-        if (root !== null) {
-          const allPages = root.getChildren().filter($isPageNode);
-          const hasPageNumber = allPages.some((p) =>
-            p.getChildren().some((c) => c instanceof PageNumberNode)
-          );
-          if (hasPageNumber) {
-            const pageNumber = allPages.length + 1;
-            nextPage.append($createPageNumberNode(String(pageNumber)));
+        pageNode.insertAfter(nextPage);
+
+        // Page number command aktifse, tüm sayfalardaki page number'ları güncelle
+        if (isHeaderPageNumberActive || isFooterPageNumberActive) {
+          const root = pageNode.getParent();
+          if (root != null) {
+            const allPages = root.getChildren().filter($isPageNode);
+            allPages.forEach((p, idx) => {
+              // Header
+              if (isHeaderPageNumberActive) {
+                const header = p.getChildren().find(isHeaderNode);
+                if (header != null) {
+                  // Önce eski page-number node'larını sil
+                  const children = header.getChildren();
+                  children.forEach((c) => {
+                    if (typeof c.getType === 'function' && c.getType() === 'page-number') {
+                      c.remove();
+                    }
+                  });
+                  // Sonra yeni page number ekle
+                  header.append($createPageNumberNode(String(idx + 1)));
+                }
+              }
+              // Footer
+              if (isFooterPageNumberActive) {
+                const footer = p.getChildren().find(isFooterNode);
+                if (footer != null) {
+                  const children = footer.getChildren();
+                  children.forEach((c) => {
+                    if (typeof c.getType === 'function' && c.getType() === 'page-number') {
+                      c.remove();
+                    }
+                  });
+                  footer.append($createPageNumberNode(String(idx + 1)));
+                }
+              }
+            });
           }
         }
         setHeaderFooterSyncEnabled(true); // Sync tekrar aç
-        pageNode.insertAfter(nextPage);
       }
 
       // Sonraki sayfanın içerik section'unu bul (yeni oluşturulduysa boş olur)

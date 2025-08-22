@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot, createCommand } from 'lexical';
 import { $createPageNumberNode } from '../nodes/PageNumberNode';
+import { setHeaderPageNumberActive, setFooterPageNumberActive } from './PageAutoSplitPlugin';
 import * as Toolbar from '@radix-ui/react-toolbar';
 
 // Lexical command tanımları
@@ -30,6 +31,9 @@ export function useFooterPageNumberToggle(): () => void {
 export function PageNumberCommandPlugin(): null {
   const [editor] = useLexicalComposerContext();
   React.useEffect(() => {
+    // Page number command aktifliğini PageAutoSplitPlugin'e bildir
+    setHeaderPageNumberActive(true);
+    setFooterPageNumberActive(true);
     // Header komutu
     const unregisterHeader = editor.registerCommand(
       TOGGLE_HEADER_PAGE_NUMBER_COMMAND,
@@ -109,6 +113,8 @@ export function PageNumberCommandPlugin(): null {
       0
     );
     return () => {
+      setHeaderPageNumberActive(false);
+      setFooterPageNumberActive(false);
       unregisterHeader();
       unregisterFooter();
     };
