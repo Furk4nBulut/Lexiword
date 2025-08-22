@@ -22,31 +22,67 @@ export function PageUnderflowPlugin(): null {
 
   useEffect(() => {
     // Backspace ve Delete komutlarını dinle
+    let lastContentSizes: number[] = [];
+
+    // Her update'de mevcut content blok sayılarını kaydet
+    const updateContentSizes = (): void => {
+      editor.getEditorState().read(() => {
+        const root = $getRoot();
+        const pages = root.getChildren().filter((n): n is PageNode => $isPageNode(n));
+        lastContentSizes = pages.map((page) => {
+          const content = page.getChildren().find(isContentNode) as LexicalNode | undefined;
+          if (content == null) return 0;
+          return content.getChildren().length;
+        });
+      });
+    };
+
+    // İlk mount'ta ve her güncellemede blok sayılarını güncelle
+    updateContentSizes();
+    const unregisterUpdate = editor.registerUpdateListener(() => {
+      updateContentSizes();
+    });
+
     const handler = (): boolean => {
       editor.update(() => {
         const root = $getRoot();
         const pages = root.getChildren().filter((n): n is PageNode => $isPageNode(n));
-        for (let i = 0; i < pages.length - 1; i++) {
-          const page = pages[i];
-          const nextPage = pages[i + 1];
-          // Her iki sayfanın content node'unu bul
+        // Önceki blok sayılarını al
+        const prevSizes = lastContentSizes;
+        // Şu anki blok sayılarını al
+        const currSizes = pages.map((page) => {
           const content = page.getChildren().find(isContentNode) as LexicalNode | undefined;
-          const nextContent = nextPage.getChildren().find(isContentNode) as LexicalNode | undefined;
-          if (content == null || nextContent == null) continue;
-          const blocks = content.getChildren();
-          const nextBlocks = nextContent.getChildren();
-          // Eğer bu sayfanın content'i kapasitesinin çok altındaysa ve sonraki sayfada blok varsa
-          if (blocks.length > 0 && nextBlocks.length > 0) {
-            // Burada daha gelişmiş bir kapasite kontrolü eklenebilir (ör: min blok sayısı, min yükseklik)
-            // Şimdilik: her backspace/delete'te bir blok yukarı çek
-            const firstBlock = nextBlocks[0];
-            if (firstBlock != null) {
-              firstBlock.remove();
-              content.append(firstBlock);
-              // Zincirleme şekilde tüm sayfa çiftlerinde blok yukarı çekilsin, break kaldırıldı
+          if (content == null) return 0;
+          return content.getChildren().length;
+        });
+        // Her sayfa için, kaç blok silindiğini bul
+        for (let i = 0; i < pages.length - 1; i++) {
+          const silinen = (prevSizes[i] ?? 0) - (currSizes[i] ?? 0);
+          if (silinen > 0) {
+            const page = pages[i];
+            const nextPage = pages[i + 1];
+            const content = page.getChildren().find(isContentNode) as LexicalNode | undefined;
+            const nextContent = nextPage.getChildren().find(isContentNode) as
+              | LexicalNode
+              | undefined;
+            if (content == null || nextContent == null) continue;
+            const nextBlocks = nextContent.getChildren();
+            // Silinen blok kadar yukarı çek
+            for (let k = 0; k < silinen && nextBlocks.length > 0; k++) {
+              const firstBlock = nextContent.getFirstChild();
+              if (firstBlock != null) {
+                firstBlock.remove();
+                content.append(firstBlock);
+              }
             }
           }
         }
+        // Son durumda blok sayılarını güncelle
+        lastContentSizes = pages.map((page) => {
+          const content = page.getChildren().find(isContentNode) as LexicalNode | undefined;
+          if (content == null) return 0;
+          return content.getChildren().length;
+        });
       });
       // Komutun işlenmesini engelleme, normal backspace/delete devam etsin
       return false;
@@ -64,6 +100,7 @@ export function PageUnderflowPlugin(): null {
     return () => {
       unregisterBackspace();
       unregisterDelete();
+      unregisterUpdate();
     };
   }, [editor]);
 
