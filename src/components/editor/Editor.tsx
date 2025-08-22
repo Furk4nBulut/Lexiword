@@ -33,6 +33,7 @@ import PageContentEditable from './PageContentEditable';
 import { HeaderFooterSyncPlugin } from './plugins/HeaderFooterSyncPlugin';
 import { HeaderFooterEditModePlugin } from './plugins/HeaderFooterEditModePlugin';
 import PageUnderflowPlugin from './plugins/PageUnderflowPlugin';
+import { PasteContentPlugin } from './plugins/PasteContentPlugin';
 
 const theme = {
   text: {
@@ -81,6 +82,7 @@ export default function Editor(): JSX.Element {
           />
           <PageInitializerPlugin />
           <HistoryPlugin />
+          <PasteContentPlugin />
           <ContentSelectAllPlugin />
           <PageAutoSplitPlugin pageHeightMm={297} marginTopMm={20} marginBottomMm={20} />
           <PageUnderflowPlugin />

@@ -372,34 +372,13 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
       console.debug('[ContentSelectAllPlugin] Input unblocked (blur)');
     };
 
-    /**
-     * Paste Event
-     *
-     * Yapıştırma işlemleri sadece `.a4-content` içinde izinlidir.
-     * Dışarıya yapıştırma engellenir.
-     */
-    const handlePaste = (e: ClipboardEvent): void => {
-      const target = e.target as HTMLElement | null;
-      const contentParent = target?.closest?.('.a4-content');
-      if (contentParent === null) {
-        console.debug(
-          '[ContentSelectAllPlugin] Paste blocked (not .a4-content)',
-          target?.className
-        );
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
-      console.debug('[ContentSelectAllPlugin] Paste allowed in .a4-content');
-    };
-
     // Root elemde event listener’ları kaydet
     const rootElem = editor.getRootElement?.();
     if (rootElem !== null && rootElem !== undefined) {
       rootElem.addEventListener('keydown', handleDeleteAllContent, true);
       rootElem.addEventListener('beforeinput', handleBeforeInput, true);
       rootElem.addEventListener('blur', handleBlur, true);
-      rootElem.addEventListener('paste', handlePaste, true);
+      // Paste event handler çıkarıldı, artık PasteContentPlugin kullanılıyor
     }
 
     // Cleanup: component unmount olduğunda listener’ları kaldır
@@ -409,7 +388,7 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
       if (rootElem !== null && rootElem !== undefined) {
         rootElem.removeEventListener('beforeinput', handleBeforeInput, true);
         rootElem.removeEventListener('blur', handleBlur, true);
-        rootElem.removeEventListener('paste', handlePaste, true);
+        // Paste event handler çıkarıldı, artık PasteContentPlugin kullanılıyor
         rootElem.removeEventListener('keydown', handleDeleteAllContent, true);
       }
     };
