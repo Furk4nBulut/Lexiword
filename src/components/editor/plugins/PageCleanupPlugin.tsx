@@ -63,7 +63,36 @@ export function PageCleanupPlugin(): null {
         }
 
         // Eğer sadece 1 sayfa varsa → onu silme, çünkü en az bir sayfa kalmalı
-        if (pages.length <= 1) return;
+        if (pages.length === 1) {
+          // Son kalan sayfanın page number'ını güncelle
+          const onlyPage = pages[0];
+          const updatePageNumberToOne = (
+            node:
+              | {
+                  getChildren?: () => any[];
+                  getType?: () => string;
+                  setTextContent?: (text: string) => void;
+                }
+              | null
+              | undefined
+          ): void => {
+            if (node == null || typeof node.getChildren !== 'function') return;
+            const children = node.getChildren();
+            for (const child of children) {
+              if (typeof child.getType === 'function' && child.getType() === 'page-number') {
+                if (typeof child.setTextContent === 'function') {
+                  child.setTextContent('1');
+                }
+              }
+              if (typeof child.getChildren === 'function') {
+                updatePageNumberToOne(child);
+              }
+            }
+          };
+          updatePageNumberToOne(onlyPage.getHeaderNode?.());
+          updatePageNumberToOne(onlyPage.getFooterNode?.());
+          return;
+        }
 
         /**
          * Boş içerikli sayfaları buluyoruz.
