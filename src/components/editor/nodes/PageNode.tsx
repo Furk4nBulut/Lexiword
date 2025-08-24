@@ -2,8 +2,6 @@
 import { ElementNode, type SerializedElementNode, type LexicalNode } from 'lexical';
 import type { PageHeaderNode } from './PageHeaderNode';
 import type { PageFooterNode } from './PageFooterNode';
-// import { $createPageHeaderNode } from './PageHeaderNode';
-// import { $createPageFooterNode } from './PageFooterNode';
 import { PageContentNode } from './PageContentNode';
 
 export function $createPageNode(): PageNode {
