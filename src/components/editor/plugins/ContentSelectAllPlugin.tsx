@@ -29,6 +29,7 @@ import {
   COPY_COMMAND
 } from 'lexical';
 import { getAllContentNodes } from '../utils/contentUtils';
+import { isSelectionFullyInA4Content } from '../utils/selectionUtils';
 
 /**
  * Helper Fonksiyon: getAllContentNodes
@@ -86,41 +87,14 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
       const allContentNodes = editor.getEditorState().read(getAllContentNodes);
       if (allContentNodes.length === 0) return false;
 
-      // Seçim gerçekten tüm içerikteyse
+      // Seçim gerçekten tüm içerikteyse (util kullan)
       const selection = window.getSelection();
-      if (selection == null || selection.isCollapsed) return false;
-      // Basit heuristic: seçim DOM seviyesinde .a4-content içinde ve tüm content'leri kapsıyor
-      let allInContent = true;
-      for (let i = 0; i < selection.rangeCount; i++) {
-        const range = selection.getRangeAt(i);
-        let startContainer = range.startContainer;
-        let endContainer = range.endContainer;
-        if (startContainer.nodeType === Node.TEXT_NODE) {
-          startContainer = startContainer.parentElement as HTMLElement;
-        }
-        if (endContainer.nodeType === Node.TEXT_NODE) {
-          endContainer = endContainer.parentElement as HTMLElement;
-        }
-        if (!(startContainer instanceof HTMLElement) || !(endContainer instanceof HTMLElement)) {
-          allInContent = false;
-          break;
-        }
-        if (
-          startContainer.closest('.a4-content') == null ||
-          endContainer.closest('.a4-content') == null
-        ) {
-          allInContent = false;
-          break;
-        }
-      }
-
-      // Eğer DOM seviyesi kontrol geçtiyse, tüm content'leri kapsayıp kapsamadığını kabaca kontrol et
+      if (!isSelectionFullyInA4Content(selection)) return false;
       const fullySelected =
-        allInContent &&
         Boolean(editor.getElementByKey?.(allContentNodes[0]?.getKey?.())) &&
         Boolean(editor.getElementByKey?.(allContentNodes[allContentNodes.length - 1]?.getKey?.()));
 
-      if (allInContent && fullySelected) {
+      if (fullySelected) {
         // Default silme işlemini engelle
         event.preventDefault();
         event.stopPropagation();
@@ -284,37 +258,12 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
       (event: ClipboardEvent): boolean => {
         // Sadece .a4-content içindeyse ve bir seçim varsa, seçili metni kopyala
         const selection = window.getSelection();
-        if (selection == null) return false;
-        if (selection.isCollapsed) return false;
-        // Seçim .a4-content içinde mi?
-        let allInContent = true;
-        for (let i = 0; i < selection.rangeCount; i++) {
-          const range = selection.getRangeAt(i);
-          let startContainer = range.startContainer;
-          let endContainer = range.endContainer;
-          if (startContainer.nodeType === Node.TEXT_NODE) {
-            startContainer = startContainer.parentElement as HTMLElement;
-          }
-          if (endContainer.nodeType === Node.TEXT_NODE) {
-            endContainer = endContainer.parentElement as HTMLElement;
-          }
-          if (!(startContainer instanceof HTMLElement) || !(endContainer instanceof HTMLElement)) {
-            allInContent = false;
-            break;
-          }
-          const startClosest = startContainer.closest('.a4-content');
-          const endClosest = endContainer.closest('.a4-content');
-          if (startClosest === null || endClosest === null) {
-            allInContent = false;
-            break;
-          }
-        }
-        if (!allInContent) return false;
+        if (!isSelectionFullyInA4Content(selection)) return false;
 
         event.preventDefault();
         event.stopPropagation();
         // Sadece seçili metni kopyala
-        const selectedText = selection.toString();
+        const selectedText = selection !== null ? selection.toString() : '';
         if (selectedText !== '') {
           event.clipboardData?.setData('text/plain', selectedText);
         }

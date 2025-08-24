@@ -9,6 +9,7 @@ import {
 } from 'lexical';
 import { $isPageNode, type PageNode } from '../nodes/PageNode';
 import { isContentNode } from '../nodes/sectionTypeGuards';
+import { getSelectedContentBlockCount, pullBlocksUp } from '../utils/underflowUtils';
 
 /**
  * PageUnderflowPlugin
@@ -26,20 +27,8 @@ export function PageUnderflowPlugin(): null {
       editor.update(() => {
         const root = $getRoot();
         const pages = root.getChildren().filter((n): n is PageNode => $isPageNode(n));
-        // Seçili blok sayısını bul
-        let selectedBlockCount = 1;
-        editor.getEditorState().read(() => {
-          const selection = editor.getEditorState()._selection;
-          if (selection != null && typeof selection.getNodes === 'function') {
-            const nodes = selection.getNodes();
-            // Sadece content node içindeki blokları say
-            const count = nodes.filter((n: any) => {
-              const parent = n.getParent?.();
-              return parent !== null && parent !== undefined && isContentNode(parent);
-            }).length;
-            if (count > 0) selectedBlockCount = count;
-          }
-        });
+        // Seçili blok sayısını helper ile hesapla
+        const selectedBlockCount = getSelectedContentBlockCount(editor);
         for (let i = 0; i < pages.length - 1; i++) {
           const page = pages[i];
           const nextPage = pages[i + 1];
@@ -51,15 +40,9 @@ export function PageUnderflowPlugin(): null {
           const nextBlocks = nextContent.getChildren();
           // Eğer bu sayfanın content'i kapasitesinin çok altındaysa ve sonraki sayfada blok varsa
           if (blocks.length > 0 && nextBlocks.length > 0) {
-            // Seçili blok sayısı kadar bloğu aşağıdan yukarıya çek
+            // Seçili blok sayısı kadar bloğu aşağıdan yukarıya çek (helper)
             const moveCount = Math.min(selectedBlockCount, nextBlocks.length);
-            for (let j = 0; j < moveCount; j++) {
-              const firstBlock = nextContent.getChildren()[0];
-              if (firstBlock != null) {
-                firstBlock.remove();
-                content.append(firstBlock);
-              }
-            }
+            pullBlocksUp(content, nextContent, moveCount);
           }
         }
       });

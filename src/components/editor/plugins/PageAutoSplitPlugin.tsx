@@ -16,6 +16,7 @@ import { setHeaderFooterSyncEnabled } from '../context/HeaderFooterSyncModeConte
 import { addOrReplacePageNumbers } from '../utils/pageNumberUtils';
 import { isContentNode, isHeaderNode, isFooterNode } from '../nodes/sectionTypeGuards';
 import { PageContentNode } from '../nodes/PageContentNode';
+import { cloneSection, getContentMetrics, getContentScrollHeight } from '../utils/flowUtils';
 
 // Page number komutunun aktif olup olmadığını global olarak takip et
 
@@ -49,27 +50,6 @@ export interface PageFlowSettings {
   pageHeightMm: number;
   marginTopMm: number;
   marginBottomMm: number;
-}
-
-/**
- * Bir section (header/footer/content) node'unu klonlar.
- * Çocuklarını da klonlayarak yeni bir node oluşturur.
- *
- * @param sectionNode Klonlanacak node (ör: header, footer, content)
- * @returns Klonlanmış yeni node veya null
- *
- * Not: Sadece LexicalNode türündeki node'lar için çalışır.
- */
-function cloneSection<T extends LexicalNode>(sectionNode: T | null): T | null {
-  if (sectionNode == null) return null;
-  const SectionClass = sectionNode.constructor as new () => T;
-  const clonedSection = new SectionClass();
-  sectionNode.getChildren().forEach((child: LexicalNode | null | undefined) => {
-    if (child !== null && child !== undefined && typeof (child as any).clone === 'function') {
-      clonedSection.append((child as any).clone());
-    }
-  });
-  return clonedSection;
 }
 
 /**
@@ -123,7 +103,7 @@ export function PageAutoSplitPlugin(props: PageFlowSettings): null {
               height: capacity,
               paddingTop,
               paddingBottom
-            } = getContentMetrics(pageEl);
+            } = getContentMetrics(editor, pageEl);
             // İçerik alanı varsa onu, yoksa tüm sayfa elementini kullan
             const targetForScroll = contentDomEl ?? pageEl;
             // Kullanılan scroll yüksekliğini hesapla
@@ -158,28 +138,7 @@ export function PageAutoSplitPlugin(props: PageFlowSettings): null {
      * @param pageEl Sayfa DOM elementi
      * @returns İçerik alanı DOM'u, top, bottom, height, paddingTop, paddingBottom
      */
-    function getContentMetrics(pageEl: HTMLElement): {
-      el: HTMLElement | null;
-      top: number;
-      bottom: number;
-      height: number;
-      paddingTop: number;
-      paddingBottom: number;
-    } {
-      const el = pageEl.querySelector('[data-lexical-page-section="content"]');
-      const contentEl = el instanceof HTMLElement ? el : null;
-      const target = contentEl !== null && contentEl !== undefined ? contentEl : pageEl;
-      const rect = target.getBoundingClientRect();
-      const styles = window.getComputedStyle(target);
-      let paddingTop = parseFloat(styles.paddingTop);
-      let paddingBottom = parseFloat(styles.paddingBottom);
-      if (Number.isNaN(paddingTop)) paddingTop = 0;
-      if (Number.isNaN(paddingBottom)) paddingBottom = 0;
-      const top = rect.top + paddingTop;
-      const bottom = rect.bottom - paddingBottom;
-      return { el: contentEl, top, bottom, height: bottom - top, paddingTop, paddingBottom };
-    }
-
+    // getContentMetrics imported from ../utils/flowUtils
     /**
      * İçerik alanının scroll yüksekliğini döndürür.
      *
@@ -190,13 +149,7 @@ export function PageAutoSplitPlugin(props: PageFlowSettings): null {
      * @param paddingBottom Alt padding
      * @returns Scroll yüksekliği (px)
      */
-    function getContentScrollHeight(
-      targetEl: HTMLElement,
-      paddingTop: number,
-      paddingBottom: number
-    ): number {
-      return targetEl.scrollHeight - paddingTop - paddingBottom;
-    }
+    // getContentScrollHeight imported from ../utils/flowUtils
 
     /**
      * Taşan blokları bir sonraki sayfaya taşır.
@@ -409,7 +362,7 @@ export function PageAutoSplitPlugin(props: PageFlowSettings): null {
             height: capacity,
             paddingTop,
             paddingBottom
-          } = getContentMetrics(pageEl);
+          } = getContentMetrics(editor, pageEl);
           const targetForScroll = contentDomEl ?? pageEl;
           const usedScroll = getContentScrollHeight(targetForScroll, paddingTop, paddingBottom);
           if (usedScroll > capacity + 2) {
