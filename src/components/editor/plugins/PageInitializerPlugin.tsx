@@ -55,8 +55,9 @@ export function PageInitializerPlugin(): JSX.Element | null {
             const headerClone = headerToCopy.clone();
             refHeaderJSON.forEach((childJSON) => {
               const imported = importSerializedNode(childJSON);
-              if (imported != null && typeof headerClone.append === 'function')
+              if (imported != null && typeof headerClone.append === 'function') {
                 headerClone.append(imported);
+              }
             });
             page.append(headerClone);
             console.log('[PageInitializerPlugin] Header cloned and appended (via JSON import)');
@@ -71,8 +72,9 @@ export function PageInitializerPlugin(): JSX.Element | null {
             const footerClone = footerToCopy.clone();
             refFooterJSON.forEach((childJSON) => {
               const imported = importSerializedNode(childJSON);
-              if (imported != null && typeof footerClone.append === 'function')
+              if (imported != null && typeof footerClone.append === 'function') {
                 footerClone.append(imported);
+              }
             });
             page.append(footerClone);
             console.log('[PageInitializerPlugin] Footer cloned and appended (via JSON import)');
