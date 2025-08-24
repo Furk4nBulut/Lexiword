@@ -319,8 +319,8 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
       (event: ClipboardEvent): boolean => {
         // Sadece .a4-content içindeyse ve bir seçim varsa, seçili metni kopyala
         const selection = window.getSelection();
-  if (selection == null) return false;
-  if (selection.isCollapsed) return false;
+        if (selection == null) return false;
+        if (selection.isCollapsed) return false;
         // Seçim .a4-content içinde mi?
         let allInContent = true;
         for (let i = 0; i < selection.rangeCount; i++) {
