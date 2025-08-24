@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot, createCommand } from 'lexical';
-import { $createPageNumberNode } from '../nodes/PageNumberNode';
+import { addOrReplacePageNumbers } from '../utils/pageNumberUtils';
 import {
   setHeaderPageNumberActive,
   setFooterPageNumberActive,
@@ -43,46 +43,7 @@ export function PageNumberCommandPlugin(): null {
         // Aktiflik state'ine göre ekle/çıkar
         const isActive = getHeaderPageNumberActive();
         editor.update(() => {
-          const root = $getRoot();
-          const pageNodes = root
-            .getChildren()
-            .filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
-          pageNodes.forEach((pageNode, idx) => {
-            const header = pageNode
-              .getChildren()
-              .find(
-                (c: { getType: () => string }) =>
-                  typeof c.getType === 'function' && c.getType() === 'page-header'
-              );
-            if (header != null) {
-              const children = header.getChildren?.();
-              const hasPageNumber =
-                Array.isArray(children) &&
-                children.some(
-                  (c) => typeof c.getType === 'function' && c.getType() === 'page-number'
-                );
-              if (isActive) {
-                // Aktifse ekle (zaten varsa önce sil)
-                if (hasPageNumber) {
-                  children.forEach((child) => {
-                    if (typeof child.getType === 'function' && child.getType() === 'page-number') {
-                      child.remove();
-                    }
-                  });
-                }
-                header.append($createPageNumberNode(String(idx + 1)));
-              } else {
-                // Kapalıysa varsa sil
-                if (hasPageNumber) {
-                  children.forEach((child) => {
-                    if (typeof child.getType === 'function' && child.getType() === 'page-number') {
-                      child.remove();
-                    }
-                  });
-                }
-              }
-            }
-          });
+          addOrReplacePageNumbers({ header: isActive, footer: getFooterPageNumberActive() });
         });
         return true;
       },
@@ -92,49 +53,9 @@ export function PageNumberCommandPlugin(): null {
     const unregisterFooter = editor.registerCommand(
       TOGGLE_FOOTER_PAGE_NUMBER_COMMAND,
       () => {
-        // Aktiflik state'ine göre ekle/çıkar
         const isActive = getFooterPageNumberActive();
         editor.update(() => {
-          const root = $getRoot();
-          const pageNodes = root
-            .getChildren()
-            .filter((n) => typeof n.getType === 'function' && n.getType() === 'page');
-          pageNodes.forEach((pageNode, idx) => {
-            const footer = pageNode
-              .getChildren()
-              .find(
-                (c: { getType: () => string }) =>
-                  typeof c.getType === 'function' && c.getType() === 'page-footer'
-              );
-            if (footer != null) {
-              const children = footer.getChildren?.();
-              const hasPageNumber =
-                Array.isArray(children) &&
-                children.some(
-                  (c) => typeof c.getType === 'function' && c.getType() === 'page-number'
-                );
-              if (isActive) {
-                // Aktifse ekle (zaten varsa önce sil)
-                if (hasPageNumber) {
-                  children.forEach((child) => {
-                    if (typeof child.getType === 'function' && child.getType() === 'page-number') {
-                      child.remove();
-                    }
-                  });
-                }
-                footer.append($createPageNumberNode(String(idx + 1)));
-              } else {
-                // Kapalıysa varsa sil
-                if (hasPageNumber) {
-                  children.forEach((child) => {
-                    if (typeof child.getType === 'function' && child.getType() === 'page-number') {
-                      child.remove();
-                    }
-                  });
-                }
-              }
-            }
-          });
+          addOrReplacePageNumbers({ header: getHeaderPageNumberActive(), footer: isActive });
         });
         return true;
       },

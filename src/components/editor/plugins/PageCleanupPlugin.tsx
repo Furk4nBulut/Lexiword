@@ -1,17 +1,10 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import {
-  $getRoot,
-  ParagraphNode,
-  TextNode,
-  LineBreakNode,
-  type SerializedParagraphNode,
-  type SerializedTextNode,
-  type SerializedLineBreakNode
-} from 'lexical';
+import { $getRoot } from 'lexical';
 import { PageNode, $isPageNode } from '../nodes/PageNode';
 import { PageHeaderNode } from '../nodes/PageHeaderNode';
 import { PageFooterNode } from '../nodes/PageFooterNode';
 import { PageContentNode } from '../nodes/PageContentNode';
+import { serializeSectionChildren, importSerializedNode } from '../utils/headerFooterUtils';
 import { useEffect } from 'react';
 
 /**
@@ -148,30 +141,16 @@ export function PageCleanupPlugin(): null {
                 (n) => typeof n.getTextContent === 'function' && n.getTextContent() === ''
               );
 
-            // Eğer silinen header dolu, kalan header boş → kopyala
+            // Eğer silinen header dolu, kalan header boş → kopyala (utils kullanarak)
             if (removedHeaderHasContent && remainingHeaderIsEmpty) {
               remainingHeader.clear();
-
-              // Header içindeki tüm child'ları JSON formatında export/import ederek taşı
-              removedHeaderChildren.forEach((child) => {
-                if (typeof child.exportJSON === 'function') {
-                  const json = child.exportJSON();
-
-                  // Lexical'da node key'i unique olmalı → bu yüzden siliyoruz
-                  if ('key' in json) delete json.key;
-
-                  let imported = null;
-                  if (json.type === 'paragraph') {
-                    imported = ParagraphNode.importJSON(json as SerializedParagraphNode);
-                  } else if (json.type === 'text') {
-                    imported = TextNode.importJSON(json as SerializedTextNode);
-                  } else if (json.type === 'linebreak') {
-                    imported = LineBreakNode.importJSON(json as SerializedLineBreakNode);
-                  }
-
+              const refHeaderJSON = serializeSectionChildren(removedHeader);
+              if (Array.isArray(refHeaderJSON)) {
+                refHeaderJSON.forEach((childJSON) => {
+                  const imported = importSerializedNode(childJSON);
                   if (imported != null) remainingHeader.append(imported);
-                }
-              });
+                });
+              }
             }
           }
 
@@ -200,25 +179,13 @@ export function PageCleanupPlugin(): null {
 
             if (removedFooterHasContent && remainingFooterIsEmpty) {
               remainingFooter.clear();
-
-              removedFooterChildren.forEach((child) => {
-                if (typeof child.exportJSON === 'function') {
-                  const json = child.exportJSON();
-
-                  if ('key' in json) delete json.key;
-
-                  let imported = null;
-                  if (json.type === 'paragraph') {
-                    imported = ParagraphNode.importJSON(json as SerializedParagraphNode);
-                  } else if (json.type === 'text') {
-                    imported = TextNode.importJSON(json as SerializedTextNode);
-                  } else if (json.type === 'linebreak') {
-                    imported = LineBreakNode.importJSON(json as SerializedLineBreakNode);
-                  }
-
+              const refFooterJSON = serializeSectionChildren(removedFooter);
+              if (Array.isArray(refFooterJSON)) {
+                refFooterJSON.forEach((childJSON) => {
+                  const imported = importSerializedNode(childJSON);
                   if (imported != null) remainingFooter.append(imported);
-                }
-              });
+                });
+              }
             }
           }
         }

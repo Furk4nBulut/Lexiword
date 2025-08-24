@@ -22,7 +22,7 @@ import {
   $createRangeSelection,
   COPY_COMMAND
 } from 'lexical';
-import { isContentNode } from '../nodes/sectionTypeGuards';
+import { getAllContentNodes } from '../utils/contentUtils';
 
 /**
  * Helper Fonksiyon: getAllContentNodes
@@ -32,25 +32,7 @@ import { isContentNode } from '../nodes/sectionTypeGuards';
  * Dönüş:
  * - PageContentNode[] dizisi
  */
-function getAllContentNodes(): any[] {
-  const rootNode = $getRoot();
-  if (rootNode == null) return [];
-  const allContentNodes: any[] = [];
-
-  // Root’un çocukları page node’lardır
-  rootNode.getChildren().forEach((pageNode: any) => {
-    if (typeof pageNode.getChildren === 'function') {
-      // Her page node’un içindeki content node’larını bul
-      pageNode.getChildren().forEach((child: any) => {
-        if (isContentNode(child)) {
-          allContentNodes.push(child);
-        }
-      });
-    }
-  });
-
-  return allContentNodes;
-}
+// helper'lar contentUtils'e taındı
 
 /**
  * React Component: ContentSelectAllPlugin
@@ -98,62 +80,37 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
       const allContentNodes = editor.getEditorState().read(getAllContentNodes);
       if (allContentNodes.length === 0) return false;
 
-      // Seçim gerçekten tüm içerikte mi yapılmış?
+      // Seçim gerçekten tüm içerikteyse
       const selection = window.getSelection();
       if (selection == null || selection.isCollapsed) return false;
-
-      // DOM seviyesinde kontrol: seçim .a4-content dışına taşmış mı?
+      // Basit heuristic: seçim DOM seviyesinde .a4-content içinde ve tüm content'leri kapsıyor
       let allInContent = true;
       for (let i = 0; i < selection.rangeCount; i++) {
         const range = selection.getRangeAt(i);
         let startContainer = range.startContainer;
         let endContainer = range.endContainer;
-        if (startContainer.nodeType === Node.TEXT_NODE) {
+        if (startContainer.nodeType === Node.TEXT_NODE)
           startContainer = startContainer.parentElement as HTMLElement;
-        }
-        if (endContainer.nodeType === Node.TEXT_NODE) {
+        if (endContainer.nodeType === Node.TEXT_NODE)
           endContainer = endContainer.parentElement as HTMLElement;
-        }
         if (!(startContainer instanceof HTMLElement) || !(endContainer instanceof HTMLElement)) {
           allInContent = false;
           break;
         }
-        const startClosest = startContainer.closest('.a4-content');
-        const endClosest = endContainer.closest('.a4-content');
-        if (startClosest === null || endClosest === null) {
+        if (
+          startContainer.closest('.a4-content') == null ||
+          endContainer.closest('.a4-content') == null
+        ) {
           allInContent = false;
           break;
         }
       }
 
-      // --- YENİ KONTROL: Seçim ilk content node'un başından son content node'un sonuna kadar mı? ---
-      let fullySelected = false;
-      if (allContentNodes.length > 0 && selection.rangeCount > 0) {
-        const firstContentEl = editor.getElementByKey?.(allContentNodes[0]?.getKey?.());
-        const lastContentEl = editor.getElementByKey?.(
-          allContentNodes[allContentNodes.length - 1]?.getKey?.()
-        );
-        if (
-          firstContentEl !== null &&
-          firstContentEl !== undefined &&
-          lastContentEl !== null &&
-          lastContentEl !== undefined
-        ) {
-          // Anchor ve focus noktalarını bul
-          const anchorNode = selection.anchorNode;
-          const focusNode = selection.focusNode;
-          // Anchor ve focus, page-content node'larının içinde mi?
-          const anchorInContent =
-            firstContentEl.contains(anchorNode) || anchorNode === firstContentEl;
-          const focusInContent = lastContentEl.contains(focusNode) || focusNode === lastContentEl;
-          // Seçim yönüne göre baş ve sonu kontrol et
-          if (anchorInContent && focusInContent) {
-            // Seçim aralığı ilk content'in başından son content'in sonuna kadar mı?
-            // (Başlangıç ve bitiş offset'leri de kontrol edilebilir ama çoğu durumda bu yeterli)
-            fullySelected = true;
-          }
-        }
-      }
+      // Eğer DOM seviyesi kontrol geçtiyse, tüm content'leri kapsayıp kapsamadığını kabaca kontrol et
+      const fullySelected =
+        allInContent &&
+        Boolean(editor.getElementByKey?.(allContentNodes[0]?.getKey?.())) &&
+        Boolean(editor.getElementByKey?.(allContentNodes[allContentNodes.length - 1]?.getKey?.()));
 
       if (allInContent && fullySelected) {
         // Default silme işlemini engelle

@@ -19,7 +19,7 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { $getRoot } from 'lexical';
 import { $createPageNode, $isPageNode, type PageNode } from '../nodes/PageNode';
 import { setHeaderFooterSyncEnabled } from '../context/HeaderFooterSyncModeContext';
-import { $createPageNumberNode } from '../nodes/PageNumberNode';
+import { addOrReplacePageNumbers } from '../utils/pageNumberUtils';
 import { isContentNode, isHeaderNode, isFooterNode } from '../nodes/sectionTypeGuards';
 import { PageContentNode } from '../nodes/PageContentNode';
 
@@ -94,38 +94,10 @@ export function PageAutoSplitPlugin(props: PageFlowSettings): null {
 
   // Yardımcı: Tüm sayfaların page number'larını güncelle
   function updateAllPageNumbers(): void {
-    const headerActive = getHeaderPageNumberActive();
-    const footerActive = getFooterPageNumberActive();
     editor.update(() => {
-      const root = $getRoot();
-      const allPages = root.getChildren().filter($isPageNode);
-      allPages.forEach((p, idx) => {
-        // Header
-        if (headerActive) {
-          const header = p.getChildren().find(isHeaderNode);
-          if (header != null) {
-            const children = header.getChildren();
-            children.forEach((c) => {
-              if (typeof c.getType === 'function' && c.getType() === 'page-number') {
-                c.remove();
-              }
-            });
-            header.append($createPageNumberNode(String(idx + 1)));
-          }
-        }
-        // Footer
-        if (footerActive) {
-          const footer = p.getChildren().find(isFooterNode);
-          if (footer != null) {
-            const children = footer.getChildren();
-            children.forEach((c) => {
-              if (typeof c.getType === 'function' && c.getType() === 'page-number') {
-                c.remove();
-              }
-            });
-            footer.append($createPageNumberNode(String(idx + 1)));
-          }
-        }
+      addOrReplacePageNumbers({
+        header: getHeaderPageNumberActive(),
+        footer: getFooterPageNumberActive()
       });
     });
   }

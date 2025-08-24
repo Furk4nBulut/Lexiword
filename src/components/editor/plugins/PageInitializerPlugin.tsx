@@ -3,6 +3,7 @@ import { $getRoot } from 'lexical';
 import { useEffect } from 'react';
 import { PageNode } from '../nodes/PageNode';
 import { PageContentNode } from '../nodes/PageContentNode';
+import { serializeSectionChildren, importSerializedNode } from '../utils/headerFooterUtils';
 
 /**
  * PageInitializerPlugin
@@ -47,25 +48,35 @@ export function PageInitializerPlugin(): JSX.Element | null {
             console.log('[PageInitializerPlugin] Copying footer from first page:', footerToCopy);
           }
         }
-        // Eğer header varsa kopyala
+        // Eğer header varsa kopyala (serialize -> import yaklaşımı)
         if (typeof headerToCopy !== 'undefined' && headerToCopy !== null) {
-          const headerClone = headerToCopy.clone();
-          headerToCopy.getChildren().forEach((child: any) => {
-            if (typeof child.clone === 'function') headerClone.append(child.clone());
-          });
-          page.append(headerClone);
-          console.log('[PageInitializerPlugin] Header cloned and appended');
+          const refHeaderJSON = serializeSectionChildren(headerToCopy);
+          if (Array.isArray(refHeaderJSON)) {
+            const headerClone = headerToCopy.clone();
+            refHeaderJSON.forEach((childJSON) => {
+              const imported = importSerializedNode(childJSON);
+              if (imported != null && typeof headerClone.append === 'function')
+                headerClone.append(imported);
+            });
+            page.append(headerClone);
+            console.log('[PageInitializerPlugin] Header cloned and appended (via JSON import)');
+          }
         }
         page.append(new PageContentNode());
         console.log('[PageInitializerPlugin] PageContentNode appended');
-        // Eğer footer varsa kopyala
+        // Eğer footer varsa kopyala (serialize -> import yaklaşımı)
         if (typeof footerToCopy !== 'undefined' && footerToCopy !== null) {
-          const footerClone = footerToCopy.clone();
-          footerToCopy.getChildren().forEach((child: any) => {
-            if (typeof child.clone === 'function') footerClone.append(child.clone());
-          });
-          page.append(footerClone);
-          console.log('[PageInitializerPlugin] Footer cloned and appended');
+          const refFooterJSON = serializeSectionChildren(footerToCopy);
+          if (Array.isArray(refFooterJSON)) {
+            const footerClone = footerToCopy.clone();
+            refFooterJSON.forEach((childJSON) => {
+              const imported = importSerializedNode(childJSON);
+              if (imported != null && typeof footerClone.append === 'function')
+                footerClone.append(imported);
+            });
+            page.append(footerClone);
+            console.log('[PageInitializerPlugin] Footer cloned and appended (via JSON import)');
+          }
         }
         root.append(page);
         console.log('[PageInitializerPlugin] New PageNode appended to root:', page);
