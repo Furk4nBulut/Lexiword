@@ -1,3 +1,9 @@
+/**
+ * HeaderFooterSyncPlugin
+ *
+ * Header ve footer içeriklerinin tüm sayfalar arasında senkronize tutulmasını sağlar.
+ * Bir header/footer düzenlendiğinde referans alınıp diğer sayfalara uygulanır.
+ */
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useEffect, useRef } from 'react';
 import { $getRoot } from 'lexical';
@@ -55,24 +61,18 @@ export function HeaderFooterSyncPlugin(): JSX.Element | null {
   useEffect(() => {
     return editor.registerUpdateListener(({ editorState }) => {
       if (isSyncingRef.current) return;
+      // Collect pageNodes and reference JSONs inside a read block to avoid "active editor state" errors
       let pageNodes: PageNode[] = [];
+      let refHeaderJSON: any[] | null = null;
+      let refFooterJSON: any[] | null = null;
       editorState.read(() => {
         const root = $getRoot();
         pageNodes = root.getChildren().filter($isPageNode);
+        if (pageNodes.length < 2) return;
+        refHeaderJSON = getReferenceSectionJSON(pageNodes, lastEditedHeaderKey.current, 'header');
+        refFooterJSON = getReferenceSectionJSON(pageNodes, lastEditedFooterKey.current, 'footer');
       });
-      // Eger yeterli sayfa yoksa atla
       if (pageNodes.length < 2) return;
-
-      const refHeaderJSON = getReferenceSectionJSON(
-        pageNodes,
-        lastEditedHeaderKey.current,
-        'header'
-      );
-      const refFooterJSON = getReferenceSectionJSON(
-        pageNodes,
-        lastEditedFooterKey.current,
-        'footer'
-      );
       if (refHeaderJSON === null && refFooterJSON === null) return;
 
       editor.update(() => {

@@ -1,4 +1,11 @@
 // Global variable to track current edit mode for header/footer
+/**
+ * HeaderFooterEditModePlugin
+ *
+ * Header/Footer düzenleme modunu kontrol eden plugin. Edit mode aktifken
+ * header/footer DOM'larına `data-edit-mode` attribute'u ve `contentEditable`
+ * değeri uygulanır.
+ */
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useEffect } from 'react';
 import {

@@ -12,6 +12,12 @@
  * - Kopyalama sonrası kısa süreli input kilidi ekler (selection bozulmasın diye).
  */
 
+/**
+ * ContentSelectAllPlugin
+ *
+ * Ctrl+A, Ctrl+C, Delete gibi eylemler için `.a4-content` alanını hedefleyen
+ * özel seçim ve kopyalama davranışları tanımlar.
+ */
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useEffect, useRef } from 'react';
 import {
@@ -89,10 +95,12 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
         const range = selection.getRangeAt(i);
         let startContainer = range.startContainer;
         let endContainer = range.endContainer;
-        if (startContainer.nodeType === Node.TEXT_NODE)
+        if (startContainer.nodeType === Node.TEXT_NODE) {
           startContainer = startContainer.parentElement as HTMLElement;
-        if (endContainer.nodeType === Node.TEXT_NODE)
+        }
+        if (endContainer.nodeType === Node.TEXT_NODE) {
           endContainer = endContainer.parentElement as HTMLElement;
+        }
         if (!(startContainer instanceof HTMLElement) || !(endContainer instanceof HTMLElement)) {
           allInContent = false;
           break;

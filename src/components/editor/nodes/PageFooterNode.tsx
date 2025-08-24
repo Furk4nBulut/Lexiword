@@ -17,6 +17,13 @@ export class PageFooterNode extends PageSectionNode {
     return new PageFooterNode();
   }
 
+  /**
+   * Clone required by Lexical. Preserve key when cloning.
+   */
+  static clone(node: PageFooterNode): PageFooterNode {
+    return new PageFooterNode(node.__key);
+  }
+
   exportJSON(): SerializedElementNode & { type: string; version: number } {
     return {
       ...super.exportJSON(),

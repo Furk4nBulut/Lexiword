@@ -1,3 +1,9 @@
+/**
+ * PasteContentPlugin
+ *
+ * Yapıştırma olaylarını yakalar ve yalnızca `.a4-content` alanına
+ * yapıştırmaya izin verir; HTML içeren dış yapıştırmaları düz metne çevirir.
+ */
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useEffect } from 'react';
 import { $getSelection } from 'lexical';

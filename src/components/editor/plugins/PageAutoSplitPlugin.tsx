@@ -1,17 +1,11 @@
 /**
  * PageAutoSplitPlugin
  *
- * Lexical editöründe içerik bloklarını otomatik olarak sayfalara bölen bir React pluginidir.
- * Sayfa taşması (overflow) algılandığında, içerik yeni bir sayfaya aktarılır ve gerekirse header/footer klonlanır.
- *
- * - Sayfa yüksekliği ve kenar boşlukları parametre olarak alınır.
- * - DOM üzerinden içerik taşması kontrol edilir.
- * - Taşma varsa yeni sayfa oluşturulur ve içerik taşan bloklar yeni sayfaya aktarılır.
- * - Header/footer senkronizasyonu ve sayfa numaralandırma desteklenir.
- * - requestAnimationFrame ile reflow işlemi animasyon çerçevesinde yapılır.
- *
- * Bu plugin, editördeki içerik bir sayfaya sığmadığında otomatik olarak yeni bir sayfa açar ve taşan içeriği oraya taşır.
- * Böylece, dinamik olarak sayfa bölme ve içerik akışı sağlanır.
+ * (Türkçe) Sayfa taşmalarını (overflow) algılayıp, taşan blokları yeni
+ * sayfalara taşıyan ve gerektiğinde header/footer kopyalayan ana reflow
+ * plugin'idir. requestAnimationFrame tabanlı güvenli reflow döngüsü ile
+ * çalışır ve page number / header-footer sync entegrasyonlarını
+ * destekler.
  */
 import type { LexicalNode } from 'lexical';
 import { useEffect, useRef } from 'react';

@@ -10,15 +10,10 @@ import { useEffect } from 'react';
 /**
  * PageCleanupPlugin
  *
- * Bu plugin, editörde bulunan "PageNode" yapılarının temizliğini yapar.
- *
- * - İçeriği tamamen boş olan sayfaları otomatik olarak siler.
- * - Her zaman en az bir sayfanın kalmasını garanti eder.
- * - Eğer silinen sayfanın header/footer'ında içerik varsa, bu içerik
- *   kalan sayfanın header/footer bölümüne kopyalanır (eğer orası boşsa).
- *
- * Özet: Kullanıcı sayfaları sildiğinde ya da boş bıraktığında, editörün
- * tutarlı bir şekilde en az bir sayfayı barındırmasını sağlar.
+ * (Türkçe) Editör içerisindeki page node'larının temizlik kurallarını
+ * uygular: tamamen boş sayfaları kaldırır, en az bir sayfanın kalmasını
+ * garanti eder ve silinen sayfaların header/footer içeriğini ihtiyaç
+ * halinde kalan sayfalara taşır.
  */
 export function PageCleanupPlugin(): null {
   // Lexical editörün context'ine erişiyoruz (editor instance).

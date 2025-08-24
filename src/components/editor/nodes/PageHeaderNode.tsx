@@ -26,6 +26,15 @@ export class PageHeaderNode extends PageSectionNode {
     return 'page-header';
   }
 
+  /**
+   * Lexical requirement: concrete node classes must implement a static clone method.
+   * Burada key bilgisini koruyarak yeni bir instance döneriz.
+   */
+  static clone(node: PageHeaderNode): PageHeaderNode {
+    // ElementNode constructor in this codebase expects the key string optionally.
+    return new PageHeaderNode(node.__key);
+  }
+
   static importJSON(_serializedNode: SerializedPageHeaderNode): PageHeaderNode {
     return new PageHeaderNode();
   }
