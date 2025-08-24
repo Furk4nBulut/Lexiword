@@ -80,13 +80,46 @@ function cloneSection<T extends LexicalNode>(sectionNode: T | null): T | null {
  * @param marginTopMm - Üst kenar boşluğu (mm)
  * @param marginBottomMm - Alt kenar boşluğu (mm)
  */
-export function PageAutoSplitPlugin({
-  pageHeightMm,
-  marginTopMm,
-  marginBottomMm
-}: PageFlowSettings): null {
+export function PageAutoSplitPlugin(props: PageFlowSettings): null {
+  const { pageHeightMm, marginTopMm, marginBottomMm } = props;
   // Lexical editör context'ini alıyoruz. Editörle etkileşim için kullanılır.
   const [editor] = useLexicalComposerContext();
+
+  // Yardımcı: Tüm sayfaların page number'larını güncelle
+  function updateAllPageNumbers() {
+    editor.update(() => {
+      const root = $getRoot();
+      const allPages = root.getChildren().filter($isPageNode);
+      allPages.forEach((p, idx) => {
+        // Header
+        if (isHeaderPageNumberActive) {
+          const header = p.getChildren().find(isHeaderNode);
+          if (header != null) {
+            const children = header.getChildren();
+            children.forEach((c) => {
+              if (typeof c.getType === 'function' && c.getType() === 'page-number') {
+                c.remove();
+              }
+            });
+            header.append($createPageNumberNode(String(idx + 1)));
+          }
+        }
+        // Footer
+        if (isFooterPageNumberActive) {
+          const footer = p.getChildren().find(isFooterNode);
+          if (footer != null) {
+            const children = footer.getChildren();
+            children.forEach((c) => {
+              if (typeof c.getType === 'function' && c.getType() === 'page-number') {
+                c.remove();
+              }
+            });
+            footer.append($createPageNumberNode(String(idx + 1)));
+          }
+        }
+      });
+    });
+  }
   // Şu anda reflow işlemi devam ediyor mu bilgisini tutar. Döngüsel taşma önlenir.
   const isReflowingRef = useRef(false);
   // requestAnimationFrame ile yapılan animasyonun id'sini saklar. Temizlik için gereklidir.
@@ -240,45 +273,15 @@ export function PageAutoSplitPlugin({
         nextPage.append(new PageContentNode());
         const newFooter = cloneSection(pageFooter ?? null);
         if (newFooter !== null) nextPage.append(newFooter);
+
+        // Önce yeni sayfayı DOM'a ekle
         pageNode.insertAfter(nextPage);
 
-        // Page number command aktifse, tüm sayfalardaki page number'ları güncelle
-        // DÜZELTME: Sadece ilgili mod aktifse ekle, aksi halde asla ekleme!
+        // HEMEN: Eğer page number modu aktifse, yeni sayfa split edildiği anda numaralandır (microtask ile DOM kesin oluşsun)
         if (isHeaderPageNumberActive || isFooterPageNumberActive) {
-          const root = pageNode.getParent();
-          if (root != null) {
-            const allPages = root.getChildren().filter($isPageNode);
-            allPages.forEach((p, idx) => {
-              // Header
-              if (isHeaderPageNumberActive) {
-                const header = p.getChildren().find(isHeaderNode);
-                if (header != null) {
-                  // Önce eski page-number node'larını sil
-                  const children = header.getChildren();
-                  children.forEach((c) => {
-                    if (typeof c.getType === 'function' && c.getType() === 'page-number') {
-                      c.remove();
-                    }
-                  });
-                  // Sonra yeni page number ekle
-                  header.append($createPageNumberNode(String(idx + 1)));
-                }
-              }
-              // Footer
-              if (isFooterPageNumberActive) {
-                const footer = p.getChildren().find(isFooterNode);
-                if (footer != null) {
-                  const children = footer.getChildren();
-                  children.forEach((c) => {
-                    if (typeof c.getType === 'function' && c.getType() === 'page-number') {
-                      c.remove();
-                    }
-                  });
-                  footer.append($createPageNumberNode(String(idx + 1)));
-                }
-              }
-            });
-          }
+          setTimeout(() => {
+            updateAllPageNumbers();
+          }, 0);
         }
         setHeaderFooterSyncEnabled(true); // Sync tekrar aç
       }
