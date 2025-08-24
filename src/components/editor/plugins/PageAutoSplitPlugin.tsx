@@ -25,14 +25,21 @@ import { PageContentNode } from '../nodes/PageContentNode';
 
 // Page number komutunun aktif olup olmadığını global olarak takip et
 
-export let isHeaderPageNumberActive = false;
-export let isFooterPageNumberActive = false;
+let _isHeaderPageNumberActive = false;
+let _isFooterPageNumberActive = false;
 
 export function setHeaderPageNumberActive(active: boolean): void {
-  isHeaderPageNumberActive = active;
+  _isHeaderPageNumberActive = active;
 }
 export function setFooterPageNumberActive(active: boolean): void {
-  isFooterPageNumberActive = active;
+  _isFooterPageNumberActive = active;
+}
+
+export function getHeaderPageNumberActive(): boolean {
+  return _isHeaderPageNumberActive;
+}
+export function getFooterPageNumberActive(): boolean {
+  return _isFooterPageNumberActive;
 }
 
 /**
@@ -87,12 +94,14 @@ export function PageAutoSplitPlugin(props: PageFlowSettings): null {
 
   // Yardımcı: Tüm sayfaların page number'larını güncelle
   function updateAllPageNumbers(): void {
+    const headerActive = getHeaderPageNumberActive();
+    const footerActive = getFooterPageNumberActive();
     editor.update(() => {
       const root = $getRoot();
       const allPages = root.getChildren().filter($isPageNode);
       allPages.forEach((p, idx) => {
         // Header
-        if (isHeaderPageNumberActive) {
+        if (headerActive) {
           const header = p.getChildren().find(isHeaderNode);
           if (header != null) {
             const children = header.getChildren();
@@ -105,7 +114,7 @@ export function PageAutoSplitPlugin(props: PageFlowSettings): null {
           }
         }
         // Footer
-        if (isFooterPageNumberActive) {
+        if (footerActive) {
           const footer = p.getChildren().find(isFooterNode);
           if (footer != null) {
             const children = footer.getChildren();
@@ -278,7 +287,7 @@ export function PageAutoSplitPlugin(props: PageFlowSettings): null {
         pageNode.insertAfter(nextPage);
 
         // HEMEN: Eğer page number modu aktifse, yeni sayfa split edildiği anda numaralandır (microtask ile DOM kesin oluşsun)
-        if (isHeaderPageNumberActive || isFooterPageNumberActive) {
+        if (getHeaderPageNumberActive() || getFooterPageNumberActive()) {
           setTimeout(() => {
             updateAllPageNumbers();
           }, 0);

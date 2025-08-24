@@ -5,8 +5,8 @@ import { $createPageNumberNode } from '../nodes/PageNumberNode';
 import {
   setHeaderPageNumberActive,
   setFooterPageNumberActive,
-  isHeaderPageNumberActive,
-  isFooterPageNumberActive
+  getHeaderPageNumberActive,
+  getFooterPageNumberActive
 } from './PageAutoSplitPlugin';
 import * as Toolbar from '@radix-ui/react-toolbar';
 
@@ -40,8 +40,8 @@ export function PageNumberCommandPlugin(): null {
     const unregisterHeader = editor.registerCommand(
       TOGGLE_HEADER_PAGE_NUMBER_COMMAND,
       () => {
-        // Eğer mod aktif değilse hiçbir şey yapma
-        if (!isHeaderPageNumberActive) return true;
+        // Aktiflik state'ine göre ekle/çıkar
+        const isActive = getHeaderPageNumberActive();
         editor.update(() => {
           const root = $getRoot();
           const pageNodes = root
@@ -61,14 +61,25 @@ export function PageNumberCommandPlugin(): null {
                 children.some(
                   (c) => typeof c.getType === 'function' && c.getType() === 'page-number'
                 );
-              if (hasPageNumber) {
-                children.forEach((child) => {
-                  if (typeof child.getType === 'function' && child.getType() === 'page-number') {
-                    child.remove();
-                  }
-                });
-              } else {
+              if (isActive) {
+                // Aktifse ekle (zaten varsa önce sil)
+                if (hasPageNumber) {
+                  children.forEach((child) => {
+                    if (typeof child.getType === 'function' && child.getType() === 'page-number') {
+                      child.remove();
+                    }
+                  });
+                }
                 header.append($createPageNumberNode(String(idx + 1)));
+              } else {
+                // Kapalıysa varsa sil
+                if (hasPageNumber) {
+                  children.forEach((child) => {
+                    if (typeof child.getType === 'function' && child.getType() === 'page-number') {
+                      child.remove();
+                    }
+                  });
+                }
               }
             }
           });
@@ -81,8 +92,8 @@ export function PageNumberCommandPlugin(): null {
     const unregisterFooter = editor.registerCommand(
       TOGGLE_FOOTER_PAGE_NUMBER_COMMAND,
       () => {
-        // Eğer mod aktif değilse hiçbir şey yapma
-        if (!isFooterPageNumberActive) return true;
+        // Aktiflik state'ine göre ekle/çıkar
+        const isActive = getFooterPageNumberActive();
         editor.update(() => {
           const root = $getRoot();
           const pageNodes = root
@@ -102,14 +113,25 @@ export function PageNumberCommandPlugin(): null {
                 children.some(
                   (c) => typeof c.getType === 'function' && c.getType() === 'page-number'
                 );
-              if (hasPageNumber) {
-                children.forEach((child) => {
-                  if (typeof child.getType === 'function' && child.getType() === 'page-number') {
-                    child.remove();
-                  }
-                });
-              } else {
+              if (isActive) {
+                // Aktifse ekle (zaten varsa önce sil)
+                if (hasPageNumber) {
+                  children.forEach((child) => {
+                    if (typeof child.getType === 'function' && child.getType() === 'page-number') {
+                      child.remove();
+                    }
+                  });
+                }
                 footer.append($createPageNumberNode(String(idx + 1)));
+              } else {
+                // Kapalıysa varsa sil
+                if (hasPageNumber) {
+                  children.forEach((child) => {
+                    if (typeof child.getType === 'function' && child.getType() === 'page-number') {
+                      child.remove();
+                    }
+                  });
+                }
               }
             }
           });
@@ -130,11 +152,16 @@ export function PageNumberCommandPlugin(): null {
 export function HeaderPageNumberButton(): JSX.Element {
   const toggleHeaderPageNumber = useHeaderPageNumberToggle();
   // Page number modunu toggle et
-  const [active, setActive] = React.useState(isHeaderPageNumberActive);
+  const [active, setActive] = React.useState(getHeaderPageNumberActive());
   const handleClick = (): void => {
     setHeaderPageNumberActive(!active);
     setActive(!active);
+    // Page number toggle işlemi tamamlandıktan sonra, page node ile ilgili işlemleri bir sonraki tick'e bırak
     toggleHeaderPageNumber();
+    setTimeout(() => {
+      // Burada page node ile ilgili işlemler tetiklenebilir (gerekirse)
+      // Örn: page node'u kapatma veya yeni sayfa ekleme işlemi
+    }, 0);
   };
   const [enabled, setEnabled] = React.useState(false);
   const [editor] = useLexicalComposerContext();
@@ -175,11 +202,16 @@ export function HeaderPageNumberButton(): JSX.Element {
 export function FooterPageNumberButton(): JSX.Element {
   const toggleFooterPageNumber = useFooterPageNumberToggle();
   // Page number modunu toggle et
-  const [active, setActive] = React.useState(isFooterPageNumberActive);
+  const [active, setActive] = React.useState(getFooterPageNumberActive());
   const handleClick = (): void => {
     setFooterPageNumberActive(!active);
     setActive(!active);
+    // Page number toggle işlemi tamamlandıktan sonra, page node ile ilgili işlemleri bir sonraki tick'e bırak
     toggleFooterPageNumber();
+    setTimeout(() => {
+      // Burada page node ile ilgili işlemler tetiklenebilir (gerekirse)
+      // Örn: page node'u kapatma veya yeni sayfa ekleme işlemi
+    }, 0);
   };
   const [enabled, setEnabled] = React.useState(false);
   const [editor] = useLexicalComposerContext();
