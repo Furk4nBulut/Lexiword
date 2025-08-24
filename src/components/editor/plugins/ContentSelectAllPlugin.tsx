@@ -299,22 +299,7 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
             selection.anchor.set(firstText.getKey(), 0, 'text');
             selection.focus.set(lastText.getKey(), lastText.getTextContent().length, 'text');
             $setSelection(selection);
-
-            // Sadece page-content node'larının text'ini panoya yaz
-            const contentText = allContentNodes
-              .map((node) =>
-                typeof node.getTextContent === 'function' ? node.getTextContent() : ''
-              )
-              .join('\n');
-
-            if (typeof contentText === 'string') {
-              navigator.clipboard.writeText(contentText).finally(() => {
-                blockInputRef.current = true;
-                setTimeout(() => {
-                  blockInputRef.current = false;
-                }, 120);
-              });
-            }
+            // Artık panoya otomatik kopyalama yok!
           });
           return true;
         }
@@ -332,17 +317,41 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
     const unregisterCopy = editor.registerCommand(
       COPY_COMMAND,
       (event: ClipboardEvent): boolean => {
-        const allContentNodes = getAllContentNodes();
-        if (allContentNodes.length === 0) return false;
+        // Sadece .a4-content içindeyse ve bir seçim varsa, seçili metni kopyala
+        const selection = window.getSelection();
+  if (selection == null) return false;
+  if (selection.isCollapsed) return false;
+        // Seçim .a4-content içinde mi?
+        let allInContent = true;
+        for (let i = 0; i < selection.rangeCount; i++) {
+          const range = selection.getRangeAt(i);
+          let startContainer = range.startContainer;
+          let endContainer = range.endContainer;
+          if (startContainer.nodeType === Node.TEXT_NODE) {
+            startContainer = startContainer.parentElement as HTMLElement;
+          }
+          if (endContainer.nodeType === Node.TEXT_NODE) {
+            endContainer = endContainer.parentElement as HTMLElement;
+          }
+          if (!(startContainer instanceof HTMLElement) || !(endContainer instanceof HTMLElement)) {
+            allInContent = false;
+            break;
+          }
+          const startClosest = startContainer.closest('.a4-content');
+          const endClosest = endContainer.closest('.a4-content');
+          if (startClosest === null || endClosest === null) {
+            allInContent = false;
+            break;
+          }
+        }
+        if (!allInContent) return false;
 
-        // Sadece page-content node'larının text'ini kopyala, header/footer asla dahil olmasın
         event.preventDefault();
         event.stopPropagation();
-        const contentText = allContentNodes
-          .map((node) => (typeof node.getTextContent === 'function' ? node.getTextContent() : ''))
-          .join('\n');
-        if (typeof contentText === 'string') {
-          event.clipboardData?.setData('text/plain', contentText);
+        // Sadece seçili metni kopyala
+        const selectedText = selection.toString();
+        if (selectedText !== '') {
+          event.clipboardData?.setData('text/plain', selectedText);
         }
         return true;
       },
