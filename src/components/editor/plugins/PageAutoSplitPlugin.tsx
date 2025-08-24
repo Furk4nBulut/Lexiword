@@ -86,7 +86,7 @@ export function PageAutoSplitPlugin(props: PageFlowSettings): null {
   const [editor] = useLexicalComposerContext();
 
   // Yardımcı: Tüm sayfaların page number'larını güncelle
-  function updateAllPageNumbers() {
+  function updateAllPageNumbers(): void {
     editor.update(() => {
       const root = $getRoot();
       const allPages = root.getChildren().filter($isPageNode);

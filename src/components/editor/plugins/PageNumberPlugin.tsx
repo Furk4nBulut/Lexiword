@@ -2,9 +2,12 @@ import * as React from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot, createCommand } from 'lexical';
 import { $createPageNumberNode } from '../nodes/PageNumberNode';
-import { setHeaderPageNumberActive, setFooterPageNumberActive } from './PageAutoSplitPlugin';
-// Aktiflik değişkenlerini import et
-import { isHeaderPageNumberActive, isFooterPageNumberActive } from './PageAutoSplitPlugin';
+import {
+  setHeaderPageNumberActive,
+  setFooterPageNumberActive,
+  isHeaderPageNumberActive,
+  isFooterPageNumberActive
+} from './PageAutoSplitPlugin';
 import * as Toolbar from '@radix-ui/react-toolbar';
 
 // Lexical command tanımları
@@ -128,7 +131,7 @@ export function HeaderPageNumberButton(): JSX.Element {
   const toggleHeaderPageNumber = useHeaderPageNumberToggle();
   // Page number modunu toggle et
   const [active, setActive] = React.useState(isHeaderPageNumberActive);
-  const handleClick = () => {
+  const handleClick = (): void => {
     setHeaderPageNumberActive(!active);
     setActive(!active);
     toggleHeaderPageNumber();
@@ -173,7 +176,7 @@ export function FooterPageNumberButton(): JSX.Element {
   const toggleFooterPageNumber = useFooterPageNumberToggle();
   // Page number modunu toggle et
   const [active, setActive] = React.useState(isFooterPageNumberActive);
-  const handleClick = () => {
+  const handleClick = (): void => {
     setFooterPageNumberActive(!active);
     setActive(!active);
     toggleFooterPageNumber();
