@@ -16,7 +16,10 @@ import type { PageNode } from '../nodes/PageNode';
 type SectionKind = 'header' | 'footer';
 
 /**
- * sectionNodeGetter: PageNode üzerindeki ilgili section node'unu döndürür.
+ * Belirtilen PageNode üzerinde, istenen türde (header/footer) section node'unu döndürür.
+ * @param page PageNode nesnesi
+ * @param kind 'header' veya 'footer'
+ * @returns İlgili section node'u veya undefined
  */
 function getSectionNode(page: PageNode, kind: SectionKind): ElementNode | undefined {
   return kind === 'header'
@@ -25,33 +28,37 @@ function getSectionNode(page: PageNode, kind: SectionKind): ElementNode | undefi
 }
 
 /**
- * serializeSectionChildren
- *
- * Verilen section node'unun çocuklarını JSON'a çevirir. `page-number` tipindeki
- * node'lar filtrelenir (sayfa numarası ayrı yönetildiği için).
+ * Bir section node'unun çocuklarını JSON'a çevirir.
+ * 'page-number' tipindeki node'lar filtrelenir (sayfa numarası ayrı yönetildiği için).
+ * @param section JSON'a çevrilecek section node'u
+ * @returns Çocukların JSON dizisi veya null
  */
 export function serializeSectionChildren(section?: ElementNode | null): any[] | null {
   if (section === null || section === undefined) return null;
   if (typeof section.getChildren !== 'function') return null;
+  // Sadece page-number olmayan çocukları al
   const children = section
     .getChildren()
     .filter((n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number');
   if (children.length === 0) return [];
+  // Her bir çocuğu JSON'a çevir
   return children.map((n: any) => n.exportJSON());
 }
 
 /**
- * isEmptySection
- *
- * Bir section'un boş olup olmadığını kontrol eder. Boş kriteri:
- * - Çocuk yok veya
+ * Bir section'un boş olup olmadığını kontrol eder.
+ * Boş kriteri:
+ * - Hiç çocuk yoksa
  * - Tüm çocuklar text ise hepsi boş string ve paragraph içindeki textler boşsa
+ * @param section Kontrol edilecek section node'u
+ * @returns Boşsa true, doluysa false
  */
 export function isEmptySection(section?: ElementNode | null): boolean {
   if (section === null || section === undefined) return true;
   if (typeof section.getChildren !== 'function') return true;
   const children = section.getChildren();
   if (children.length === 0) return true;
+  // Her bir çocuk için boşluk kontrolü
   return children.every((child: any) => {
     if (child instanceof TextNode) return child.getTextContent() === '';
     if (child instanceof LineBreakNode) return true;
@@ -71,20 +78,22 @@ export function isEmptySection(section?: ElementNode | null): boolean {
 }
 
 /**
- * getReferenceSectionJSON
- *
- * pageNodes dizisinden, reference (kopyalanacak) section JSON'unu belirler.
+ * pageNodes dizisinden, referans (kopyalanacak) section JSON'unu belirler.
  * Öncelik sırası:
  * 1) lastEditedKey ile eşleşen section
  * 2) aktif element focus'taysa onun section'u
  * 3) ilk dolu section
+ * @param pageNodes Tüm sayfa node'ları
+ * @param lastEditedKey Son düzenlenen section'un anahtarı
+ * @param kind 'header' veya 'footer'
+ * @returns Referans section'un JSON'u veya null
  */
 export function getReferenceSectionJSON(
   pageNodes: PageNode[],
   lastEditedKey: string | null | undefined,
   kind: SectionKind
 ): any[] | null {
-  // 1) lastEditedKey ile eşleşen
+  // 1) lastEditedKey ile eşleşen section'u bul
   if (lastEditedKey !== null && lastEditedKey !== undefined && lastEditedKey !== '') {
     for (const p of pageNodes) {
       const s = getSectionNode(p, kind);
@@ -94,7 +103,7 @@ export function getReferenceSectionJSON(
     }
   }
 
-  // 2) activeElement focus match
+  // 2) Aktif element focus'taysa onun section'unu bul
   const activeElement = typeof document !== 'undefined' ? document.activeElement : null;
   if (activeElement !== null && activeElement !== undefined) {
     for (const p of pageNodes) {
@@ -111,7 +120,7 @@ export function getReferenceSectionJSON(
     }
   }
 
-  // 3) ilk dolu section
+  // 3) İlk dolu section'u bul
   for (const p of pageNodes) {
     const s = getSectionNode(p, kind);
     if (s !== null && s !== undefined && !isEmptySection(s)) {
@@ -123,12 +132,14 @@ export function getReferenceSectionJSON(
 }
 
 /**
- * applySectionJSONToAll
+ * Verilen referans JSON'u tüm sayfalardaki ilgili sectionlara uygular.
+ * deepEqual ile mevcut içerik ile karşılaştırılır; fark varsa güncelleme yapılır.
  *
- * Verilen refJSON'u tüm sayfalardaki ilgili sectionlara uygular.
- * deepEqual kullanılarak mevcut içerik ile karşılaştırılır; fark varsa güncelleme yapılır.
- *
- * Dönen değer: boolean (herhangi bir senkronizasyon yapıldı mı)
+ * @param pageNodes Tüm sayfa node'ları
+ * @param kind 'header' veya 'footer'
+ * @param refJSON Uygulanacak referans JSON
+ * @param isSyncingRef Senkronizasyon durumu (React ref)
+ * @returns boolean (herhangi bir senkronizasyon yapıldı mı)
  */
 export function applySectionJSONToAll(
   pageNodes: PageNode[],
@@ -140,14 +151,17 @@ export function applySectionJSONToAll(
   for (const p of pageNodes) {
     const section = getSectionNode(p, kind);
     if (!(section instanceof ElementNode)) continue;
+    // page-number olmayan çocukları al
     const children = section
       .getChildren()
       .filter((n: any) => typeof n.getType === 'function' && n.getType() !== 'page-number');
     const currJSON = children.map((n: any) => n.exportJSON());
+    // Eğer referans JSON ile mevcut içerik farklıysa güncelle
     if (Array.isArray(refJSON) && !deepEqual(currJSON, refJSON)) {
       isSyncingRef.current = true;
       didSync = true;
       section.clear();
+      // Her bir referans çocuğu için uygun Lexical node oluştur
       refJSON.forEach((childJSON: any) => {
         const type = childJSON.type;
         if (type === 'paragraph') {
@@ -183,10 +197,10 @@ export function applySectionJSONToAll(
 }
 
 /**
- * importSerializedNode
- *
  * Basit serialized node objesini, ilgili Lexical node instance'ına çevirir.
- * Sadece paragraph, text ve linebreak tipleri desteklenir (şu anki kullanımlar için yeterli).
+ * Sadece paragraph, text ve linebreak tipleri desteklenir.
+ * @param json JSON node objesi
+ * @returns Lexical node instance'ı veya null
  */
 export function importSerializedNode(json: any): any | null {
   if (json === null || json === undefined) return null;

@@ -4,8 +4,12 @@ import { $isPageNode } from '../nodes/PageNode';
 import { isHeaderNode, isFooterNode } from '../nodes/sectionTypeGuards';
 
 /**
- * Header/footer sayfa numaralar1n31 g31ncelleme yard31mc31 fonksiyonlar31.
- * - addOrReplacePageNumbers: aktifse ekler, de31lse siler
+ * Sayfa başlık (header) ve altlık (footer) alanlarındaki sayfa numaralarını ekleyen veya güncelleyen yardımcı fonksiyon.
+ *
+ * Eğer header veya footer aktifse, ilgili alana sayfa numarası ekler. Aktif değilse mevcut sayfa numarasını siler.
+ *
+ * @param header Header'a sayfa numarası ekle (true/false)
+ * @param footer Footer'a sayfa numarası ekle (true/false)
  */
 export function addOrReplacePageNumbers({
   header,
@@ -14,44 +18,59 @@ export function addOrReplacePageNumbers({
   header: boolean;
   footer: boolean;
 }): void {
-  const root = $getRoot();
-  const pages = root.getChildren().filter($isPageNode);
+  const root = $getRoot(); // Tüm dokümanın kök nodunu al
+  const pages = root.getChildren().filter($isPageNode); // Sadece sayfa nodlarını filtrele
   pages.forEach((p, idx) => {
+    // Header işlemleri
     if (header) {
-      const h = p.getChildren().find(isHeaderNode);
+      const h = p.getChildren().find(isHeaderNode); // Header nodunu bul
       if (h != null) {
         const children = h.getChildren();
-        // remove existing page-number nodes
+        // Var olan page-number nodlarını sil
         children.forEach((c) => {
-          if (typeof c.getType === 'function' && c.getType() === 'page-number') c.remove();
+          if (typeof c.getType === 'function' && c.getType() === 'page-number') {
+            c.remove();
+          }
         });
+        // Yeni page-number nodunu ekle (sayfa sırasına göre)
         h.append($createPageNumberNode(String(idx + 1)));
       }
     } else {
+      // Header aktif değilse, varsa mevcut page-number nodlarını sil
       const h = p.getChildren().find(isHeaderNode);
       if (h != null) {
         const children = h.getChildren();
         children.forEach((c) => {
-          if (typeof c.getType === 'function' && c.getType() === 'page-number') c.remove();
+          if (typeof c.getType === 'function' && c.getType() === 'page-number') {
+            c.remove();
+          }
         });
       }
     }
 
+    // Footer işlemleri
     if (footer) {
-      const f = p.getChildren().find(isFooterNode);
+      const f = p.getChildren().find(isFooterNode); // Footer nodunu bul
       if (f != null) {
         const children = f.getChildren();
+        // Var olan page-number nodlarını sil
         children.forEach((c) => {
-          if (typeof c.getType === 'function' && c.getType() === 'page-number') c.remove();
+          if (typeof c.getType === 'function' && c.getType() === 'page-number') {
+            c.remove();
+          }
         });
+        // Yeni page-number nodunu ekle (sayfa sırasına göre)
         f.append($createPageNumberNode(String(idx + 1)));
       }
     } else {
+      // Footer aktif değilse, varsa mevcut page-number nodlarını sil
       const f = p.getChildren().find(isFooterNode);
       if (f != null) {
         const children = f.getChildren();
         children.forEach((c) => {
-          if (typeof c.getType === 'function' && c.getType() === 'page-number') c.remove();
+          if (typeof c.getType === 'function' && c.getType() === 'page-number') {
+            c.remove();
+          }
         });
       }
     }

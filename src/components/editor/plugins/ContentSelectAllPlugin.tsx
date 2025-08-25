@@ -28,8 +28,8 @@ import {
   $createRangeSelection,
   COPY_COMMAND
 } from 'lexical';
-import { getAllContentNodes } from '../utils/contentUtils';
 import { isSelectionFullyInA4Content } from '../utils/selectionUtils';
+import { getAllContentNodes } from '../utils/contentUtils';
 
 /**
  * Helper Fonksiyon: getAllContentNodes
