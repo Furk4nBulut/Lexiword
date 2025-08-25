@@ -1,23 +1,25 @@
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $getRoot } from 'lexical';
-import { PageNode, $isPageNode } from '../nodes/PageNode';
-import { PageHeaderNode } from '../nodes/PageHeaderNode';
-import { PageFooterNode } from '../nodes/PageFooterNode';
-import { PageContentNode } from '../nodes/PageContentNode';
-import { serializeSectionChildren, importSerializedNode } from '../utils/headerFooterUtils';
-import { useEffect } from 'react';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'; // Lexical context hook'u
+import { $getRoot } from 'lexical'; // Lexical kök node fonksiyonu
+import { PageNode, $isPageNode } from '../nodes/PageNode'; // Page node tipleri
+import { PageHeaderNode } from '../nodes/PageHeaderNode'; // Header node
+import { PageFooterNode } from '../nodes/PageFooterNode'; // Footer node
+import { PageContentNode } from '../nodes/PageContentNode'; // Content node
+import { serializeSectionChildren, importSerializedNode } from '../utils/headerFooterUtils'; // Header/footer utils
+import { useEffect } from 'react'; // React hook
 
 /**
  * PageCleanupPlugin
  *
- * (Türkçe) Editör içerisindeki page node'larının temizlik kurallarını
- * uygular: tamamen boş sayfaları kaldırır, en az bir sayfanın kalmasını
- * garanti eder ve silinen sayfaların header/footer içeriğini ihtiyaç
- * halinde kalan sayfalara taşır.
+ * Editör içerisindeki page node'larının temizlik kurallarını uygular:
+ * - Tamamen boş sayfaları kaldırır
+ * - En az bir sayfanın kalmasını garanti eder
+ * - Silinen sayfaların header/footer içeriğini ihtiyaç halinde kalan sayfalara taşır
+ *
+ * @returns null (sadece yan etki için)
  */
 export function PageCleanupPlugin(): null {
   // Lexical editörün context'ine erişiyoruz (editor instance).
-  const [editor] = useLexicalComposerContext();
+  const [editor] = useLexicalComposerContext(); // Editor instance'ı
 
   /**
    * useEffect hook'u, editor güncellendiğinde (örn. kullanıcı yazı yazdığında,
@@ -26,34 +28,27 @@ export function PageCleanupPlugin(): null {
    * registerUpdateListener → her editor güncellemesinde çalışır.
    */
   useEffect(() => {
+    // Editor güncellenince tetiklenecek listener kaydı
     return editor.registerUpdateListener(() => {
       // Editor state güncelleme bloğu
       editor.update(() => {
-        // Root (ana container) node'u alıyoruz.
-        const root = $getRoot();
+        const root = $getRoot(); // Kök node'u al
+        const pages = root.getChildren().filter($isPageNode); // Tüm page node'larını al
 
-        // Root içindeki tüm PageNode'ları alıyoruz.
-        const pages = root.getChildren().filter($isPageNode);
-
-        /**
-         * Eğer hiç PageNode kalmamışsa:
-         * - Yeni bir PageNode oluştur
-         * - İçine header, content ve footer ekle
-         * - Root'a ekle
-         */
+        // Hiç sayfa yoksa yeni bir tane oluştur
         if (pages.length === 0) {
-          const newPage = new PageNode({});
-          newPage.append(new PageHeaderNode());
-          newPage.append(new PageContentNode());
-          newPage.append(new PageFooterNode());
-          root.append(newPage);
+          const newPage = new PageNode({}); // Yeni page node
+          newPage.append(new PageHeaderNode()); // Header ekle
+          newPage.append(new PageContentNode()); // Content ekle
+          newPage.append(new PageFooterNode()); // Footer ekle
+          root.append(newPage); // Root'a ekle
           return;
         }
 
-        // Eğer sadece 1 sayfa varsa → onu silme, çünkü en az bir sayfa kalmalı
+        // Sadece 1 sayfa varsa onu silme, en az bir sayfa kalmalı
         if (pages.length === 1) {
-          // Son kalan sayfanın page number'ını güncelle
-          const onlyPage = pages[0];
+          const onlyPage = pages[0]; // Tek sayfa
+          // Header/footer içindeki page-number'ı 1 yap
           const updatePageNumberToOne = (
             node:
               | {
@@ -64,28 +59,25 @@ export function PageCleanupPlugin(): null {
               | null
               | undefined
           ): void => {
-            if (node == null || typeof node.getChildren !== 'function') return;
-            const children = node.getChildren();
+            if (node == null || typeof node.getChildren !== 'function') return; // Yoksa çık
+            const children = node.getChildren(); // Çocukları al
             for (const child of children) {
               if (typeof child.getType === 'function' && child.getType() === 'page-number') {
                 if (typeof child.setTextContent === 'function') {
-                  child.setTextContent('1');
+                  child.setTextContent('1'); // Page number'ı 1 yap
                 }
               }
               if (typeof child.getChildren === 'function') {
-                updatePageNumberToOne(child);
+                updatePageNumberToOne(child); // Alt node'larda da uygula
               }
             }
           };
-          updatePageNumberToOne(onlyPage.getHeaderNode?.());
-          updatePageNumberToOne(onlyPage.getFooterNode?.());
+          updatePageNumberToOne(onlyPage.getHeaderNode?.()); // Header için uygula
+          updatePageNumberToOne(onlyPage.getFooterNode?.()); // Footer için uygula
           return;
         }
 
-        /**
-         * Boş içerikli sayfaları buluyoruz.
-         * Yani page-content node'u varsa ve içinde hiç child yoksa → boş sayfa kabul edilir.
-         */
+        // Boş içerikli sayfaları bul (content'i boş olanlar)
         const pagesToRemove = pages.filter((pageNode) => {
           const contentNode = pageNode.getChildren().find((c) => c.getType() === 'page-content');
           return (
@@ -93,50 +85,40 @@ export function PageCleanupPlugin(): null {
           );
         });
 
-        // Eğer silinecek sayfa yoksa → direkt çık
+        // Silinecek sayfa yoksa çık
         if (pagesToRemove.length === 0) return;
 
-        /**
-         * Geriye en az 1 sayfa kalmasını garanti etmek için:
-         * - Silinecek sayfalar dışındakileri bul
-         * - Eğer sadece 1 tane kalıyorsa → onu "kalan sayfa" olarak işaretle
-         */
-        const remainingPages = pages.filter((p) => !pagesToRemove.includes(p));
-        const remainingPage = remainingPages.length === 1 ? remainingPages[0] : null;
+        // Geriye en az 1 sayfa kalmasını garanti et
+        const remainingPages = pages.filter((p) => !pagesToRemove.includes(p)); // Kalanlar
+        const remainingPage = remainingPages.length === 1 ? remainingPages[0] : null; // Tek kalan varsa
 
-        /**
-         * Eğer sadece 1 sayfa kalıyorsa ve silinecek sayfa sadece 1 tane ise:
-         * - Silinecek sayfanın header/footer içeriğini al
-         * - Eğer kalan sayfanın header/footer'ı boşsa → bu içerikleri kopyala
-         */
+        // Eğer sadece 1 sayfa kalıyorsa ve silinecek sayfa sadece 1 ise, header/footer kopyala
         if (remainingPage != null && pagesToRemove.length === 1) {
-          const removedPage = pagesToRemove[0];
+          const removedPage = pagesToRemove[0]; // Silinecek sayfa
 
-          /**
-           * HEADER KOPYALAMA
-           */
-          const removedHeader = removedPage.getHeaderNode();
-          const remainingHeader = remainingPage.getHeaderNode();
+          // HEADER KOPYALAMA
+          const removedHeader = removedPage.getHeaderNode(); // Silinenin header'ı
+          const remainingHeader = remainingPage.getHeaderNode(); // Kalanın header'ı
 
           if (removedHeader != null && remainingHeader != null) {
             const removedHeaderChildren = removedHeader.getChildren();
             const remainingHeaderChildren = remainingHeader.getChildren();
 
-            // Silinen sayfanın header'ında içerik var mı?
+            // Silinen header'da içerik var mı?
             const removedHeaderHasContent =
               removedHeaderChildren.length > 0 &&
               removedHeaderChildren.some(
                 (n) => typeof n.getTextContent === 'function' && n.getTextContent() !== ''
               );
 
-            // Kalan sayfanın header'ı boş mu?
+            // Kalan header boş mu?
             const remainingHeaderIsEmpty =
               remainingHeaderChildren.length === 0 ||
               remainingHeaderChildren.every(
                 (n) => typeof n.getTextContent === 'function' && n.getTextContent() === ''
               );
 
-            // Eğer silinen header dolu, kalan header boş → kopyala (utils kullanarak)
+            // Silinen header dolu, kalan header boşsa kopyala
             if (removedHeaderHasContent && remainingHeaderIsEmpty) {
               remainingHeader.clear();
               const refHeaderJSON = serializeSectionChildren(removedHeader);
@@ -149,10 +131,7 @@ export function PageCleanupPlugin(): null {
             }
           }
 
-          /**
-           * FOOTER KOPYALAMA
-           * (Header ile aynı mantıkta çalışır)
-           */
+          // FOOTER KOPYALAMA (header ile aynı mantık)
           const removedFooter = removedPage.getFooterNode();
           const remainingFooter = remainingPage.getFooterNode();
 
@@ -185,17 +164,15 @@ export function PageCleanupPlugin(): null {
           }
         }
 
-        /**
-         * Son adım: Silinecek sayfaları gerçekten DOM'dan kaldır.
-         */
+        // Son adım: Silinecek sayfaları DOM'dan kaldır
         pagesToRemove.forEach((pageNode) => {
-          pageNode.remove();
+          pageNode.remove(); // Sayfayı sil
         });
       });
     });
   }, [editor]);
 
-  // Plugin React bileşeni olduğu için null döner → sadece side-effect çalıştırır
+  // Plugin React bileşeni olduğu için null döner → sadece yan etki çalıştırır
   return null;
 }
 
