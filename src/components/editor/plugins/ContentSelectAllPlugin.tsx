@@ -130,10 +130,24 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
               }
 
               // Cursor’u content’in başına taşı
-              const selection = $createRangeSelection();
-              selection.anchor.set(contentNode.getKey(), 0, 'element');
-              selection.focus.set(contentNode.getKey(), 0, 'element');
-              $setSelection(selection);
+              const rangeSelection = $createRangeSelection();
+              rangeSelection.anchor.set(contentNode.getKey(), 0, 'element');
+              rangeSelection.focus.set(contentNode.getKey(), 0, 'element');
+              // DOM güncellemeleri tamamlanana kadar bekleyip (raf)
+              // selection atamayı yeni bir editor.update içinde yapıyoruz.
+              if (
+                typeof window !== 'undefined' &&
+                typeof window.requestAnimationFrame === 'function'
+              ) {
+                const sel = rangeSelection;
+                window.requestAnimationFrame(() => {
+                  editor.update(() => {
+                    $setSelection(sel);
+                  });
+                });
+              } else {
+                $setSelection(rangeSelection);
+              }
             }
           }
         });
@@ -235,9 +249,47 @@ export function ContentSelectAllPlugin(): JSX.Element | null {
             if (lastText === null) lastText = allContentNodes[allContentNodes.length - 1];
             // Seçim objesi oluştur ve ayarla (sadece content'ler, header/footer hariç)
             const selection = $createRangeSelection();
-            selection.anchor.set(firstText.getKey(), 0, 'text');
-            selection.focus.set(lastText.getKey(), lastText.getTextContent().length, 'text');
-            $setSelection(selection);
+
+            // Güvenlik: firstText/lastText gerçek text node'u değilse 'element' seçimi kullan
+            const anchorIsText =
+              typeof firstText.getType === 'function' && firstText.getType() === 'text';
+            const focusIsText =
+              typeof lastText.getType === 'function' && lastText.getType() === 'text';
+
+            if (anchorIsText && focusIsText) {
+              // Text node'lar için offset'leri clamp ederek ayarla
+              const anchorOffset = 0;
+              const focusOffset = Math.max(
+                0,
+                Math.min(lastText.getTextContent().length, lastText.getTextContent().length)
+              );
+              selection.anchor.set(firstText.getKey(), anchorOffset, 'text');
+              selection.focus.set(lastText.getKey(), focusOffset, 'text');
+            } else {
+              // Element (non-text) node'ları için element offset'leri kullan
+              const anchorOffset = 0;
+              const focusChildrenCount =
+                typeof lastText.getChildren === 'function' ? lastText.getChildren().length : 0;
+              const focusOffset = Math.max(0, focusChildrenCount);
+              selection.anchor.set(firstText.getKey(), anchorOffset, 'element');
+              selection.focus.set(lastText.getKey(), focusOffset, 'element');
+            }
+
+            // Güvenli selection ataması: DOM ile Lexical commit sırasındaki
+            // uyumsuzlukları önlemek için raf'ta yeni bir update ile uygula.
+            const selToApply = selection;
+            if (
+              typeof window !== 'undefined' &&
+              typeof window.requestAnimationFrame === 'function'
+            ) {
+              window.requestAnimationFrame(() => {
+                editor.update(() => {
+                  $setSelection(selToApply);
+                });
+              });
+            } else {
+              $setSelection(selection);
+            }
             // Artık panoya otomatik kopyalama yok!
           });
           return true;
